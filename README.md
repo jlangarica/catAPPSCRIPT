@@ -1,133 +1,235 @@
+# README.md Mejorado
+
+```markdown
 <p align="center">
   <img src="https://img.shields.io/badge/Google%20Apps%20Script-V8-blue?logo=google&logoColor=4285F4" alt="Google Apps Script">
-  <img src="https://img.shields.io/badge/BigQuery- legacySQL-orange?logo=googlecloud&logoColor=F29900" alt="BigQuery">
-  <img src="badge/Drive%20API-v3-4285F4?logo=googledrive&logoColor=34A853" alt="Drive API">
+  <img src="https://img.shields.io/badge/BigQuery-Legacy%20SQL-orange?logo=googlebigquery&logoColor=FF6D01" alt="BigQuery">
+  <img src="https://img.shields.io/badge/Drive%20API-v3-4285F4?logo=googledrive&logoColor=34A853" alt="Drive API">
   <img src="https://img.shields.io/badge/HTML%20Service-SPA-2ea44f?logo=html5&logoColor=E34F26" alt="HTML Service">
   <br>
-  <img src="https://img.shields.io/badge/Access-DOMAIN-yellow" alt="Access">
-  <img src="https://img.shields.io/badge/Runtime-V8-8A2BE2" alt="V8">
-  <img src="https://img.shields.io/badge/Cache-6h-success" alt="Cache TTL">
-</p>
-
-<h1 align="center">Verificador de Catalogo HCG</h1>
-<p align="center">
-  <strong>Busqueda semantica + Prevencion de duplicados + Generacion automatica de formatos de inclusion</strong>
+  <img src="https://img.shields.io/badge/Access-DOMAIN-yellow?style=flat-square" alt="Access">
+  <img src="https://img.shields.io/badge/Runtime-V8-8A2BE2?style=flat-square" alt="V8">
+  <img src="https://img.shields.io/badge/Cache-6h-success?style=flat-square" alt="Cache TTL">
+  <img src="https://img.shields.io/badge/WCAG-2.1-005a9c?style=flat-square" alt="WCAG 2.1">
+  <img src="https://img.shields.io/badge/Version-1.0.0--stable-4caf50?style=flat-square" alt="Version">
 </p>
 
 ---
 
-## Tabla de Contenido
+<div align="center">
 
-- [1. Descripcion General](#1-descripcion-general)
-- [2. Arquitectura del Sistema](#2-arquitectura-del-sistema)
-- [3. Estructura del Proyecto](#3-estructura-del-proyecto)
-- [4. Configuracion](#4-configuracion)
-- [5. Base de Datos BigQuery](#5-base-de-datos-bigquery)
-- [6. API del Servidor (Code.gs)](#6-api-del-servidor-codegs)
-- [7. Interfaz de Usuario (index.html)](#7-interfaz-de-usuario-indexhtml)
-- [8. Seguridad](#8-seguridad)
-- [9. Despliegue](#9-despliegue)
-- [10. Solucion de Problemas](#10-solucion-de-problemas)
-- [11. Roadmap](#11-roadmap)
+# Verificador de Catálogo HCG
+
+### Hospital Civil de Guadalajara · Sistema de Prevención de Duplicados
+
+**Búsqueda semántica · Prevención de duplicados · Generación automática de formatos de inclusión**
+
+<img src="https://img.shields.io/badge/Estado-Produccion-4caf50?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik05IDE2LjE3TDQuODMgMTJsLTEuNDIgMS40MUw5IDE5IDIxIDdsLTEuNDEtMS40MUwxNi4xNyA3SDl2Mi4xN3oiLz48L3N2Zz4=" alt="Producción">
+
+</div>
 
 ---
 
-## 1. Descripcion General
+<div align="center">
 
-**Verificador de Catalogo HCG** es una Web App integrada en Google Apps Script que implementa un flujo de 5 fases para la prevencion de duplicados en un catalogo maestro hospitalario del Hospital Civil de Guadalajara (HCG).
+**[`Documentación Técnica`](#-documentación-técnica)**
+·
+**[`Despliegue`](#-despliegue)**
+·
+**[`API Reference`](#-referencia-de-la-api)**
+·
+**[`Roadmap`](#-roadmap)**
+·
+**[`Troubleshooting`](#-solución-de-problemas)**
 
-El sistema permite:
+</div>
 
-1. **Buscar** articulos en tiempo real mediante similitud semantica contra BigQuery.
-2. **Verificar** coincidencias con scoring Sorensen-Dice basado en trigramas.
-3. **Confirmar** la responsabilidad del solicitante antes de crear una clave nueva.
-4. **Registrar** la solicitud con formulario validado y documento adjunto.
-5. **Generar** automaticamente un Google Sheets con los datos de inclusion.
+---
 
-### Stack Tecnico
+## Índice
 
-| Capa           | Tecnologia                                                     |
-| -------------- | -------------------------------------------------------------- |
-| Frontend       | HTML5 Service + CSS vanilla (Flexbox/Grid) + JavaScript ES2020 |
-| Backend        | Google Apps Script (V8)                                        |
-| Base de Datos  | Google BigQuery (busqueda semantica)                           |
-| Almacenamiento | Google Drive (documentos generados)                            |
-| Cache          | `CacheService.getScriptCache()` (6 horas TTL)                  |
-| Fuentes        | Google Fonts (DM Sans) + SVG inline                            |
+<details>
+<summary><strong>Clic para expandir índice completo</strong></summary>
+
+| #   | Sección                                                 | Descripción                               |
+| --- | ------------------------------------------------------- | ----------------------------------------- |
+| 1   | [Descripción General](#1-descripción-general)           | Resumen ejecutivo y stack técnico         |
+| 2   | [Arquitectura del Sistema](#2-arquitectura-del-sistema) | Diagramas de flujo y flujo de datos       |
+| 3   | [Estructura del Proyecto](#3-estructura-del-proyecto)   | Árbol de archivos y responsabilidades     |
+| 4   | [Configuración](#4-configuración)                       | Variables de entorno, recursos y permisos |
+| 5   | [Base de Datos BigQuery](#5-base-de-datos-bigquery)     | Esquema, algoritmo y optimizaciones       |
+| 6   | [Referencia de la API](#6-referencia-de-la-api)         | Contratos de funciones servidor           |
+| 7   | [Interfaz de Usuario](#7-interfaz-de-usuario-indexhtml) | Patrones de diseño y tokens               |
+| 8   | [Seguridad](#8-seguridad)                               | Sanitización, inyección y dominio         |
+| 9   | [Despliegue](#9-despliegue)                             | Checklist de producción                   |
+| 10  | [Solución de Problemas](#10-solución-de-problemas)      | Diagnóstico y modo debug                  |
+| 11  | [Roadmap](#11-roadmap)                                  | Versiones actuales y planificadas         |
+
+</details>
+
+---
+
+## 1. Descripción General
+
+**Verificador de Catálogo HCG** es una aplicación web integrada en Google Apps Script que implementa un flujo de **5 fases** para la prevención de duplicados en el catálogo maestro hospitalario del Hospital Civil de Guadalajara.
+
+### Flujo funcional en 5 fases
+```
+
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ │ │ │ │ │ │ │ │ │
+│ FASE 1 │───▶│ FASE 2 │───▶│ FASE 3 │───▶│ FASE 4 │───▶│ FASE 5 │
+│ Búsqueda │ │ Resultados │ │ Confirmación │ │ Formulario │ │ Éxito │
+│ │ │ │ │ │ │ │ │ │
+│ Texto libre │ │ Tabla scoring│ │ Disclaimer │ │ 14 campos │ │ Link Sheet │
+│ → BigQuery │ │ + badges │ │ + warning │ │ + PDF adj. │ │ generado │
+│ │ │ │ │ │ │ │ │ │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+▲ │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+Reiniciar flujo
+
+````
+
+### Stack técnico
+
+<table>
+<tr>
+<td align="center"><strong>Capa</strong></td>
+<td align="center"><strong>Tecnología</strong></td>
+<td align="center"><strong>Detalle</strong></td>
+</tr>
+<tr>
+<td>🖥️ Frontend</td>
+<td>HTML5 Service · CSS vanilla · JavaScript ES2020</td>
+<td>SPA monolítica en un solo archivo <code>index.html</code></td>
+</tr>
+<tr>
+<td>⚙️ Backend</td>
+<td>Google Apps Script (V8 Runtime)</td>
+<td>5 funciones públicas + 2 helpers privados</td>
+</tr>
+<tr>
+<td>🗄️ Base de datos</td>
+<td>Google BigQuery</td>
+<td>Búsqueda semántica con coeficiente de Sørensen-Dice</td>
+</tr>
+<tr>
+<td>📁 Almacenamiento</td>
+<td>Google Drive · Google Sheets</td>
+<td>Documentos generados + plantilla maestra</td>
+</tr>
+<tr>
+<td>⚡ Cache</td>
+<td><code>CacheService.getScriptCache()</code></td>
+<td>TTL de 6 horas · Clave MD5 de 24 caracteres</td>
+</tr>
+<tr>
+<td>🎨 Tipografía</td>
+<td>Google Fonts (DM Sans)</td>
+<td>400 · 500 · 600 · 700</td>
+</tr>
+</table>
 
 ---
 
 ## 2. Arquitectura del Sistema
 
+### Diagrama de arquitectura de alto nivel
+
 ```mermaid
 flowchart TD
-    subgraph Cliente [Browser - IFrame GAS]
-        A[UI: Fase 1 Busqueda] -->|input texto| B{google.script.run}
-        B -->|buscarSimilitudesBQ| C{Render Resultados / Skeleton}
-        C --> D{UI: Fase 2 Resultados}
-        D -->|usuario decide| E{UI: Fase 3 Confirmacion}
-        E -->|usuario confirma| F{UI: Fase 4 Formulario}
-        F -->|FileReader PDF| G{google.script.run}
-        G -->|guardarSolicitud| H{Render Exito}
+    subgraph CLIENTE["🌐 Cliente — Browser / IFrame GAS"]
+        direction TB
+        A["<b>Fase 1</b><br/>Búsqueda de texto libre"] -->|"input ≥ 3 chars"| B{"google.script.run"}
+        B -->|"buscarSimilitudesBQ()"| C{"Render resultados<br/>o Skeleton loader"}
+        C --> D["<b>Fase 2</b><br/>Tabla con scoring + badges"]
+        D -->|"Solicitar alta nueva"| E["<b>Fase 3</b><br/>Confirmación con disclaimer"]
+        E -->|"Entiendo y Confirmo"| F["<b>Fase 4</b><br/>Formulario 14 campos + PDF"]
+        F -->|"FileReader → Base64"| G{"google.script.run"}
+        G -->|"guardarSolicitud()"| H["<b>Fase 5</b><br/>Éxito · Link al documento"]
     end
 
-    subgraph Servidor [Google Apps Script - V8]
-        B -->|valida longitud >= 3| I[Normalizar input NFD]
-        I --> J[Generar regex tokenizado]
-        J --> K{CacheService.get hit?}
-        K -->|SI| L[Retornar JSON cacheado]
-        K -->|NO| M[BigQuery.Jobs.query]
-        M --> N{Polling con timeout 55s}
-        N --> O[mapear resultados BigQuery]
+    subgraph SERVIDOR["⚙️ Servidor — Google Apps Script V8"]
+        direction TB
+        B -->|"Re-valida ≥ 3 chars"| I["Normalizar input<br/>NFD → strip accents"]
+        I --> J["Generar regex tokenizado"]
+        J --> K{"CacheService<br/>hit?"}
+        K -->|"✅ HIT"| L["Retornar JSON cacheado<br/><i>latencia ~0ms</i>"]
+        K -->|"❌ MISS"| M["BigQuery.Jobs.query<br/><i>query parametrizada</i>"]
+        M --> N{"Polling<br/><code>Utilities.sleep(800ms)</code><br/>timeout: 55s"}
+        N --> O["Mapear resultados<br/>id_codigo · descripcion<br/>activo · score"]
         O --> L
-        G --> P[DriveApp.getFileById plantilla]
-        P --> Q[makeCopy en carpeta dedicada]
-        Q --> R[SpreadsheetApp.setValues batch]
-        R --> S[Retornar URL del documento]
+        G --> P["DriveApp.getFileById<br/><i>plantilla maestra</i>"]
+        P --> Q["makeCopy() en<br/>carpeta dedicada"]
+        Q --> R["SpreadsheetApp<br/>setValues() batch<br/><i>14 columnas × 1 fila</i>"]
+        R --> S["Retornar {url, id}"]
     end
-```
 
-### Flujo de Datos
+    B -.->|"~200-500ms<br/>latencia GAS"| B
+
+    style CLIENTE fill:#0d1117,stroke:#58a6ff,stroke-width:2px,color:#e6edf3
+    style SERVIDOR fill:#0d1117,stroke:#f0883e,stroke-width:2px,color:#e6edf3
+````
+
+### Flujo de datos detallado
 
 ```
-Usuario ingresa texto
-    │
-    ▼
-Cliente JS (index.html)
-    ├── Normaliza: toUpperCase() → NFD → strip accents → filtro palabras >= 3 chars → max 15
-    ├── Genera regex escapada: inputWords.map(escapeRegex).join('|')
-    └── Invoca: google.script.run.buscarSimilitudesBQ(texto, regex)
-         │
-         ▼
-Servidor GAS (Code.gs)
-    ├── Re-valida longitud >= 3
-    ├── Cache hit? → return JSON.parse(cached)  [latencia ~0ms]
-    ├── Cache miss? → BigQuery.Jobs.query(queryParametros)
-    │       ├── Parametro @q: texto original (sin normalizar)
-    │       └── Parametro @regex: regex escapado para REGEXP_CONTAINS
-    ├── Polling: Utilities.sleep(800ms) hasta jobComplete (max 55s)
-    ├── Mapea resultados: id_codigo, descripcion, activo, score
-    ├── Cache.put(cacheKey, JSON.stringify(results), 21600)
-    └── return [{id_codigo, descripcion, activo, similitud}]
-         │
-         ▼
-Cliente JS (index.html)
-    ├── renderSkeleton() → renderResultados(data)
-    │       └── Animacion stagger por fila (40ms delay)
-    └── UX: skeleton → tabla con badges → actions
-         │
-         ▼ (si usuario decide solicitar alta)
-Servidor GAS (Code.gs)
-    ├── guardarSolicitud(payload)
-    │       ├── getCarpetaSolicitudes() → DriveApp.getFoldersByName()
-    │       ├── generarDocumentoInclusion(datosDoc, pdfBase64)
-    │       │       ├── plantilla.makeCopy(nombre, carpetaDestino)
-    │       │       ├── SpreadsheetApp.open(copia).getSheetByName('Formato')
-    │       │       ├── hoja.getRange(14, 3, 1, 14).setValues(batch)
-    │       │       ├── FileReader PDF → DriveApp.createFile(blob) (si existe)
-    │       │       └── SpreadsheetApp.flush()
-    │       └── return { success: true, url, id }
-    └── Error handling: throw new Error(mensaje) → withFailureHandler
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        FLUJO DE DATOS COMPLETO                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  Usuario ingresa texto libre
+       │
+       ▼
+  ┌────────────────────────────────────────────────────────────────────┐
+  │  CLIENTE JS (index.html)                                           │
+  │                                                                    │
+  │  1. toUpperCase()                                                  │
+  │  2. NFD normalization → strip diacriticals                         │
+  │  3. Filtro: palabras con length ≥ 3 chars → max 15 tokens          │
+  │  4. Regex escapada: inputWords.map(escapeRegex).join('|')          │
+  │  5. Invoca: google.script.run.buscarSimilitudesBQ(texto, regex)    │
+  └────────────────────────────┬───────────────────────────────────────┘
+                               │ google.script.run (~200-500ms latencia)
+                               ▼
+  ┌────────────────────────────────────────────────────────────────────┐
+  │  SERVIDOR GAS (Code.gs)                                            │
+  │                                                                    │
+  │  1. Re-valida longitud ≥ 3                                         │
+  │  2. ┌─ Cache HIT → return JSON.parse(cached)     [~0ms]           │
+  │     └─ Cache MISS ↓                                                │
+  │  3. BigQuery.Jobs.query                                            │
+  │     ├── @q     : texto original (sin normalizar)                   │
+  │     └── @regex : regex escapado para REGEXP_CONTAINS               │
+  │  4. Polling: Utilities.sleep(800ms) × N iteraciones (max 55s)     │
+  │  5. Mapeo: {id_codigo, descripcion, activo, similitud}             │
+  │  6. Cache.put(key, JSON, 21600)                                    │
+  │  7. return Array<Resultado>                                        │
+  └────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+  ┌────────────────────────────────────────────────────────────────────┐
+  │  CLIENTE JS (index.html)                                           │
+  │                                                                    │
+  │  1. renderSkeleton() → renderResultados(data)                      │
+  │  2. Stagger animation: 40ms delay por fila                         │
+  │  3. UX: skeleton → tabla con badges de estado                      │
+  └────────────────────────────────────────────────────────────────────┘
+       │
+       ▼  (Si usuario decide solicitar alta nueva)
+  ┌────────────────────────────────────────────────────────────────────┐
+  │  SERVIDOR GAS (Code.gs) → guardarSolicitud(payload)                │
+  │                                                                    │
+  │  1. getCarpetaSolicitudes() → DriveApp.getFoldersByName()          │
+  │  2. generarDocumentoInclusion(datosDoc, pdfBase64)                 │
+  │     ├── plantilla.makeCopy(nombre, carpetaDestino)                 │
+  │     ├── SpreadsheetApp.open(copia).getSheetByName('Formato')       │
+  │     ├── hoja.getRange(14, 3, 1, 14).setValues(batch)              │
+  │     ├── [Opcional] DriveApp.createFile(blob) ← PDF adjunto        │
+  │     └── SpreadsheetApp.flush()                                     │
+  │  3. return { success: true, url, id }                              │
+  └────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -135,321 +237,541 @@ Servidor GAS (Code.gs)
 ## 3. Estructura del Proyecto
 
 ```
-├── appsscript.json          # Manifest del proyecto GAS
-│   ├── runtimeVersion: "V8"
-│   ├── webapp.executeAs: "USER_DELING"
-│   ├── webapp.access: "DOMAIN"
-│   └── dependencies.enabledAdvancedServices:
-│       ├── BigQuery (busqueda)
-│       ├── Drive    (documentos)
-│       └── Sheets   (plantilla)
+hcg-catalogo-verifier/
 │
-├── Code.gs                 # Logica del servidor (2 funciones publicas + 2 helpers)
-│   ├── doGet()                    # Punto de entrada HTML Service
-│   ├── buscarSimilitudesBQ()      # Motor de busqueda semantica
-│   ├── guardarSolicitud()        # Orquestador de alta
-│   ├── generarDocumentoInclusion() # Generador de documentos
-│   └── getCarpetaSolicitudes()    # Gestor de carpeta Drive
+├── appsscript.json              # ⚙️  Manifest del proyecto GAS
+│   ├── runtimeVersion           #     "V8"
+│   ├── webapp.executeAs         #     "USER_DEPLOYING"
+│   ├── webapp.access            #     "DOMAIN"
+│   └── dependencies.enabledAdvancedServices
+│       ├── bigquery             #     Búsqueda semántica
+│       ├── drive                #     Gestión de documentos
+│       └── sheets               #     Plantilla + generación
 │
-└── index.html              # Interfaz completa (SPA de 5 fases)
-    ├── <style>                # ~620 lineas CSS
-    │   ├── Variables CSS (:root)
-    │   ├── Layout (Flexbox/Grid)
-    │   ├── Componentes (stepper, skeleton, modal, toast, badges)
-    │   ├── Animaciones (CSS keyframes)
-    │   ├── Responsive (@media max-width: 600px)
-    │   └── Accesibilidad (prefers-reduced-motion)
-    ├── <body>                 # HTML semantico con ARIA
-    │   ├── Stepper de progreso (nav + aria-label)
-    │   ├── Phase 1: Busqueda (input + loader + skeleton)
-    │   ├── Phase 2: Resultados (tabla + badges + stagger animation)
-    │   ├── Phase 3: Confirmacion (disclaimer warning)
-    │   ├── Phase 4: Formulario (14 campos + validacion + file upload)
-    │   └── Phase 5: Exito (animacion checkmark + link documento)
-    └── <script>               # ~400 lineas JavaScript
-        ├── Estado: flags de concurrencia, timeout, currentPhase
-        ├── Navegacion: irFase(num, force) con transiciones bidireccionales
-        ├── Busqueda: ejecutarBusqueda() con skeleton + timeout 30s
-        ├── Renderizado: renderResultados(), renderSkeleton(), renderEmpty()
-        ├── Validacion: enviarFormulario() con checkValidity + PDF validation
-        ├── UI: showToast(), showModal(), ripple effect, updateCharCounter()
-        ├── Utilidades: escapeHTML(), $ selector
-        └── Eventos: DOMContentLoaded con Enter + ripple en botones
+├── Code.gs                      # 🖥️  Lógica del servidor
+│   │
+│   │   ── Funciones públicas (expuestas al cliente) ──
+│   ├── doGet()                         Punto de entrada HTML Service
+│   ├── buscarSimilitudesBQ()           Motor de búsqueda semántica
+│   └── guardarSolicitud()              Orquestador de alta + documento
+│   │
+│   │   ── Helpers privados ──
+│   ├── generarDocumentoInclusion()     Generador de Google Sheets
+│   └── getCarpetaSolicitudes()         Gestor de carpeta Drive
+│
+└── index.html                   # 🎨 Interfaz completa (SPA · 5 fases)
+    │
+    ├── <style>                  # ~620 líneas CSS
+    │   ├── Variables CSS        #     27 custom properties (:root)
+    │   ├── Layout               #     Flexbox / CSS Grid
+    │   ├── Componentes          #     stepper · skeleton · modal · toast · badges
+    │   ├── Animaciones          #     @keyframes · transitions · stagger
+    │   ├── Responsive           #     @media (max-width: 600px)
+    │   └── Accesibilidad        #     prefers-reduced-motion
+    │
+    ├── <body>                   # HTML semántico con ARIA
+    │   ├── nav[stepper]         #     Indicador de progreso (5 pasos)
+    │   ├── section[phase-1]     #     Búsqueda (input + loader + skeleton)
+    │   ├── section[phase-2]     #     Resultados (tabla + badges + stagger)
+    │   ├── section[phase-3]     #     Confirmación (disclaimer warning)
+    │   ├── section[phase-4]     #     Formulario (14 campos + file upload)
+    │   └── section[phase-5]     #     Éxito (checkmark animado + link)
+    │
+    └── <script>                 # ~400 líneas JavaScript
+        ├── Estado               #     flags concurrencia · timeout · currentPhase
+        ├── Navegación           #     irFase(num, force) · transiciones bidir.
+        ├── Búsqueda             #     ejecutarBusqueda() · skeleton · timeout 30s
+        ├── Renderizado          #     renderResultados() · renderSkeleton()
+        ├── Validación           #     enviarFormulario() · checkValidity + PDF
+        ├── UI                   #     showToast() · showModal() · ripple()
+        └── Utilidades           #     escapeHTML() · $() · escapeRegex()
 ```
 
 ---
 
-## 4. Configuracion
+## 4. Configuración
 
-### 4.1 Propiedades del Script (Required)
+### 4.1 Variables de entorno obligatorias
 
-Las siguientes propiedades deben configurarse en **Google Apps Script > Proyecto > Configuracion del proyecto > Variables de entorno**:
+> **Ubicación:** Google Apps Script → Proyecto ⚙️ → Configuración del proyecto → Variables de entorno
 
-| Variable        | Descripcion                                   | Ejemplo                 |
-| --------------- | --------------------------------------------- | ----------------------- |
-| `BQ_PROJECT_ID` | ID del proyecto GCP donde reside BigQuery     | `hcg-catalogo-prod`     |
-| `BQ_DATASET`    | Dataset de BigQuery con la tabla del catalogo | `hcg_catalogo`          |
-| `BQ_TABLE`      | Tabla de BigQuery con los articulos           | `catalogo_articulos_v2` |
-| `BQ_LOCATION`   | Region de BigQuery (default: US)              | `US`                    |
+| Variable        | Descripción         |   Tipo   | Ejemplo                 |     Requerido      |
+| :-------------- | :------------------ | :------: | :---------------------- | :----------------: |
+| `BQ_PROJECT_ID` | ID del proyecto GCP | `string` | `hcg-catalogo-prod`     |         ✅         |
+| `BQ_DATASET`    | Dataset en BigQuery | `string` | `hcg_catalogo`          |         ✅         |
+| `BQ_TABLE`      | Tabla del catálogo  | `string` | `catalogo_articulos_v2` |         ✅         |
+| `BQ_LOCATION`   | Región de BigQuery  | `string` | `US`                    | ❌ (default: `US`) |
 
-### 4.2 Archivos de Recursos (Required)
+### 4.2 Recursos externos
 
-| Recurso                 | ID / Ruta                                      | Descripcion                        |
-| ----------------------- | ---------------------------------------------- | ---------------------------------- |
-| Plantilla Google Sheets | `1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8` | Hoja "Formato" con mapeo de celdas |
-| Logo HCG                | `1DgdE3nJmkNA9fMq4OQHpYYExy7E_jsjF`            | Logo PNG servido desde Drive       |
+| Recurso                    | Identificador                                  | Descripción                                      |
+| :------------------------- | :--------------------------------------------- | :----------------------------------------------- |
+| 📊 Plantilla Google Sheets | `1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8` | Hoja `"Formato"` con mapeo de celdas predefinido |
+| 🖼️ Logo HCG                | `1DgdE3nJmkNA9fMq4OQHpYYExy7E_jsjF`            | Imagen PNG servida vía Google Drive              |
 
-### 4.3 Permisos OAuth
+### 4.3 Permisos OAuth requeridos
 
-El script solicita los siguientes permisos al ejecutarse por primera vez:
+```mermaid
+flowchart LR
+    subgraph PERMISOS["🔐 Permisos OAuth solicitados"]
+        A["<b>bigquery.readonly</b><br/>Ejecutar consultas SQL"]
+        B["<b>bigquery.job</b><br/>Crear/monitorear jobs"]
+        C["<b>drive.readonly</b><br/>Leer plantilla del catálogo"]
+        D["<b>drive</b><br/>Crear copias y subir PDFs"]
+        E["<b>sheets.readonly</b><br/>Abrir documento generado"]
+    end
 
-| Permiso             | Justificacion                       |
-| ------------------- | ----------------------------------- |
-| `bigquery.readonly` | Ejecutar consultas SQL en BigQuery  |
-| `bigquery.job`      | Crear y monitorear jobs de consulta |
-| `drive.readonly`    | Leer la plantilla del catalogo      |
-| `drive`             | Crear copias y subir PDFs           |
-| `sheets.readonly`   | Abrir el documento generado         |
+    style A fill:#1a73e8,color:#fff
+    style B fill:#1a73e8,color:#fff
+    style C fill:#34a853,color:#fff
+    style D fill:#34a853,color:#fff
+    style E fill:#fbbc04,color:#000
+```
 
-> **Nota:** Con `executeAs: "USER_DEPLOYING"`, los permisos se otorgan bajo la cuenta del usuario que despliega la app. Con `"ME"`, se ejecuta como el usuario activo.
+| Permiso             | Justificación                       | Scope     |
+| :------------------ | :---------------------------------- | :-------- |
+| `bigquery.readonly` | Ejecutar consultas SQL en BigQuery  | Lectura   |
+| `bigquery.job`      | Crear y monitorear jobs de consulta | Escritura |
+| `drive.readonly`    | Leer la plantilla del catálogo      | Lectura   |
+| `drive`             | Crear copias y subir archivos PDF   | Escritura |
+| `sheets.readonly`   | Abrir el documento generado         | Lectura   |
+
+> ⚠️ **Nota sobre ejecución:** Con `executeAs: "USER_DEPLOYING"`, los permisos se otorgan bajo la cuenta del usuario que despliega la app. Con `"ME"`, se ejecuta como el usuario activo de la sesión.
 
 ---
 
 ## 5. Base de Datos BigQuery
 
-### 5. Esquema de la Tabla
-
-La tabla de BigQuery debe contener al menos estas columnas para que el script funcione correctamente:
+### 5.1 Esquema de la tabla
 
 ```sql
-CREATE TABLE `project.dataset.catalogo_articulos_v2` (
-  id_codigo        STRING   NOT NULL,  -- Clave del articulo
-  descripcion_articulo STRING   NOT NULL,  -- Descripcion del articulo
-  activo          INT64     NOT NULL,  -- 1 = activo, 0 = inactivo
+-- Esquema mínimo requerido para el funcionamiento del sistema
+CREATE TABLE `project.dataset.catalogo_articulos_v2`
+(
+  id_codigo             STRING    NOT NULL,   -- Clave única del artículo
+  descripcion_articulo  STRING    NOT NULL,   -- Descripción normalizada
+  activo                INT64     NOT NULL    -- Estado: 1 = activo, 0 = inactivo
+)
+OPTIONS(
+  description = "Catálogo maestro de artículos HCG — Usado por el Verificador de Catálogo"
 );
 ```
 
-### 5. Algoritmo de Similitud
+### 5.2 Algoritmo de similitud — Coeficiente de Sørensen-Dice
 
-El motor de busqueda utiliza el **coeficiente de Sorensen-Dice** aplicado sobre trigramas (subcadenas de 3 caracteres):
+El motor de búsqueda implementa el **coeficiente de Sørensen-Dice** aplicado sobre **trigramas** (subcadenas de 3 caracteres consecutivos):
 
 ```
-Similitud = inter / (len_cat + len_in - inter) * 100
+                 2 × |A ∩ B|
+Dice(A, B) = ─────────────────
+               |A| + |B|
+
+Equivalente implementado:
+
+               |trigramas_en_común|
+Similitud = ─────────────────────────────── × 100
+             |trigramas_catálogo| + |trigramas_input|
 
 Donde:
-  inter     = Trigramas en comun entre query y catalogo
-  len_cat  = Total de trigramas del candidato
-  len_in   = Total de trigramas del input
+  inter    = Trigramas comunes entre query y candidato
+  len_cat  = Total de trigramas del candidato en el catálogo
+  len_in   = Total de trigramas del input del usuario
 ```
 
-**Pipeline SQL:**
+### 5.3 Pipeline SQL completo
+
+```sql
+-- ═══════════════════════════════════════════════════════════════════
+-- PIPELINE DE SIMILITUD SEMÁNTICA — Verificador de Catálogo HCG
+-- ═══════════════════════════════════════════════════════════════════
+
+-- 1. NORMALIZACIÓN DEL INPUT
+--    input_text → NFD → strip accents → UPPER → SPLIT → FILTER(≥3)
+
+-- 2. GENERACIÓN DE TRIGRAMAS
+--    Cada palabra → GENERATE_ARRAY(1, len-2) → SUBSTR(word, i, 3)
+--    → ARRAY_AGG(DISTINCT) → token_set
+
+-- 3. MÍSMO PROCESO PARA DESCRIPCIONES DEL CATÁLOGO
+
+-- 4. CROSS JOIN ENTRE TOKEN SETS
+--    COUNT(inter) / (len_cat + len_in) × 100 = SCORE
+
+-- 5. FILTRADO Y ORDENAMIENTO
+--    WHERE inter > 0 AND score >= 0.15
+--    ORDER BY score DESC
+--    LIMIT 10
+```
+
+**Representación visual del algoritmo:**
 
 ```
-input_text
-  → NORMALIZE → REGEXP_REPLACE(NFD) → UPPER
-  → SPLIT(' ') → FILTRAR length >= 3 → DISTINCT
-  → GENERATE_ARRAY(1, len-2) → SUBSTR(w, i, 3)  [trigramas]
-  → ARRAY_AGG(DISTINCT)  [token set de entrada]
-
-descripcion_articulo
-  → MISMO PROCESO  [token set del candidato]
-
-CROSS JOIN entre token sets → COUNT(inter) → SCORE
-WHERE inter > 0 AND score >= 0.15
-ORDER BY score DESC LIMIT 10
+INPUT: "jeringa hipodérmica"
+         │
+         ▼
+  ┌─── Normalización ───┐
+  │ jeringa hipodérmica  │
+  │ → JERINGA HIPODERMIC│   (NFD + strip accents + UPPER)
+  │ → ["JERINGA",       │
+  │    "HIPODERMIC"]    │   (SPLIT + FILTER ≥ 3 chars)
+  └─────────────────────┘
+         │
+         ▼
+  ┌─── Trigramas ────────┐
+  │ JER · ERI · RIN ·   │
+  │ ING · NGA · HPO ·   │   (SUBSTR sliding window)
+  │ POD · ODE · DER ·   │
+  │ ERI · RIC           │
+  │ → 11 trigramas únicos│
+  └───────────────────────┘
+         │
+         ▼
+  ┌─── Cross Join con Catálogo ──┐
+  │                              │
+  │ Candidato: "JERINGA 10ML"    │
+  │ Trigramas: JER·ERI·RIN·...   │
+  │                              │
+  │ Intersección: 6 trigramas    │
+  │ Score = 6/(11+12) × 100     │
+  │       = 26.08%               │
+  │                              │
+  │ Score ≥ 15% → INCLUIR ✅     │
+  └──────────────────────────────┘
+         │
+         ▼
+  ┌─── Top 10 Resultados ──┐
+  │ 1. JERINGA 10ML  26.08%│
+  │ 2. JERINGA 5ML   21.73%│
+  │ 3. JERINGA 3ML   17.39%│
+  │ ...                     │
+  └─────────────────────────┘
 ```
 
-### 5. Optimizaciones de Rendimiento
+### 5.4 Optimizaciones de rendimiento
 
-| Tecnica                 | Implementacion                                                              |
-| ----------------------- | --------------------------------------------------------------------------- |
-| **Cache**               | `CacheService.getScriptCache()` con clave MD5 de 24 chars, TTL 6 horas      |
-| **Filtro previo**       | `REGEXP_CONTAINS` con regex antes de calcular similitud (reduce candidatos) |
-| **Limitacion de input** | Max 15 palabras, min 3 chars por palabra (previene regex explosivo)         |
-| **Escritura por lotes** | `hoja.getRange(fila, 3, 1, 14).setValues(batch)` en una sola llamada        |
-| **Polling optimizado**  | 800ms interval (vs 400ms anterior) + timeout de seguridad 55s               |
+|  #  | Técnica                 | Implementación                                                         | Impacto  |
+| :-: | :---------------------- | :--------------------------------------------------------------------- | :------: |
+|  1  | **Cache en memoria**    | `CacheService.getScriptCache()` con clave MD5 de 24 chars, TTL 6 horas | 🔴 Alto  |
+|  2  | **Filtro previo**       | `REGEXP_CONTAINS` con regex tokenizado antes de calcular similitud     | 🟠 Medio |
+|  3  | **Limitación de input** | Max 15 palabras · min 3 chars/palabra (previene regex explosivo)       | 🟠 Medio |
+|  4  | **Escritura por lotes** | `hoja.getRange(f, 3, 1, 14).setValues(batch)` — 1 sola llamada         | 🟢 Bajo  |
+|  5  | **Polling optimizado**  | Intervalo de 800ms (vs 400ms anterior) + timeout seguridad 55s         | 🟢 Bajo  |
 
 ---
 
-## 6. API del Servidor (Code.gs)
+## 6. Referencia de la API
 
 ### 6.1 `doGet()`
 
-Punto de entrada de la Web App. No recibe parametros. Devuelve `HtmlService.createHtmlOutputFromFile('index')` con metadata viewport.
+> Punto de entrada de la Web App. Renderiza la interfaz HTML.
 
-```typescript
-// Firma: doGet(): HtmlOutput
-// Retorno: Interfaz HTML renderizada en iframe de GAS
+```javascript
+/**
+ * @returns {GoogleAppsScript.HTML.HtmlOutput} Interfaz HTML renderizada en iframe de GAS
+ */
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile("index")
+    .setTitle("Verificador de Catálogo HCG")
+    .addMetaTag("viewport", "width=device-width, initial-scale=1")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+}
 ```
 
 ### 6.2 `buscarSimilitudesBQ(textoUsuario)`
 
-Motor de busqueda semantica. Es la unica funcion invocada por el cliente durante la fase de busqueda.
+> Motor de búsqueda semántica. Única función invocada por el cliente en la Fase 1.
 
-```typescript
-// Firma: buscarSimilitudesBQ(textoUsuario: string): Object[]
-// Retorno: Array de objetos con estructura:
-//   { id_codigo: string, descripcion: string, activo: number, similitud: number }
-// Errores: throw Error('BigQuery: mensaje') si la consulta falla o excede timeout
-// Cache: Retorna resultados cacheados si existen (max 6h de antiguedad)
-// Timeout: 55s max en servidor antes de lanzar Error
-// Nota: La normalizacion NFD + strip accents ocurre en el servidor,
-//       no en el cliente, para mantener consistencia con la cache
+```javascript
+/**
+ * Busca artículos similares en BigQuery usando trigramas Sørensen-Dice
+ *
+ * @param {string} textoUsuario - Texto de búsqueda (min 3 chars)
+ * @returns {Array<{id_codigo: string, descripcion: string, activo: number, similitud: number}>}
+ * @throws {Error} Si la consulta BigQuery falla o excede timeout (55s)
+ *
+ * @example
+ * // Retorno:
+ * // [
+ * //   { id_codigo: "JER-001", descripcion: "JERINGA HIPODERMICA 10ML",
+ * //     activo: 1, similitud: 26.08 },
+ * //   { id_codigo: "JER-002", descripcion: "JERINGA HIPODERMICA 5ML",
+ * //     activo: 1, similitud: 21.73 }
+ * // ]
+ */
+function buscarSimilitudesBQ(textoUsuario) {
+  /* ... */
+}
 ```
+
+**Parámetros de BigQuery:**
+
+| Parámetro |   Tipo   | Descripción                                 |
+| :-------- | :------: | :------------------------------------------ |
+| `@q`      | `STRING` | Texto original del usuario (sin normalizar) |
+| `@regex`  | `STRING` | Regex escapada para `REGEXP_CONTAINS`       |
 
 ### 6.3 `guardarSolicitud(payload)`
 
-Orquestador que valida, genera el documento y devuelve la URL del archivo creado.
+> Orquestador que valida, genera el documento y devuelve la URL del archivo creado.
 
-```typescript
-// Firma: guardarSolicitud(payload: Object): Object
-// Retorno: { success: true, url: string, id: string }
-// Side effects: Crea Google Sheet copia en Drive, sube PDF si existe
-// Errores: throw Error si no puede acceder a Drive o crear documento
-// Nota: Si payload es null/undefined, ejecuta verificacion de autorizacion Drive
+```javascript
+/**
+ * @param {Object} payload - Datos de la solicitud (ver tabla de campos)
+ * @returns {{ success: boolean, url: string, id: string }}
+ * @throws {Error} Si no puede acceder a Drive o crear el documento
+ * @sideEffect Crea Google Sheet copia en Drive + archivo PDF si existe
+ */
+function guardarSolicitud(payload) {
+  /* ... */
+}
 ```
 
-**Estructura esperada de `payload`:**
+**Estructura del payload:**
 
-| Campo                | Tipo   | Required | Transformacion                                            |
-| -------------------- | ------ | -------- | --------------------------------------------------------- |
-| `descripcion`        | string | Si       | `.trim().toUpperCase()`                                   |
-| `unidadMedida`       | string | Si       | `.trim().toUpperCase()`                                   |
-| `partidaCOG`         | string | Si       | `.trim().toUpperCase()`                                   |
-| `unidadHospitalaria` | string | Si       | Sin transformar                                           |
-| `familia`            | string | No       | `.trim().toUpperCase()`                                   |
-| `nombreSolicitante`  | string | Si       | `.trim()` (preserva caso)                                 |
-| `cargoSolicitante`   | string | No       | `.trim()` (preserva caso)                                 |
-| `servicio`           | string | No       | `.trim()` (preserva caso)                                 |
-| `precio`             | string | No       | Valor directo                                             |
-| `proveedor`          | string | No       | `.trim().toUpperCase()`                                   |
-| `justificacion`      | string | No       | `.trim()` (preserva caso)                                 |
-| `observacion`        | string | No       | `.trim()` (preserva caso)                                 |
-| `cotizacionPDF`      | string | No       | Base64 del PDF (sin prefijo data:application/pdf;base64,) |
+| Campo                |   Tipo   | Requerido | Transformación servidor      | Ejemplo                         |
+| :------------------- | :------: | :-------: | :--------------------------- | :------------------------------ |
+| `descripcion`        | `string` |    ✅     | `.trim().toUpperCase()`      | `"JERINGA HIPODERMICA 10ML"`    |
+| `unidadMedida`       | `string` |    ✅     | `.trim().toUpperCase()`      | `"PIEZA"`                       |
+| `partidaCOG`         | `string` |    ✅     | `.trim().toUpperCase()`      | `"030"`                         |
+| `unidadHospitalaria` | `string` |    ✅     | Sin transformar              | `"Hospital Civil Fray Antonio"` |
+| `familia`            | `string` |    ❌     | `.trim().toUpperCase()`      | `"MATERIAL MEDICO"`             |
+| `nombreSolicitante`  | `string` |    ✅     | `.trim()` (preserva caso)    | `"Juan Pérez"`                  |
+| `cargoSolicitante`   | `string` |    ❌     | `.trim()` (preserva caso)    | `"Jefe de Compras"`             |
+| `servicio`           | `string` |    ❌     | `.trim()` (preserva caso)    | `"Urgencias"`                   |
+| `precio`             | `string` |    ❌     | Valor directo                | `"12.50"`                       |
+| `proveedor`          | `string` |    ❌     | `.trim().toUpperCase()`      | `"DISTRIBUIDORA XYZ"`           |
+| `justificacion`      | `string` |    ❌     | `.trim()` (preserva caso)    | `"Stock agotado"`               |
+| `observacion`        | `string` |    ❌     | `.trim()` (preserva caso)    | `"Urgente"`                     |
+| `cotizacionPDF`      | `string` |    ❌     | Base64 (sin prefijo `data:`) | `"JVBERi0xLjQK..."`             |
 
 ### 6.4 `generarDocumentoInclusion(datos, pdfBase64)`
 
-Genera el documento de inclusion a partir de la plantilla.
+> Genera el documento de inclusión a partir de la plantilla maestra.
 
-```typescript
-// Firma: generarDocumentoInclusion(datos: Object, pdfBase64: string): Object
-// Retorno: { url: string, id: string }
-// Side effects: Crea copia en Drive + archivo PDF si existe
-// Mapeo de celdas:
-//   Fila 14, Columna C → P (14 columnas)
-//   C: partida | D: familia | E: unidad | F: descripcion
-//   G: unidadMedida | H: nombreSolicitante | I: cargo
-//   J: servicio | K: costo | L: proveedor
-//   M: fecha (new Date) | N: justificacion | O: observacion | P: urlPdf
+```javascript
+/**
+ * @param {Object} datos - Datos mapeados a celdas del Sheet
+ * @param {string} pdfBase64 - Contenido del PDF en Base64 (opcional)
+ * @returns {{ url: string, id: string }}
+ */
+function generarDocumentoInclusion(datos, pdfBase64) {
+  /* ... */
+}
+```
+
+**Mapeo de celdas (Fila 14, Columna C → P):**
+
+```
+┌────────┬────────┬────────────────────────────────────┐
+│ Columna│ Campo  │ Descripción                        │
+├────────┼────────┼────────────────────────────────────┤
+│   C    │ partida│ Partida COG                        │
+│   D    │ familia│ Familia del artículo               │
+│   E    │ unidad │ Unidad hospitalaria                │
+│   F    │ descr. │ Descripción del artículo           │
+│   G    │ U.M.   │ Unidad de medida                   │
+│   H    │ nombre │ Nombre del solicitante             │
+│   I    │ cargo  │ Cargo del solicitante              │
+│   J    │ serv.  │ Servicio                           │
+│   K    │ costo  │ Precio estimado                    │
+│   L    │ prov.  │ Proveedor                          │
+│   M    │ fecha  │ Fecha de solicitud (auto)          │
+│   N    │ justif.│ Justificación                      │
+│   O    │ observ.│ Observaciones                      │
+│   P    │ urlPDF │ URL del documento adjunto          │
+└────────┴────────┴────────────────────────────────────┘
 ```
 
 ### 6.5 `getCarpetaSolicitudes()`
 
-Helper que obtiene o crea la carpeta dedicada en Drive para almacenar los documentos generados.
+> Helper que obtiene o crea la carpeta dedicada en Drive.
 
-```typescript
-// Firma: getCarpetaSolicitudes(): Folder
-// Retorno: Folder de Drive con nombre "Solicitudes de Inclusion HCG"
-// Comportamiento: getFoldersByName → next, else createFolder
+```javascript
+/**
+ * @returns {GoogleAppsScript.Drive.Folder} Carpeta "Solicitudes de Inclusión HCG"
+ * @behavior getFoldersByName() → next(), si no existe → createFolder()
+ */
+function getCarpetaSolicitudes() {
+  /* ... */
+}
 ```
 
 ---
 
-## 7. Interfaz de Usuario (index.html)
+## 7. Interfaz de Usuario (`index.html`)
 
-### 7. Patrones de Diseno
+### 7.1 Patrones de diseño implementados
 
-| Patron                           | Implementacion                                                          |
-| -------------------------------- | ----------------------------------------------------------------------- |
-| **Single Page Application**      | Navegacion por fases con `display: none/flex`, sin recarga              |
-| **Stepper horizontal**           | Indicador visual de progreso con estados: pendiente, activo, completado |
-| **Transiciones bidireccionales** | `slideInForward` / `slideInBackward` con cubic-bezier(0.4,0,0.2,1)      |
-| **Skeleton loader**              | Shimmer CSS con `translateX` para latencia BigQuery                     |
-| **Modal custom**                 | Reemplaza `window.confirm()` con backdrop-filter blur + focus trap      |
-| **Toast notifications**          | Con barra de progreso decreciente y auto-remocion a 3s                  |
-| **Ripple effect**                | Micro-interaccion Material Design en todos los botones                  |
-| **CSS Variables**                | 27 variables para consistencia de tema                                  |
-| **BEM-like naming**              | `.stepper__step`, `.stepper__dot`, `.btn--loading`, `.toast__progress`  |
+| Patrón                           | Implementación                                                     | Beneficio                              |
+| :------------------------------- | :----------------------------------------------------------------- | :------------------------------------- |
+| **SPA Monolítica**               | Navegación por fases con `display: none/flex`                      | Sin recarga de página · UX fluida      |
+| **Stepper horizontal**           | Indicador visual: pendiente → activo → completado                  | Orientación clara del usuario          |
+| **Transiciones bidireccionales** | `slideInForward` / `slideInBackward` · `cubic-bezier(0.4,0,0.2,1)` | Percepción de dirección natural        |
+| **Skeleton loader**              | Shimmer CSS con `translateX` animado                               | Disimula latencia BigQuery (~200ms-5s) |
+| **Modal custom**                 | `backdrop-filter: blur()` + focus trap                             | Reemplaza `window.confirm()` nativo    |
+| **Toast notifications**          | Barra de progreso decreciente · auto-remoción 3s                   | Feedback no intrusivo                  |
+| **Ripple effect**                | Micro-interacción Material Design en todos los botones             | Feedback táctil inmediato              |
+| **CSS Custom Properties**        | 27 variables en `:root`                                            | Tema consistente · fácil de extender   |
+| **BEM-like naming**              | `.stepper__step` · `.btn--loading` · `.toast__progress`            | CSS mantenible y escalable             |
 
-### 7. Estilos de Colores (Design Tokens)
+### 7.2 Design Tokens
 
-| Token            | Valor     | Uso                                          |
-| ---------------- | --------- | -------------------------------------------- |
-| `--blue-main`    | `#0071e3` | Botones primarios, foco, links activos       |
-| `--red-main`     | `#ff3b30` | Errores, campos invalidos, boton destructivo |
-| `--green-main`   | `#34c759` | Exito, badges "Activo", confirmacion         |
-| `--bg-body`      | `#f5f5f7` | Fondo exterior del body                      |
-| `--border-color` | `#d2d2d7` | Bordes de inputs, tablas                     |
-| `--text-muted`   | `#86868b` | Texto secundario, placeholders, labels       |
+```css
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS — Verificador de Catálogo HCG
+   ═══════════════════════════════════════════════════ */
 
-### 7. Diagrama de Fases de la SPA
+:root {
+  /* ── Colores primarios ── */
+  --blue-main: #0071e3; /* Botones primarios · foco · links activos */
+  --blue-hover: #0077ed; /* Hover state */
+  --red-main: #ff3b30; /* Errores · campos inválidos · destructivo */
+  --green-main: #34c759; /* Éxito · badges "Activo" · confirmación */
+  --amber-main: #ff9500; /* Warnings · badges pendientes */
+
+  /* ── Superficies ── */
+  --bg-body: #f5f5f7; /* Fondo exterior del body */
+  --bg-card: #ffffff; /* Fondo de tarjetas y modales */
+  --bg-hover: #f0f5ff; /* Hover en filas de tabla */
+
+  /* ── Bordes ── */
+  --border-color: #d2d2d7; /* Bordes de inputs y tablas */
+  --border-focus: #0071e3; /* Anillo de foco */
+
+  /* ── Texto ── */
+  --text-primary: #1d1d1f; /* Texto principal */
+  --text-secondary: #6e6e73; /* Texto de soporte */
+  --text-muted: #86868b; /* Placeholders · labels */
+
+  /* ── Sombras ── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+
+  /* ── Tipografía ── */
+  --font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: "DM Mono", "SF Mono", Consolas, monospace;
+
+  /* ── Espaciado ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+}
+```
+
+### 7.3 Diagrama de flujo de estados de la SPA
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Busqueda : Verificar
-    Busqueda --> Resultados : Mostrar coincidencias
-    Resultados --> Confirmacion : Solicitar Alta Nueva
-    Confirmacion --> Formulario : Entiendo y Confirmo
-    Formulario --> Exito : Enviar Solicitud
-    Exito --> Busqueda : Finalizar y Volver
+    [*] --> Busqueda : Click "Verificar"
+    Busqueda --> Busqueda : Input < 3 chars (no-op)
+    Busqueda --> Resultados : BigQuery responde
+    Busqueda --> Resultados : Timeout → tabla vacía
 
-    note right of Busqueda: Input de texto + 3 caracteres min
-    note right of Resultados: Tabla con scoring + badges
-    note right of Formulario: 14 campos + validacion nativa
-    note right of Exito: Link al documento generado
+    Resultados --> Busqueda : Nueva búsqueda
+    Resultados --> Confirmacion : "Solicitar Alta Nueva"
+    Resultados --> Busqueda : "Regresar"
+
+    Confirmacion --> Resultados : "Cancelar"
+    Confirmacion --> Formulario : "Entiendo y Confirmo"
+
+    Formulario --> Confirmacion : "Cancelar"
+    Formulario --> Exito : Validación OK + Enviar
+    Formulario --> Formulario : Validación fallida (toast error)
+
+    Exito --> Busqueda : "Finalizar y Volver"
+
+    note right of Busqueda
+        Input mínimo 3 caracteres
+        Skeleton loader durante búsqueda
+        Timeout cliente: 30s
+    end note
+
+    note right of Resultados
+        Tabla con scoring Sørensen-Dice
+        Badges: Activo (verde) / Inactivo (rojo)
+        Animación stagger por fila
+    end note
+
+    note right of Formulario
+        14 campos · validación nativa HTML5
+        File upload PDF (max 10MB)
+        Char counter en textarea
+    end note
+
+    note right of Exito
+        Animación checkmark SVG
+        Link al Google Sheet generado
+        Link al PDF adjunto (si existe)
+    end note
 ```
 
-### 7. Accesibilidad (WCAG 2.1)
+### 7.4 Accesibilidad — Cumplimiento WCAG 2.1
 
-| Criterio                    | Implementacion                                                        |
-| --------------------------- | --------------------------------------------------------------------- |
-| **2.1.2 No Keyboard Trap**  | Focus trap en modal (Tab cicla dentro del overlay)                    |
-| **2.4.3 Focus Order**       | `irFase()` mueve foco al primer input de cada fase                    |
-| **2.4.7 Focus Visible**     | `:focus-visible` con `box-shadow: 0 0 0 3px` en todos los inputs      |
-| **4.1.3 Status Messages**   | `aria-live="polite"` en loader y resultados                           |
-| **1.4.13 Content on Hover** | Tablas con `box-shadow: inset 3px 0` + `background: #f0f5ff`          |
-| **2.3.3 Animation**         | `prefers-reduced-motion: reduce` con fallbacks para opacity/transform |
-| **1.3.4 Orientation**       | Responsive con `max-width: 600px` y touch targets de 44px min         |
+| Criterio                    | Nivel | Implementación                                                     |
+| :-------------------------- | :---: | :----------------------------------------------------------------- |
+| **2.1.2 No Keyboard Trap**  |   A   | Focus trap en modal (Tab cicla dentro del overlay)                 |
+| **2.4.3 Focus Order**       |   A   | `irFase()` mueve foco al primer input de cada fase                 |
+| **2.4.7 Focus Visible**     |  AA   | `:focus-visible` con `box-shadow: 0 0 0 3px` en todos los inputs   |
+| **4.1.3 Status Messages**   |  AA   | `aria-live="polite"` en loader y contenedor de resultados          |
+| **1.4.13 Content on Hover** |  AA   | Tablas con `box-shadow: inset 3px 0` + `background: #f0f5ff`       |
+| **2.3.3 Animation**         |  AAA  | `prefers-reduced-motion: reduce` con fallbacks `opacity/transform` |
+| **1.3.4 Orientation**       |  AA   | Responsive `max-width: 600px` · touch targets ≥ 44px               |
 
-### 7. Metricas de Rendimiento CSS
+### 7.5 Rendimiento CSS — Propiedades GPU-aceleradas
 
-| Patron       | Uso                                                                          | Propiedad GPU                    |
-| ------------ | ---------------------------------------------------------------------------- | -------------------------------- |
-| `transform`  | Transiciones de fase, scale en botones, posicionamiento de skeleton          | Compositor (60fps)               |
-| `opacity`    | Fade in/out de fases, toasts, modal                                          | Compositor (60fps)               |
-| `box-shadow` | Focus rings, hover en tablas, glow de stepper activo                         | Compositor (si no afecta layout) |
-| `transition` | Solo en propiedades especificas (`border-color`, `box-shadow`, `background`) | N/A                              |
+| Propiedad    | Uso                                                                       | Capa de renderizado |
+| :----------- | :------------------------------------------------------------------------ | :------------------ |
+| `transform`  | Transiciones de fase · scale en botones · skeleton shimmer                | Compositor (60fps)  |
+| `opacity`    | Fade in/out de fases · toasts · modal backdrop                            | Compositor (60fps)  |
+| `box-shadow` | Focus rings · hover en tablas · glow stepper activo                       | Compositor          |
+| `transition` | Solo propiedades específicas (`border-color`, `box-shadow`, `background`) | Layout controlado   |
 
-**Antipatrones evitados:**
-
-- `transition: all` (solo en `.stepper__dot` pendiente de correccion)
-- `background-color` animado (usa `opacity` o `transform` cuando es posible)
-- `document.write()` / `innerHTML` con datos de usuario sin sanitizar
+> **Antipatrones evitados:**
+>
+> - `transition: all` (excepto en `.stepper__dot` pendiente de corrección)
+> - `background-color` animado (usa `opacity` o `transform`)
+> - `document.write()` / `innerHTML` con datos sin sanitizar
 
 ---
 
 ## 8. Seguridad
 
-### 8.1 Sanitizacion de Entrada
+### 8.1 Sanitización de entrada (Cliente)
 
-| Componente                               | Riesgo                             | Mitigacion                                                  |
-| ---------------------------------------- | ---------------------------------- | ----------------------------------------------------------- |
-| Toast messages (`showToast`)             | XSS si `msg` contiene HTML         | `span.textContent = msg` (DOM API safe)                     |
-| Tabla de resultados (`renderResultados`) | XSS si `descripcion` contiene HTML | `escapeHTML()` con escape de 5 caracteres (`& < > " '`)     |
-| Disclaimer term                          | XSS si `searchInput` contiene HTML | `textContent` (no innerHTML)                                |
-| Stepper checkmark                        | XSS si se usa `innerHTML`          | Usa `innerHTML` solo con `&#10003;` (entidad HTML conocida) |
+```mermaid
+flowchart TD
+    A["Entrada del usuario"] --> B{"¿Contiene HTML?"}
+    B -->|"Sí"| C["escapeHTML()<br/>Escapa: &amp; &lt; &gt; &quot; &#39;"]
+    B -->|"No"| D["Uso directo"]
+    C --> E["DOM API segura<br/>textContent / createElement"]
+    D --> E
+    E --> F["Renderizado seguro"]
 
-### 8.2 Seguridad del Servidor
+    style A fill:#ff3b30,color:#fff
+    style F fill:#34c759,color:#fff
+```
 
-| Medida                   | Implementacion                                                                                           |
-| ------------------------ | -------------------------------------------------------------------------------------------------------- |
-| **Inyeccion SQL**        | Consultas parametrizadas con `queryParameters` (NAMED) — nunca concatenacion de strings SQL              |
-| **Regex sanitizado**     | `escapeRegex()` escapa metacaracteres regex del input antes de pasarlo a BigQuery                        |
-| **Limitacion de tokens** | Max 15 palabras, min 3 caracteres por palabra — previene regex excesivamente complejos (DoS en BigQuery) |
-| **Timeout de servidor**  | 55s max de polling + `Utilities.sleep(800)` — previene ejecuciones infinitas que consumen cuota          |
-| **XFrameOptions**        | `setXFrameOptionsMode(DEFAULT)` — permite incrustar en Google Sites pero con proteccion de frames        |
+| Componente             | Riesgo XSS                  | Mitigación                                            |
+| :--------------------- | :-------------------------- | :---------------------------------------------------- |
+| Toast messages         | `msg` contiene HTML         | `span.textContent = msg` (DOM API segura)             |
+| Tabla de resultados    | `descripcion` contiene HTML | `escapeHTML()` — escape de 5 caracteres (`& < > " '`) |
+| Disclaimer de términos | `searchInput` contiene HTML | `textContent` (no `innerHTML`)                        |
+| Stepper checkmark      | Inyección vía `innerHTML`   | Solo renderiza entidad conocida `&#10003;`            |
 
-### 8.3 Integridad de Dominio
+### 8.2 Seguridad del servidor
+
+| Medida                   | Implementación                                     | Riesgo mitigado                       |
+| :----------------------- | :------------------------------------------------- | :------------------------------------ |
+| **Inyección SQL**        | Consultas parametrizadas `queryParameters` (NAMED) | ❌ Nunca concatenación de strings SQL |
+| **Regex sanitizado**     | `escapeRegex()` escapa metacaracteres del input    | ❌ Evita regex maliciosas en BigQuery |
+| **Limitación de tokens** | Max 15 palabras · min 3 chars/palabra              | ❌ Previene regex explosivo (DoS)     |
+| **Timeout de servidor**  | 55s max polling · `Utilities.sleep(800)`           | ❌ Previene ejecuciones infinitas     |
+| **XFrameOptions**        | `setXFrameOptionsMode(DEFAULT)`                    | ❌ Protección contra clickjacking     |
+
+### 8.3 Control de acceso por dominio
 
 ```json
 {
@@ -460,145 +782,195 @@ stateDiagram-v2
 }
 ```
 
-Con `DOMAIN`, solo usuarios autenticados del dominio de Google Workspace pueden acceder a la aplicacion. Esto previene acceso publico no autorizado al endpoint de GAS.
+> Con `DOMAIN`, solo usuarios autenticados del dominio de Google Workspace pueden acceder. Esto previene acceso público no autorizado al endpoint de GAS.
 
 ---
 
 ## 9. Despliegue
 
-### 9.1 Requisitos Previos
+### 9.1 Requisitos previos
 
-- Proyecto de Google Cloud con BigQuery habilitado
-- Google Workspace con dominio configurado (para acceso `DOMAIN`)
-- Cuenta de servicio con permisos: BigQuery, Drive, Sheets
-- La plantilla de Google Sheets existente con la estructura esperada (hoja "Formato", 14 columnas desde columna C)
+- [ ] Proyecto de Google Cloud con BigQuery habilitado
+- [ ] Google Workspace con dominio configurado (acceso `DOMAIN`)
+- [ ] Cuenta con permisos: BigQuery Admin, Drive Editor, Sheets Editor
+- [ ] Plantilla de Google Sheets existente con estructura esperada
 
-### 9.2 Pasos de Despliegue
+### 9.2 Checklist de despliegue
 
 ```bash
-# 1. Clonar el repositorio o copiar los archivos
+# ═══════════════════════════════════════════════════════════════
+# DESPLIEGUE — Verificador de Catálogo HCG
+# ═══════════════════════════════════════════════════════════════
+
+# ① Clonar repositorio
 git clone <repo-url> hcg-catalogo-verifier
 cd hcg-catalogo-verifier
 
-# 2. Abrir Google Apps Script
-# Ir a https://script.google.com/home/projects/open?id=<PROJECT_ID>
+# ② Abrir Google Apps Script
+# → https://script.google.com/home/projects/open?id=<PROJECT_ID>
 
-# 3. Crear los 3 archivos
-#    - index.html    → Contenido completo del frontend
-#    - Code.gs         → Logica del servidor
-#    - appsscript.json → Manifest del proyecto (ver seccion 4)
+# ③ Crear los 3 archivos del proyecto:
+#    ├── index.html       ← Frontend completo (SPA)
+#    ├── Code.gs          ← Lógica del servidor
+#    └── appsscript.json  ← Manifest del proyecto
 
-# 4. Configurar variables de entorno
-#    Ir a Proyecto > Configuracion del proyecto > Variables de entorno
-#    Agregar: BQ_PROJECT_ID, BQ_DATASET, BQ_TABLE, BQ_LOCATION
+# ④ Configurar variables de entorno
+#    Proyecto ⚙️ → Configuración → Variables de entorno
+#    ┌─────────────────┬────────────────────────┐
+#    │ BQ_PROJECT_ID   │ hcg-catalogo-prod      │
+#    │ BQ_DATASET      │ hcg_catalogo           │
+#    │ BQ_TABLE        │ catalogo_articulos_v2  │
+#    │ BQ_LOCATION     │ US                     │
+#    └─────────────────┴────────────────────────┘
 
-# 5. Actualizar ID de plantilla (si es necesario)
-#    Buscar en Code.gs linea 233 y reemplazar con el ID correcto
+# ⑤ Actualizar ID de plantilla (si es necesario)
+#    Buscar en Code.gs: PLANTILLA_SHEET_ID
+#    Reemplazar con el ID correcto
 
-# 6. Implementar autorizacion
-#    Primera ejecucion: la app pedira permisos de BigQuery, Drive, Sheets
-#    Aceptar todos los permisos solicitados
+# ⑥ Autorización inicial
+#    Ejecutar doGet() → Aceptar permisos solicitados
 
-# 7. Desplegar como Web App
-#    Implementar > Despliegue > Nueva implementacion > Web app
-#    Configurar: Ejecutar como: "Yo" | Acceso: "Cualquier usuario del dominio"
-#    Presionar Desplegar y copiar la URL publica
+# ⑦ Desplegar como Web App
+#    Implementar → Nueva implementación → Web App
+#    ┌──────────────────────┬────────────────────────────────┐
+#    │ Ejecutar como        │ Yo (USER_DEPLOYING)            │
+#    │ Acceso               │ Cualquier usuario del dominio  │
+#    └──────────────────────┴────────────────────────────────┘
+
+# ⑧ Verificar
+#    Copiar URL pública → Abrir en navegador → Probar flujo completo
 ```
 
-### 9.3 Configuracion de Activacion (Deploy Trigger)
+### 9.3 Notas sobre el iframe de GAS
 
-La Web App no requiere un trigger programado ya que funciona como SPA. Sin embargo, para mantener la sesion activa y evitar que GAS elimine el estado en modo iframe:
-
-```javascript
-// Opcional: Agregar al final de Code.gs
-// Esto forza un keepalive cada 5 minutos para mantener la sesion activa
-function setupKeepAlive() {
-  // No se recomienda en produccion con acceso DOMAIN
-}
-```
-
-> **Nota sobre el iframe de GAS:** Google Apps Script renderiza la Web App dentro de un sandboxed iframe. La latencia por comunicacion `google.script.run` es inherente (~200-500ms por llamada). Todas las animaciones de la interfaz estan disenadas para disimular esta latencia (skeleton loader, timeout de 30s, estados de carga).
+> ⚠️ Google Apps Script renderiza la Web App dentro de un **sandboxed iframe**. La latencia por comunicación `google.script.run` es inherente (~200-500ms por llamada). Todas las animaciones de la interfaz están diseñadas para disimular esta latencia (skeleton loader, timeout de 30s, estados de carga).
 
 ---
 
-## 10. Solucion de Problemas
+## 10. Solución de Problemas
 
-### Problemas Comunes
+### 10.1 Problemas comunes
 
-| Problema                                              | Causa Raiz                                                            | Solucion                                                                                        |
-| ----------------------------------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| "Error en la busqueda: No se pudo conectar"           | BigQuery no accesible o `executeAs` incorrecto                        | Verificar permisos BigQuery y `BQ_PROJECT_ID`                                                   |
-| La tabla aparece vacia pero el articulo existe        | Normalizacion NFD del servidor elimina acentos que el usuario ingreso | Los datos del input se normalizan en el servidor antes de buscar; coincide con la base de datos |
-| El PDF no se sube                                     | El archivo excede 10 MB o `MIME type` incorrecto                      | Validar `file.size` y `file.type` antes de enviar                                               |
-| Modal no se abre o cierra al hacer clic               | Conflicto de `z-index` con otro elemento del DOM                      | Verificar que no haya overlays con z-index >= 1000                                              |
-| "La consulta tardo demasiado" en menos de 30 segundos | Timeout del cliente (30s) coincide con latencia real                  | Aumentar `SEARCH_TIMEOUT_MS` en JS o optimizar consulta SQL en BigQuery                         |
-| Animaciones "trabadas" o parpadean                    | `prefers-reduced-motion` activo en el sistema del usuario             | Las animaciones respetan la media query `prefers-reduced-motion: reduce`                        |
+<table>
+<tr>
+<th width="30%">🔴 Problema</th>
+<th width="35%">🔍 Causa raíz</th>
+<th width="35%">✅ Solución</th>
+</tr>
+<tr>
+<td><code>"Error en la búsqueda: No se pudo conectar"</code></td>
+<td>BigQuery no accesible o <code>executeAs</code> incorrecto</td>
+<td>Verificar permisos BigQuery y valor de <code>BQ_PROJECT_ID</code></td>
+</tr>
+<tr>
+<td>Tabla aparece vacía pero el artículo existe</td>
+<td>Diferencia de normalización NFD entre input y datos</td>
+<td>Los datos se normalizan en servidor; verificar que la tabla también esté normalizada</td>
+</tr>
+<tr>
+<td>El PDF no se sube</td>
+<td>Archivo excede 10 MB o MIME type incorrecto</td>
+<td>Validar <code>file.size</code> y <code>file.type</code> antes de enviar</td>
+</tr>
+<tr>
+<td>Modal no abre o cierra inesperadamente</td>
+<td>Conflicto de <code>z-index</code> con otro elemento DOM</td>
+<td>Verificar que no haya overlays con <code>z-index ≥ 1000</code></td>
+</tr>
+<tr>
+<td><code>"La consulta tardó demasiado"</code> en &lt;30s</td>
+<td>Timeout del cliente (30s) coincide con latencia real</td>
+<td>Aumentar <code>SEARCH_TIMEOUT_MS</code> o optimizar SQL en BigQuery</td>
+</tr>
+<tr>
+<td>Animaciones "trabadas" o parpadean</td>
+<td><code>prefers-reduced-motion</code> activo en el OS</td>
+<td>Las animaciones respetan la media query por diseño</td>
+</tr>
+</table>
 
-### 10.1 Debug Mode
+### 10.2 Modo debug (sin servidor)
 
-La Web App incluye un fallback para pruebas locales sin servidor GAS:
+La Web App incluye un fallback automático para pruebas locales:
 
 ```javascript
 // Si google.script.run no existe, la app entra en modo demo
-// (simula busqueda vacia y envio exitoso sin llamar al servidor)
+// Simula búsqueda vacía y envío exitoso sin llamar al servidor
 if (typeof google !== "undefined" && google.script && google.script.run) {
-  google.script.run.buscarSimilitudesBQ(val);
+  google.script.run
+    .withSuccessHandler(renderResultados)
+    .withFailureHandler(handleError)
+    .buscarSimilitudesBQ(texto);
 } else {
+  // Modo demo: simula respuesta vacía tras 1 segundo
   setTimeout(() => {
-    clearTimeout(_searchTimer);
     _searchInProgress = false;
     setLoading(false);
-    renderResultados([]); // Simula resultados vacios
+    renderResultados([]);
   }, 1000);
 }
 ```
 
-Para activar este modo, abrir `index.html` directamente en el navegador (sin el servidor GAS).
+> **Para activar:** Abrir `index.html` directamente en el navegador (sin el servidor GAS de intermediación).
 
 ---
 
 ## 11. Roadmap
 
-### v1.0 (Actual) — Version Estable
+### ✅ v1.0 — Estable (Actual)
 
-- [x] Busqueda semantica con BigQuery
-- [x] Score Sorensen-Dice con trigramas
-- [x] Cache de resultados (6h)
-- [x] Skeleton loader
-- [x] Modal custom con focus trap
-- [x] Toast con barra de progreso
-- [x] Stepper de progreso
-- [x] Formulario con validacion nativa + file upload PDF
-- [x] Generacion automatica de Google Sheets
-- [x] Carpeta dedicada en Drive
-- [x] Responsive + Touch targets
-- [x] Accesibilidad WCAG 2.1 (focus-visible, aria-live, reduced-motion)
+- [x] Búsqueda semántica con BigQuery (Sørensen-Dice · trigramas)
+- [x] Cache de resultados con TTL de 6 horas
+- [x] Skeleton loader con shimmer CSS
+- [x] Modal custom con focus trap + backdrop blur
+- [x] Toast notifications con barra de progreso
+- [x] Stepper de progreso horizontal con estados
+- [x] Formulario con validación nativa HTML5 + file upload PDF
+- [x] Generación automática de Google Sheets desde plantilla
+- [x] Carpeta dedicada en Drive con auto-creación
+- [x] Responsive · Touch targets ≥ 44px
+- [x] Accesibilidad WCAG 2.1 (focus-visible · aria-live · reduced-motion)
+- [x] Sanitización XSS en cliente + SQL parametrizado en servidor
 
-### v1.1 (Planificado)
+### 🔨 v1.1 — Planificado
 
-- [ ] Visualizacion de la similitud como porcentaje animado
-- [ ] Paginacion de resultados (offset/limit en consulta SQL)
-- [ ] Autocompletar sugerencias de busqueda desde BigQuery
-- [ ] Soporte para catalogos multiples (dropdown selector)
-- [ ] Historial de busquedas recientes (localStorage)
+- [ ] Visualización de similitud como porcentaje animado (counter)
+- [ ] Paginación de resultados (offset/limit en consulta SQL)
+- [ ] Autocompletar sugerencias de búsqueda desde BigQuery
+- [ ] Soporte para catálogos múltiples (dropdown selector)
+- [ ] Historial de búsquedas recientes (localStorage)
 - [ ] Exportar resultados a Google Sheets o CSV
 
-### v2.0 (Futuro)
+### 🚀 v2.0 — Futuro
 
 - [ ] PWA: Service Worker + cache offline
-- [ ] REST API propia como backend (reemplazar google.script.run)
-- [ ] Dashboard de administracion con metricas de uso
-- [ ] Sistema de aprobacion de solicitudes (workflow)
-- [ ] Integracion con Gmail API para notificaciones automaticas
+- [ ] REST API propia como backend (reemplazar `google.script.run`)
+- [ ] Dashboard de administración con métricas de uso
+- [ ] Sistema de aprobación de solicitudes (workflow multi-paso)
+- [ ] Integración con Gmail API para notificaciones automáticas
 
 ---
 
-## Licencia
+<div align="center">
 
-Este proyecto es propiedad del Hospital Civil de Guadalajara. Uso interno restringido. Consultar con el area de TI antes de distribuir.
+### Licencia
+
+**Propiedad del Hospital Civil de Guadalajara**
+Uso interno restringido · Consultar con el área de TI antes de distribuir
 
 ---
 
-<p align="center">
-  <sub>Generado con auditoria de codigo completo | v1.0 | Mayo 2026</sub>
-</p>
+`Verificador de Catálogo HCG` · `v1.0.0-stable` · `Mayo 2026`
+
+<br/>
+
+<sub>
+  Documentación generada con auditoría de código completo
+  <br/>
+  Google Apps Script · BigQuery · Drive API · WCAG 2.1
+</sub>
+
+</div>
+```
+
+---

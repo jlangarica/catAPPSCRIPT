@@ -1,6 +1,3 @@
-# README.md Mejorado
-
-```markdown
 <p align="center">
   <img src="https://img.shields.io/badge/Google%20Apps%20Script-V8-blue?logo=google&logoColor=4285F4" alt="Google Apps Script">
   <img src="https://img.shields.io/badge/BigQuery-Legacy%20SQL-orange?logo=googlebigquery&logoColor=FF6D01" alt="BigQuery">
@@ -74,6 +71,7 @@
 **Verificador de Catálogo HCG** es una aplicación web integrada en Google Apps Script que implementa un flujo de **5 fases** para la prevención de duplicados en el catálogo maestro hospitalario del Hospital Civil de Guadalajara.
 
 ### Flujo funcional en 5 fases
+
 ```
 
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
@@ -89,7 +87,7 @@
 └──────────────────────────────────────────────────────────────────────────────────────┘
 Reiniciar flujo
 
-````
+```
 
 ### Stack técnico
 
@@ -170,7 +168,7 @@ flowchart TD
 
     style CLIENTE fill:#0d1117,stroke:#58a6ff,stroke-width:2px,color:#e6edf3
     style SERVIDOR fill:#0d1117,stroke:#f0883e,stroke-width:2px,color:#e6edf3
-````
+```
 
 ### Flujo de datos detallado
 
@@ -971,6 +969,5 @@ Uso interno restringido · Consultar con el área de TI antes de distribuir
 </sub>
 
 </div>
-```
 
 ---

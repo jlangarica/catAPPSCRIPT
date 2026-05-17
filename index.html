@@ -1733,7 +1733,7 @@ const renderResultados = (data) => {
 
       // ─── LÓGICA DE FORMULARIO (FASE 4) ──────────────────────────────────────────
 
-      const enviarFormulario = () => {
+      let enviarFormulario = () => {
         if (_submitInProgress) return;
 
         document
@@ -1897,7 +1897,7 @@ const showToast = (msg, isError = false) => {
         }
       };
 
-      const confirmarCancelar = () => {
+      let confirmarCancelar = () => {
         const isDirty = DIRTY_CHECK_IDS.some(
           (id) => $(id)?.value.trim() !== "",
         );

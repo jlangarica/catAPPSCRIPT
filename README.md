@@ -13,8 +13,8 @@
 
 <div align="center">
 
-  <!-- Logo institucional (opcional: reemplazar con logo real) -->
-  <img src="https://img.shields.io/badge/HOSPITAL CIVIL DE GUADALAJARA-white?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMWU0MGFmIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0gridIDyMnM4LTQgOC0xMFY1bC04LTMtOCAzdjdjMCA2IDggMTAgOCAxMHoiLz48L3N2Zz4=" width="260">
+  <!-- Logo institucional -->
+  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwznMpanZo8joZkePlBwsbRgQe82yuhR8Qvw&s" width="260" alt="Logo HCG">
 
   <h1 style="font-size: 2.5em;">
     <code>Verificador de Catálogo HCG</code>
@@ -63,64 +63,64 @@
 <table>
 <tr>
 <td align="center" width="16%">
-<a href="#-visión-general">
+<a href="#visión-general">
 <img src="https://img.shields.io/badge/🔎-Visión-2563eb?style=flat-square&logoColor=white" alt="Visión"><br><sub><b>General</b></sub>
 </a>
 </td>
 <td align="center" width="16%">
-<a href="#-arquitectura">
+<a href="#arquitectura">
 <img src="https://img.shields.io/badge/🏗️-Arquitectura-7c3aed?style=flat-square&logoColor=white" alt="Arquitectura"><br><sub><b>Sistema</b></sub>
 </a>
 </td>
 <td align="center" width="16%">
-<a href="#-motor-de-búsqueda">
+<a href="#motor-de-búsqueda">
 <img src="https://img.shields.io/badge/🧬-Motor-059669?style=flat-square&logoColor=white" alt="Motor"><br><sub><b>Jaccard</b></sub>
 </a>
 </td>
 <td align="center" width="16%">
-<a href="#-referencia-api">
+<a href="#referencia-api">
 <img src="https://img.shields.io/badge/📡-API-d97706?style=flat-square&logoColor=white" alt="API"><br><sub><b>Servidor</b></sub>
 </a>
 </td>
 <td align="center" width="16%">
-<a href="#-interfaz-de-usuario">
+<a href="#interfaz-de-usuario">
 <img src="https://img.shields.io/badge/🎨-UI-be185d?style=flat-square&logoColor=white" alt="UI"><br><sub><b>Diseño</b></sub>
 </a>
 </td>
 <td align="center" width="16%">
-<a href="#-seguridad">
+<a href="#seguridad">
 <img src="https://img.shields.io/badge/🔒-Seguridad-dc2626?style=flat-square&logoColor=white" alt="Seguridad"><br><sub><b>Hardening</b></sub>
 </a>
 </td>
 </tr>
 <tr>
 <td align="center">
-<a href="#-configuración">
+<a href="#configuración">
 <img src="https://img.shields.io/badge/⚙️-Config-6366f1?style=flat-square&logoColor=white" alt="Config"><br><sub><b>Variables</b></sub>
 </a>
 </td>
 <td align="center">
-<a href="#-despliegue">
+<a href="#despliegue">
 <img src="https://img.shields.io/badge/🚀-Deploy-0891b2?style=flat-square&logoColor=white" alt="Deploy"><br><sub><b>Producción</b></sub>
 </a>
 </td>
 <td align="center">
-<a href="#-estructura-de-archivos">
+<a href="#estructura-de-archivos">
 <img src="https://img.shields.io/badge/📂-Archivos-4f46e5?style=flat-square&logoColor=white" alt="Archivos"><br><sub><b>Proyecto</b></sub>
 </a>
 </td>
 <td align="center">
-<a href="#-accesibilidad">
+<a href="#accesibilidad">
 <img src="https://img.shields.io/badge/♿-A11y-0d9488?style=flat-square&logoColor=white" alt="A11y"><br><sub><b>WCAG 2.1</b></sub>
 </a>
 </td>
 <td align="center">
-<a href="#-troubleshooting">
+<a href="#troubleshooting">
 <img src="https://img.shields.io/badge/🛠️-Debug-64748b?style=flat-square&logoColor=white" alt="Debug"><br><sub><b>Problemas</b></sub>
 </a>
 </td>
 <td align="center">
-<a href="#-roadmap">
+<a href="#roadmap">
 <img src="https://img.shields.io/badge/🗺️-Roadmap-f97316?style=flat-square&logoColor=white" alt="Roadmap"><br><sub><b>Futuro</b></sub>
 </a>
 </td>
@@ -245,24 +245,24 @@ Timeout de servidor
 flowchart TD
     subgraph CLIENTE["🖥️ Cliente — Browser / IFrame GAS"]
         direction TB
-        A["<b>Fase 1</b><br/>Búsqueda de texto libre"] -->|"input ≥ 3 chars"| B{"google.script.run"}
-        B -->|"buscarSimilitudesBQ(texto)"| C{"Render resultados<br/>o Skeleton loader"}
-        C --> D["<b>Fase 2</b><br/>Tabla con scoring + badges"]
-        D -->|"Solicitar alta nueva"| E["<b>Fase 3</b><br/>Disclaimer + checklist"]
-        E -->|"Ambos checks marcados"| F["<b>Fase 4</b><br/>Formulario 14 campos + PDF"]
+        A["Fase 1\nBúsqueda de texto libre"] -->|"input ≥ 3 chars"| B{"google.script.run"}
+        B -->|"buscarSimilitudesBQ(texto)"| C{"Render resultados\no Skeleton loader"}
+        C --> D["Fase 2\nTabla con scoring + badges"]
+        D -->|"Solicitar alta nueva"| E["Fase 3\nDisclaimer + checklist"]
+        E -->|"Ambos checks marcados"| F["Fase 4\nFormulario 14 campos + PDF"]
         F -->|"FileReader → Base64"| G{"google.script.run"}
-        G -->|"guardarSolicitud(payload)"| H["<b>Fase 5</b><br/>Éxito · Link al documento"]
+        G -->|"guardarSolicitud(payload)"| H["Fase 5\nÉxito · Link al documento"]
     end
 
     subgraph SERVIDOR["⚙️ Servidor — Google Apps Script V8"]
         direction TB
-        B -->|"Re-valida ≥ 3 chars"| I["Normalizar input<br/>NFD → strip accents"]
-        I --> J["Generar regex tokenizado<br/><i>server-side</i>"]
-        J --> K{"CacheService<br/>hit?"}
-        K -->|"✅ HIT"| L["Retornar JSON cacheado<br/><i>latencia ~0ms</i>"]
-        K -->|"❌ MISS"| M["BigQuery.Jobs.query<br/><i>query parametrizada</i>"]
-        M --> N{"Polling<br/><code>sleep(800ms)</code><br/>timeout: 55s"}
-        N --> O["Mapear resultados<br/>id_codigo · descripcion<br/>activo · score"]
+        B -->|"Re-valida ≥ 3 chars"| I["Normalizar input\nNFD → strip accents"]
+        I --> J["Generar regex tokenizado\nserver-side"]
+        J --> K{"CacheService\nhit?"}
+        K -->|"✅ HIT"| L["Retornar JSON cacheado\nlatencia ~0ms"]
+        K -->|"❌ MISS"| M["BigQuery.Jobs.query\nquery parametrizada"]
+        M --> N{"Polling\nsleep(800ms)\ntimeout: 55s"}
+        N --> O["Mapear resultados\nid_codigo · descripcion\nactivo · score"]
         O --> L
         G --> P["DriveApp.getFileById<br/><i>plantilla maestra</i>"]
         P --> Q["makeCopy() en<br/>carpeta dedicada"]

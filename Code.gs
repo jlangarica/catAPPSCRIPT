@@ -577,26 +577,41 @@ const mapearResultadosBQ_ = (rows) => {
 /**
  * Adjunta un archivo PDF de cotización a la carpeta de solicitudes.
  *
- * Decodifica el Base64, crea el blob y lo almacena en Drive.
- *
- * @param {GoogleAppsScript.Drive.Folder} carpetaDestino - Carpeta donde almacenar el PDF.
- * @param {string|undefined} pdfBase64 - Contenido del PDF codificado en Base64.
- * @param {string} descripcion - Descripción del artículo (usada para nombrar el archivo).
- * @returns {string} URL del archivo PDF en Drive, o cadena vacía si no se proporcionó PDF.
+ * @param {GoogleAppsScript.Drive.Folder} carpetaDestino - Carpeta destino.
+ * @param {string|undefined} pdfBase64 - Contenido PDF codificado en Base64.
+ * @param {string} descripcion - Descripción del artículo para nomenclatura.
+ * @returns {string} URL del archivo PDF en Drive, o cadena vacía.
+ * @throws {Error} Si el Base64 es inválido o la creación de archivo falla.
  * @private
  */
 const adjuntarPDF_ = (carpetaDestino, pdfBase64, descripcion) => {
-  if (!pdfBase64) return "";
+  if (!pdfBase64 || typeof pdfBase64 !== "string" || pdfBase64.trim() === "") {
+    return "";
+  }
 
   const nombreArchivo = `Cotizacion_${descripcion.substring(0, 20)}.pdf`;
-  const blob = Utilities.newBlob(
-    Utilities.base64Decode(pdfBase64),
-    "application/pdf",
-    nombreArchivo,
-  );
-  const archivoPdf = carpetaDestino.createFile(blob);
-  console.info({ message: "PDF adjuntado", nombre: nombreArchivo });
-  return archivoPdf.getUrl();
+
+  try {
+    const bytes = Utilities.base64Decode(pdfBase64);
+    const blob = Utilities.newBlob(bytes, "application/pdf", nombreArchivo);
+    const archivoPdf = carpetaDestino.createFile(blob);
+
+    console.info({
+      message: "PDF adjuntado",
+      nombre: nombreArchivo,
+      tamanoBytes: bytes.length,
+      mimeType: blob.getContentType(),
+    });
+
+    return archivoPdf.getUrl();
+  } catch (e) {
+    console.error({
+      message: "Fallo al adjuntar PDF",
+      nombre: nombreArchivo,
+      error: e.message,
+    });
+    throw new Error(`Adjunto PDF inválido: ${e.message}`);
+  }
 };
 
 /**

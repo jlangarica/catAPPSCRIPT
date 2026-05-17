@@ -92,7 +92,20 @@ function buscarSimilitudesBQ(textoUsuario) {
     const bqTable = props.getProperty("BQ_TABLE") || "catalogo_maestro_clean";
 
     const sqlQuery = `
-      WITH candidatos_evaluados AS (
+      WITH base_trigramas AS (
+        SELECT 
+          id_codigo,
+          descripcion_articulo,
+          activo,
+          (
+            SELECT COALESCE(ARRAY_AGG(DISTINCT SUBSTR(w, i, 3)), [])
+            FROM UNNEST(SPLIT(norm_desc, ' ')) AS w,
+                 UNNEST(GENERATE_ARRAY(1, LENGTH(w) - 2)) AS i
+            WHERE LENGTH(w) >= 3
+          ) AS trigramas
+        FROM \`${bqProject}.${bqDataset}.${bqTable}\`
+      ),
+      candidatos_evaluados AS (
         SELECT
           id_codigo,
           descripcion_articulo,
@@ -103,7 +116,7 @@ function buscarSimilitudesBQ(textoUsuario) {
             FROM UNNEST(trigramas) elemento
             WHERE elemento IN UNNEST(@user_trigrams)
           ) AS inter
-        FROM \`${bqProject}.${bqDataset}.${bqTable}\`
+        FROM base_trigramas
       )
       SELECT 
         id_codigo,

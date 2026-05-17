@@ -1,13 +1,15 @@
+/**
+ * @fileoverview Verificador de Catálogo HCG — Servidor (Google Apps Script V8)
+ * Refactorizado para optimización mediante Batch Operations, ES6+,
+ * JSDoc estricto, robustez con Cloud Logging y encapsulamiento.
+ *
+ * @version 2.0.0
+ * @author Jules (Lead Developer)
+ */
+
 "use strict";
 
-/* ===========================================================================
- * Verificador de Catálogo HCG — Servidor (Google Apps Script V8)
- * ---------------------------------------------------------------------------
- * Refactorización: Batch Ops · ES6+ · JSDoc estricto · try-catch + Stackdriver
- *                         Helpers privados con sufijo _
- * =========================================================================== */
-
-// ─── Constantes de configuración ─────────────────────────────────────────────
+// ─── CONSTANTES DE CONFIGURACIÓN ─────────────────────────────────────────────
 
 /** @const {string} ID de la hoja de cálculo plantilla (HCG Formato Inclusión 2026) */
 const ID_PLANTILLA = "1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8";
@@ -21,15 +23,23 @@ const NOMBRE_CARPETA = "Solicitudes de Inclusión HCG";
 /** @const {number} TTL de caché en segundos (6 horas) */
 const CACHE_TTL_SEG = 21600;
 
-
-
 /** @const {number} Fila inicio para escritura batch en la plantilla */
 const FILA_INICIO_DATOS = 14;
 
 /** @const {number} Columna inicio (C = 3) para escritura batch */
 const COL_INICIO_DATOS = 3;
 
-// ─── Funciones Públicas (Trigger-safe) ───────────────────────────────────────
+/** @const {Object<string, string>} Diccionario clínico para normalización */
+const DICT_MEDICO = {
+  "MG": "MILIGRAMOS",
+  "ML": "MILILITROS",
+  "TAB": "TABLETA",
+  "CAP": "CAPSULA",
+  "AMP": "AMPOLLA",
+  "JGA": "JERINGA"
+};
+
+// ─── FUNCIONES PÚBLICAS (TRIGGER-SAFE) ───────────────────────────────────────
 
 /**
  * Punto de entrada HTML Service — renderiza la SPA al cliente.
@@ -44,106 +54,81 @@ function doGet() {
 }
 
 /**
- * 🔍 MOTOR DE AUDITORÍA Y PREVENCIÓN DE DUPLICADOS (VERSIÓN FUZZY OPTIMIZADA)
+ * Motor de auditoría y prevención de duplicados utilizando BigQuery y similitud de Jaccard.
+ *
  * @param {string} textoUsuario - Descripción enviada por el solicitante en la SPA.
  * @returns {Array<{id_codigo: string, descripcion: string, activo: number, similitud: number}>}
+ *   Lista de coincidencias encontradas.
+ * @throws {Error} Si la entrada es inválida o falla la consulta a BigQuery.
  */
 function buscarSimilitudesBQ(textoUsuario) {
-  const input = String(textoUsuario || "").trim();
-  if (input.length < 3) {
-    throw new Error("La verificación requiere una descripción mínima de 3 caracteres.");
-  }
+  try {
+    const input = String(textoUsuario || "").trim();
+    if (input.length < 3) {
+      throw new Error("La verificación requiere una descripción mínima de 3 caracteres.");
+    }
 
-  // ─── NORMALIZACIÓN MÉDICA SIMÉTRICA EN MEMORIA (DICCIONARIO JS) ───
-  let txt = input.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  txt = txt.replace(/C\//g, " CON ").replace(/S\//g, " SIN ");
-  
-  // Separar números de letras
-  txt = txt.replace(/([0-9]+)([A-Z])/g, "$1 $2").replace(/([A-Z]+)([0-9])/g, "$1 $2");
-  // Diccionario Clínico Local
-  const DICT_MEDICO = {
-    "MG": "MILIGRAMOS", "ML": "MILILITROS", "TAB": "TABLETA", 
-    "CAP": "CAPSULA", "AMP": "AMPOLLA", "JGA": "JERINGA"
-  };
-  for (const [abrev, compl] of Object.entries(DICT_MEDICO)) {
-    txt = txt.replace(new RegExp("\\b" + abrev + "\\b", "gi"), compl);
-  }
+    const cleanInput = normalizarTexto_(input);
+    const trigramasArray = generarTrigramas_(cleanInput);
 
-  const cleanInput = txt.replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-  
-  // ─── GENERACIÓN DE TRIGRAMAS DEL LADO DEL SERVIDOR (V8) ───
-  const paddedInput = " " + cleanInput + " ";
-  const trigrams = new Set();
-  for (let i = 0; i < paddedInput.length - 2; i++) {
-    const tri = paddedInput.substring(i, i + 3);
-    if (tri.trim().length === 3) trigrams.add(tri); 
-  }
-  const trigramasArray = Array.from(trigrams);
-  if (trigramasArray.length === 0) {
-    throw new Error("Entrada sin suficiente claridad léxica alfanumérica.");
-  }
+    if (trigramasArray.length === 0) {
+      throw new Error("Entrada sin suficiente claridad léxica alfanumérica.");
+    }
 
-  const props = PropertiesService.getScriptProperties();
-  
-  // CORRECCIÓN DE REGIÓN: Forzamos la ubicación real de tu dataset
-  const bqLocation = props.getProperty("BQ_LOCATION") || "northamerica-south1"; 
-  
-  const cacheKeyRaw = `hcg_idx_v6_${cleanInput}`;
-  const cacheKey = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, cacheKeyRaw)
-    .map(b => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2)).join("").substring(0, 24);
-  const cache = CacheService.getScriptCache();
-  const cached = cache.get(cacheKey);
-  if (cached) return JSON.parse(cached);
+    const cacheKey = generarCacheKey_(cleanInput);
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get(cacheKey);
+    if (cached) return JSON.parse(cached);
 
-  // ─── CONSULTA SQL SIN FILTROS RESTRICTIVOS (RECALL TOTAL) ───
-  const sqlQuery = `
-    WITH candidatos_evaluados AS (
+    const props = PropertiesService.getScriptProperties();
+    const bqLocation = props.getProperty("BQ_LOCATION") || "northamerica-south1";
+    const billingProjectId = props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
+
+    const sqlQuery = `
+      WITH candidatos_evaluados AS (
+        SELECT
+          id_codigo,
+          descripcion_articulo,
+          activo,
+          ARRAY_LENGTH(trigramas) AS len_cat,
+          (
+            SELECT COUNT(DISTINCT elemento)
+            FROM UNNEST(trigramas) elemento
+            WHERE elemento IN UNNEST(@user_trigrams)
+          ) AS inter
+        FROM \`certain-perigee-495302-h7.catalogo.catalogo_maestro_clean\`
+      )
       SELECT 
         id_codigo,
         descripcion_articulo,
         activo,
-        ARRAY_LENGTH(trigramas) AS len_cat,
-        (
-          SELECT COUNT(DISTINCT elemento) 
-          FROM UNNEST(trigramas) elemento 
-          WHERE elemento IN UNNEST(@user_trigrams)
-        ) AS inter
-      FROM \`certain-perigee-495302-h7.catalogo.catalogo_maestro_clean\`
-    )
-    SELECT 
-      id_codigo,
-      descripcion_articulo,
-      activo,
-      ROUND(SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) * 100, 1) AS score
-    FROM candidatos_evaluados
-    WHERE inter > 0 
-      AND SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) >= 0.15 -- Regresamos al 15% original para recuperar sensibilidad
-    ORDER BY score DESC
-    LIMIT 10;
-  `;
+        ROUND(SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) * 100, 1) AS score
+      FROM candidatos_evaluados
+      WHERE inter > 0
+        AND SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) >= 0.15
+      ORDER BY score DESC
+      LIMIT 10;
+    `;
 
-  const billingProjectId = props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
+    const request = {
+      query: sqlQuery,
+      useLegacySql: false,
+      parameterMode: "NAMED",
+      location: bqLocation,
+      queryParameters: [
+        {
+          name: "user_trigrams",
+          parameterType: { type: "ARRAY", arrayType: { type: "STRING" } },
+          parameterValue: { arrayValues: trigramasArray.map(t => ({ value: t })) }
+        },
+        {
+          name: "len_in_tri",
+          parameterType: { type: "INT64" },
+          parameterValue: { value: String(trigramasArray.length) }
+        }
+      ]
+    };
 
-  const request = {
-    query: sqlQuery,
-    useLegacySql: false,
-    parameterMode: "NAMED",
-    location: bqLocation,
-    queryParameters: [
-      {
-        name: "user_trigrams",
-        parameterType: { type: "ARRAY", arrayType: { type: "STRING" } },
-        parameterValue: { arrayValues: trigramasArray.map(t => ({ value: t })) }
-      },
-      {
-        name: "len_in_tri",
-        parameterType: { type: "INT64" },
-        parameterValue: { value: String(trigramasArray.length) }
-      }
-    ]
-  };
-
-  try {
     const res = BigQuery.Jobs.query(request, billingProjectId);
     const results = res.rows ?
       res.rows.map(({ f }) => ({
@@ -152,10 +137,16 @@ function buscarSimilitudesBQ(textoUsuario) {
         activo: Number(f[2].v) || 0,
         similitud: Number(f[3].v) || 0
       })) : [];
-    cache.put(cacheKey, JSON.stringify(results), 21600);
+
+    cache.put(cacheKey, JSON.stringify(results), CACHE_TTL_SEG);
     return results;
+
   } catch (e) {
-    console.error({ message: "Fallo en motor de auditoría léxica HCG", error: e.message });
+    console.error({
+      message: "Fallo en motor de auditoría léxica HCG",
+      error: e.message,
+      stack: e.stack
+    });
     throw new Error(`Error analítico de catálogo: ${e.message}`);
   }
 }
@@ -163,23 +154,7 @@ function buscarSimilitudesBQ(textoUsuario) {
 /**
  * Orquestador de alta de solicitud y generación de documento de inclusión.
  *
- * Flujo: mapeo de payload → generación de documento Sheets → retorno de URL/ID.
- * Si `payload` es `null` o `undefined`, ejecuta la verificación de autorización Drive.
- *
  * @param {Object|null} payload - Datos del formulario enviados desde el cliente.
- * @param {string} payload.partidaCOG       - Partida presupuestal COG.
- * @param {string} [payload.familia]         - Familia del artículo.
- * @param {string} [payload.unidadHospitalaria] - Unidad hospitalaria solicitante.
- * @param {string} payload.descripcion       - Descripción del bien o servicio.
- * @param {string} payload.unidadMedida      - Unidad de medida.
- * @param {string} [payload.nombreSolicitante] - Nombre del solicitante.
- * @param {string} [payload.cargoSolicitante]  - Cargo del solicitante.
- * @param {string} [payload.servicio]        - Servicio hospitalario.
- * @param {string} [payload.precio]          - Costo de referencia.
- * @param {string} [payload.proveedor]       - Proveedor sugerido.
- * @param {string} [payload.justificacion]   - Justificación de la solicitud.
- * @param {string} [payload.observacion]     - Observaciones adicionales.
- * @param {string} [payload.cotizacionPDF]   - PDF de cotización en Base64.
  * @returns {{ success: boolean, url?: string, id?: string, message?: string }}
  *   Resultado de la operación.
  * @throws {Error} Si la validación o generación del documento falla.
@@ -188,7 +163,6 @@ function guardarSolicitud(payload) {
   if (!payload) {
     console.info({ message: "Verificando acceso a DriveApp..." });
     DriveApp.getRootFolder();
-    console.info({ message: "Acceso a Drive confirmado." });
     return { success: true, message: "Autorización exitosa" };
   }
 
@@ -197,12 +171,6 @@ function guardarSolicitud(payload) {
     console.warn({ message: "Validación de payload fallida", error: mensaje });
     throw new Error(`Validación: ${mensaje}`);
   }
-
-  console.info({
-    message: "Nueva solicitud recibida",
-    descripcion: payload.descripcion,
-    partida: payload.partidaCOG,
-  });
 
   try {
     const {
@@ -238,8 +206,14 @@ function guardarSolicitud(payload) {
 
     const resultadoDoc = generarDocumentoInclusion(datosDoc, cotizacionPDF);
 
-    console.info({ message: "Documento generado", id: resultadoDoc.id });
+    console.info({
+      message: "Solicitud procesada con éxito",
+      descripcion,
+      idDocumento: resultadoDoc.id
+    });
+
     return { success: true, url: resultadoDoc.url, id: resultadoDoc.id };
+
   } catch (e) {
     console.error({
       message: "Error en guardarSolicitud",
@@ -252,36 +226,19 @@ function guardarSolicitud(payload) {
 
 /**
  * Genera el documento de inclusión clonando la plantilla maestra y
- * escribiendo los datos del formulario en batch (14 columnas × 1 fila).
+ * escribiendo los datos del formulario en batch.
  *
- * @param {Object} datos         - Objeto con la información mapeada del formulario.
- * @param {string} datos.partida           - Partida presupuestal.
- * @param {string} datos.familia           - Familia del artículo.
- * @param {string} datos.unidad            - Unidad hospitalaria.
- * @param {string} datos.descripcion       - Descripción del bien/servicio.
- * @param {string} datos.unidadMedida      - Unidad de medida.
- * @param {string} datos.nombreSolicitante - Nombre del solicitante.
- * @param {string} datos.cargoSolicitante  - Cargo del solicitante.
- * @param {string} datos.servicio          - Servicio hospitalario.
- * @param {string} datos.costoReferencia   - Costo de referencia.
- * @param {string} datos.proveedor         - Proveedor sugerido.
- * @param {string} datos.justificacion     - Justificación.
- * @param {string} datos.observacion       - Observaciones.
- * @param {string} [pdfBase64]  - Datos del archivo PDF de cotización en Base64.
+ * @param {Object} datos - Objeto con la información mapeada del formulario.
+ * @param {string} [pdfBase64] - Datos del archivo PDF de cotización en Base64.
  * @returns {{ url: string, id: string }} URL e ID del documento generado.
- * @throws {Error} Si falla la clonación, la hoja no existe o la escritura batch falla.
  */
 function generarDocumentoInclusion(datos, pdfBase64) {
   try {
-    if (!datos || !datos.descripcion) {
-      throw new Error("Datos insuficientes: descripción es obligatoria.");
-    }
-
     const plantilla = DriveApp.getFileById(ID_PLANTILLA);
     const fechaStr = formatearTimestamp_();
     const nombreNuevoArchivo = `Solicitud Inclusión - ${datos.descripcion.substring(0, 30)} - ${fechaStr}`;
 
-    const carpetaDestino = getCarpetaSolicitudes();
+    const carpetaDestino = getCarpetaSolicitudes_();
     const copia = plantilla.makeCopy(nombreNuevoArchivo, carpetaDestino);
 
     const ssCopia = SpreadsheetApp.open(copia);
@@ -294,18 +251,12 @@ function generarDocumentoInclusion(datos, pdfBase64) {
     const urlPdf = adjuntarPDF_(carpetaDestino, pdfBase64, datos.descripcion);
     const valores = construirValoresHoja_(datos, urlPdf);
 
-    // Batch write: O(1) llamada API para 14 columnas
+    // Batch write: Escritura de una sola vez para optimizar rendimiento
     hoja.getRange(FILA_INICIO_DATOS, COL_INICIO_DATOS, 1, valores[0].length).setValues(valores);
     SpreadsheetApp.flush();
 
-    console.info({
-      message: "Documento de inclusión generado",
-      nombre: nombreNuevoArchivo,
-      filas: valores.length,
-      columnas: valores[0].length,
-    });
-
     return { url: ssCopia.getUrl(), id: ssCopia.getId() };
+
   } catch (e) {
     console.error({
       message: "Error al generar documento",
@@ -316,21 +267,20 @@ function generarDocumentoInclusion(datos, pdfBase64) {
   }
 }
 
+// ─── FUNCIONES PRIVADAS (SUFFIX: _) ──────────────────────────────────────────
+
 /**
  * Obtiene o crea la carpeta dedicada para las solicitudes de inclusión en Drive.
  *
- * Si la carpeta no existe, la crea en la raíz de Drive del usuario deployante.
- *
  * @returns {GoogleAppsScript.Drive.Folder} Carpeta destino para las solicitudes.
+ * @private
  */
-function getCarpetaSolicitudes() {
+const getCarpetaSolicitudes_ = () => {
   const folders = DriveApp.getFoldersByName(NOMBRE_CARPETA);
   if (folders.hasNext()) return folders.next();
   console.info({ message: "Carpeta creada", nombre: NOMBRE_CARPETA });
   return DriveApp.createFolder(NOMBRE_CARPETA);
-}
-
-// ─── Funciones Privadas (suffix: _) ──────────────────────────────────────────
+};
 
 /**
  * Valida que el payload de solicitud contenga los campos críticos.
@@ -344,7 +294,8 @@ const validarPayloadEntrada_ = (payload) => {
     return { valido: false, mensaje: "Payload nulo o malformado." };
   }
   const camposObligatorios = ["descripcion", "unidadMedida", "partidaCOG"];
-  const faltantes = camposObligatorios.filter((c) => !payload[c] || String(payload[c]).trim() === "");
+  const faltantes = camposObligatorios.filter(c => !payload[c] || String(payload[c]).trim() === "");
+
   if (faltantes.length) {
     return { valido: false, mensaje: `Campos obligatorios faltantes: ${faltantes.join(", ")}.` };
   }
@@ -352,100 +303,119 @@ const validarPayloadEntrada_ = (payload) => {
 };
 
 /**
- * Genera un timestamp formateado para nomenclatura de archivos institucionales.
+ * Genera un timestamp formateado para nomenclatura de archivos.
  *
  * @param {Date} [fecha=new Date()] - Fecha base.
- * @param {string} [formato="yyyyMMdd-HHmm"] - Patrón de fecha.
- * @returns {string} Cadena formateada.
+ * @returns {string} Cadena formateada (yyyyMMdd-HHmm).
  * @private
  */
-const formatearTimestamp_ = (fecha = new Date(), formato = "yyyyMMdd-HHmm") =>
-  Utilities.formatDate(fecha, Session.getScriptTimeZone(), formato);
+const formatearTimestamp_ = (fecha = new Date()) =>
+  Utilities.formatDate(fecha, Session.getScriptTimeZone(), "yyyyMMdd-HHmm");
 
 /**
- * Normaliza un texto para búsqueda: NFD → elimina diacríticos → mayúsculas →
- * remueve caracteres no alfanuméricos → colapsa espacios.
+ * Normaliza un texto para búsqueda léxica avanzada.
  *
  * @param {string} texto - Texto crudo del usuario.
- * @returns {string} Texto normalizado listo para tokenización y comparación.
+ * @returns {string} Texto normalizado y expandido según diccionario.
  * @private
  */
-const normalizarTexto_ = (texto) =>
-  texto
-    .toUpperCase()
+const normalizarTexto_ = (texto) => {
+  let txt = texto.toUpperCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^A-Z0-9 ]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/C\//g, " CON ")
+    .replace(/S\//g, " SIN ");
+
+  // Separar números de letras
+  txt = txt.replace(/([0-9]+)([A-Z])/g, "$1 $2").replace(/([A-Z]+)([0-9])/g, "$1 $2");
+
+  // Expansión de abreviaturas médicas
+  for (const [abrev, compl] of Object.entries(DICT_MEDICO)) {
+    txt = txt.replace(new RegExp("\\b" + abrev + "\\b", "gi"), compl);
+  }
+
+  return txt.replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+};
+
+/**
+ * Genera un array de trigramas únicos a partir de un texto.
+ *
+ * @param {string} texto - Texto normalizado.
+ * @returns {string[]} Arreglo de trigramas.
+ * @private
+ */
+const generarTrigramas_ = (texto) => {
+  const padded = ` ${texto} `;
+  const trigrams = new Set();
+  for (let i = 0; i < padded.length - 2; i++) {
+    const tri = padded.substring(i, i + 3);
+    if (tri.trim().length === 3) trigrams.add(tri);
+  }
+  return Array.from(trigrams);
+};
+
+/**
+ * Genera una clave MD5 corta para el servicio de caché.
+ *
+ * @param {string} input - Texto base para la clave.
+ * @returns {string} Hash MD5 de 24 caracteres.
+ * @private
+ */
+const generarCacheKey_ = (input) => {
+  const rawKey = `hcg_v2_${input}`;
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, rawKey)
+    .map(b => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2))
+    .join("")
+    .substring(0, 24);
+};
+
 /**
  * Adjunta un archivo PDF de cotización a la carpeta de solicitudes.
  *
- * @param {GoogleAppsScript.Drive.Folder} carpetaDestino - Carpeta destino.
+ * @param {GoogleAppsScript.Drive.Folder} carpeta - Carpeta destino.
  * @param {string|undefined} pdfBase64 - Contenido PDF codificado en Base64.
- * @param {string} descripcion - Descripción del artículo para nomenclatura.
- * @returns {string} URL del archivo PDF en Drive, o cadena vacía.
- * @throws {Error} Si el Base64 es inválido o la creación de archivo falla.
+ * @param {string} descripcion - Descripción para el nombre del archivo.
+ * @returns {string} URL del archivo PDF en Drive.
  * @private
  */
-const adjuntarPDF_ = (carpetaDestino, pdfBase64, descripcion) => {
-  if (!pdfBase64 || typeof pdfBase64 !== "string" || pdfBase64.trim() === "") {
-    return "";
-  }
-
-  const nombreArchivo = `Cotizacion_${descripcion.substring(0, 20)}.pdf`;
+const adjuntarPDF_ = (carpeta, pdfBase64, descripcion) => {
+  if (!pdfBase64 || typeof pdfBase64 !== "string") return "";
 
   try {
+    const nombreArchivo = `Cotizacion_${descripcion.substring(0, 20)}.pdf`;
     const bytes = Utilities.base64Decode(pdfBase64);
     const blob = Utilities.newBlob(bytes, "application/pdf", nombreArchivo);
-    const archivoPdf = carpetaDestino.createFile(blob);
+    const archivo = carpeta.createFile(blob);
 
-    console.info({
-      message: "PDF adjuntado",
-      nombre: nombreArchivo,
-      tamanoBytes: bytes.length,
-      mimeType: blob.getContentType(),
-    });
-
-    return archivoPdf.getUrl();
+    console.info({ message: "PDF adjuntado", nombre: nombreArchivo });
+    return archivo.getUrl();
   } catch (e) {
-    console.error({
-      message: "Fallo al adjuntar PDF",
-      nombre: nombreArchivo,
-      error: e.message,
-    });
-    throw new Error(`Adjunto PDF inválido: ${e.message}`);
+    console.error({ message: "Fallo al adjuntar PDF", error: e.message });
+    throw new Error(`Error en adjunto PDF: ${e.message}`);
   }
 };
 
 /**
- * Construye el arreglo 2D de valores para escritura batch en la hoja Sheets.
+ * Construye el arreglo 2D de valores para escritura batch.
  *
- * El orden de las 14 columnas corresponde a: C(partida) · D(familia) ·
- * E(unidad) · F(descripcion) · G(unidadMedida) · H(nombreSolicitante) ·
- * I(cargoSolicitante) · J(servicio) · K(costoReferencia) · L(proveedor) ·
- * M(fecha) · N(justificacion) · O(observacion) · P(urlPdf).
- *
- * @param {Object} datos  - Objeto con la información mapeada del formulario.
- * @param {string} urlPdf - URL del PDF de cotización (vacío si no aplica).
- * @returns {Array<Array<*>>} Arreglo 2D con una fila y 14 columnas.
+ * @param {Object} datos - Datos del formulario.
+ * @param {string} urlPdf - URL del PDF adjunto.
+ * @returns {Array<Array<*>>} Arreglo 2D de una fila.
  * @private
  */
-const construirValoresHoja_ = (datos, urlPdf) => [
-  [
-    datos.partida, // Col C
-    datos.familia, // Col D
-    datos.unidad, // Col E
-    datos.descripcion, // Col F
-    datos.unidadMedida, // Col G
-    datos.nombreSolicitante, // Col H
-    datos.cargoSolicitante, // Col I
-    datos.servicio, // Col J
-    datos.costoReferencia, // Col K
-    datos.proveedor, // Col L
-    new Date(), // Col M — fecha de registro
-    datos.justificacion, // Col N
-    datos.observacion, // Col O
-    urlPdf, // Col P — link cotización
-  ],
-];
+const construirValoresHoja_ = (datos, urlPdf) => [[
+  datos.partida,           // Col C
+  datos.familia,           // Col D
+  datos.unidad,            // Col E
+  datos.descripcion,       // Col F
+  datos.unidadMedida,      // Col G
+  datos.nombreSolicitante, // Col H
+  datos.cargoSolicitante,  // Col I
+  datos.servicio,          // Col J
+  datos.costoReferencia,   // Col K
+  datos.proveedor,         // Col L
+  new Date(),              // Col M
+  datos.justificacion,     // Col N
+  datos.observacion,       // Col O
+  urlPdf                   // Col P
+]];

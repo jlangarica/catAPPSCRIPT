@@ -9,13 +9,14 @@
 
 "use strict";
 
-// ─── LAZY-CONFIG: Se evalúa solo en la primera llamada, no en cada invocación ─
+// ─── LAZY-CONFIG: Evalúa PropertiesService solo en la primera llamada ───────
 
 /** @type {Object|null} Caché en memoria de la ejecución actual */
 let __configCache = null;
 
 /**
  * Retorna configuración unificada desde PropertiesService con caché en memoria.
+ * Impacto: -1 llamada a PropertiesService por ejecución (cuota: 50,000/día).
  * @private
  * @returns {Object}
  */
@@ -42,8 +43,8 @@ const NOMBRE_CARPETA = "Solicitudes de Inclusión HCG";
 const CACHE_TTL_SEG = 21600; // 6 horas
 const FILA_INICIO_DATOS = 14;
 const COL_INICIO_DATOS = 3;
-const MAX_TRIGRAMAS = 200;
-const MAX_INPUT_LENGTH = 500;
+const MAX_TRIGRAMAS = 200;        // Protección anti-abuso de cuota BQ
+const MAX_INPUT_LENGTH = 500;     // Protección anti-exceso de tokens IA
 
 /** @const {Object<string, string>} Diccionario clínico */
 const DICT_MEDICO = {
@@ -55,11 +56,12 @@ const DICT_MEDICO = {
   JGA: "JERINGA",
 };
 
-/** @type {Map|null} Caché de regex precompiladas */
+/** @type {Map|null} Caché de regex precompiladas (memoization) */
 let __regexCache = null;
 
 /**
  * Retorna Map de regex precompiladas para expansión médica.
+ * Impacto: Elimina 6 compilaciones de RegExp por cada llamada a normalizarTexto_.
  * @private
  * @returns {Map<string, RegExp>}
  */
@@ -72,10 +74,10 @@ const getRegexCacheMedico_ = () => {
   return __regexCache;
 };
 
-// ─── LOGGING ESTRUCTURADO ────────────────────────────────────────────────────
+// ─── LOGGING ESTRUCTURADO (Cloud Logging / Stackdriver) ─────────────────────
 
 /**
- * Logger unificado con metadatos JSON para Cloud Logging/Stackdriver.
+ * Logger unificado con metadatos JSON. Ingesta automática en GCP.
  * @private
  * @param {number} level 0=info, 1=warn, 2=error
  * @param {string} message
@@ -131,9 +133,7 @@ function buscarSimilitudesBQ(textoUsuario) {
   const startTime = Date.now();
   try {
     let input = String(textoUsuario || "").trim();
-    if (input.length > MAX_INPUT_LENGTH) {
-      input = input.substring(0, MAX_INPUT_LENGTH);
-    }
+    if (input.length > MAX_INPUT_LENGTH) input = input.substring(0, MAX_INPUT_LENGTH);
     if (input.length < 3) {
       throw new Error("La verificación requiere una descripción mínima de 3 caracteres.");
     }
@@ -145,22 +145,21 @@ function buscarSimilitudesBQ(textoUsuario) {
       throw new Error("Entrada sin suficiente claridad léxica alfanumérica.");
     }
 
-    // Protección contra payloads excesivos
+    // Protección contra payloads excesivos (anti-abuso de cuota BQ)
     const originalTriCount = trigramasArray.length;
     if (trigramasArray.length > MAX_TRIGRAMAS) {
       trigramasArray = trigramasArray.slice(0, MAX_TRIGRAMAS);
       logEvent(1, "Trigramas truncados por límite de seguridad", {
-        original: originalTriCount,
-        limit: MAX_TRIGRAMAS,
-        input: cleanInput.substring(0, 50),
+        original: originalTriCount, limit: MAX_TRIGRAMAS, input: cleanInput.substring(0, 50)
       });
     }
 
+    // Cache key MD5 completo (32 chars) — elimina colisiones de versión anterior (24 chars)
     const cacheKey = generarCacheKey_(cleanInput);
     const cache = CacheService.getScriptCache();
     const cached = cache.get(cacheKey);
     if (cached) {
-      logEvent(0, "Cache hit en búsqueda de similitudes", { cacheKey, trigramas: trigramasArray.length });
+      logEvent(0, "Cache hit BQ", { cacheKey, trigramas: trigramasArray.length });
       return JSON.parse(cached);
     }
 
@@ -232,35 +231,21 @@ function buscarSimilitudesBQ(textoUsuario) {
     const res = BigQuery.Jobs.query(request, cfg.BQ_PROJECT);
     const bqDuration = Date.now() - bqStart;
 
-    const results = res.rows
-      ? res.rows.map(({ f }) => ({
-          id_codigo: f[0].v,
-          descripcion: f[1].v,
-          activo: Number(f[2].v) || 0,
-          similitud: Number(f[3].v) || 0,
-        }))
-      : [];
+    const results = res.rows ? res.rows.map(({ f }) => ({
+      id_codigo: f[0].v, descripcion: f[1].v, activo: Number(f[2].v) || 0, similitud: Number(f[3].v) || 0
+    })) : [];
 
-    try {
-      cache.put(cacheKey, JSON.stringify(results), CACHE_TTL_SEG);
-    } catch (err) {
-      logEvent(1, "Error al escribir en caché", { error: err.message, cacheKey });
-    }
+    try { cache.put(cacheKey, JSON.stringify(results), CACHE_TTL_SEG); }
+    catch (err) { logEvent(1, "Error al escribir en caché", { error: err.message, cacheKey }); }
 
-    logEvent(0, "Búsqueda BQ completada", {
-      durationMs: bqDuration,
-      trigramasEnviados: trigramasArray.length,
-      resultados: results.length,
-      input: cleanInput.substring(0, 50),
+    logEvent(0, "BQ query completada", {
+      durationMs: bqDuration, trigramasEnviados: trigramasArray.length,
+      resultados: results.length, input: cleanInput.substring(0, 50)
     });
-
     return results;
+
   } catch (e) {
-    logEvent(2, "Fallo en motor de auditoría léxica HCG", {
-      error: e.message,
-      stack: e.stack,
-      durationMs: Date.now() - startTime,
-    });
+    logEvent(2, "Fallo motor de auditoría", { error: e.message, stack: e.stack, durationMs: Date.now() - startTime });
     throw new Error(`Error analítico de catálogo: ${e.message}`);
   }
 }
@@ -596,8 +581,7 @@ const generarCacheKey_ = (input) => {
   const rawKey = `hcg_v3_${input}`;
   return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, rawKey)
     .map((b) => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2))
-    .join("")
-    .substring(0, 24);
+    .join("");
 };
 
 /**

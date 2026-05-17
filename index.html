@@ -1063,7 +1063,7 @@ select:not(:focus):valid ~ label {
           
           <div class="input-group form-full">
             <div class="file-upload-wrapper" id="fileUploadWrapper">
-              <input type="file" id="formPDF" accept="application/pdf" onchange="handleFileChange(this)">
+              <input type="file" id="formPDF" accept="application/pdf" onchange="handleFileChange(this)" aria-label="Adjuntar cotización institucional">
               <div class="custom-file-upload">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -1359,7 +1359,7 @@ function handleFileChange(input) {
       const umFinal = (umSelect === 'OTRO') ? umOtro : umSelect;
       if (umSelect === 'OTRO' && !umOtro) {
         showToast('Especifica la unidad de medida personalizada.', true);
-        $('formUMOtro').style.display = 'block';
+        $('wrapUMOtro').style.display = 'flex';
         $('formUMOtro').focus();
         return;
       }

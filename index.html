@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       /* Paleta Evolucionada de Alta Fidelidad y Contraste WCAG AA */
@@ -32,6 +33,8 @@
       --green-surface: #ecfdf5;
       --amber-main: #b45309;              /* #b45309/#fffbeb = 5.4:1 ✅ — corrige el badge orange */
       --amber-surface: #fffbeb;
+
+      --green-surface-subtle: rgba(5, 150, 105, 0.04);
 
       /* Sistema de espaciado — escala 4px */
       --space-1: 4px;
@@ -130,10 +133,11 @@
     }
 
     .compliance-banner h2 {
+      font-family: var(--font-body);
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       color: var(--blue-main);
       margin: 0 0 6px 0;
     }
@@ -252,15 +256,15 @@
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    .stepper__check-icon { display: none; }
+    
+    .stepper__step--done .stepper__icon { display: none !important; }
+    .stepper__step--done .stepper__check-icon { display: block !important; stroke: white; }
+
     .stepper__step--done .stepper__dot {
       background: var(--blue-main);
       border-color: var(--blue-main);
       color: white;
-    }
-    .stepper__step--done .stepper__icon { stroke: white; }
-    
-    .stepper__step--done .stepper__label {
-      color: var(--text-main);
     }
 
     .stepper__step--done {
@@ -313,6 +317,28 @@
       from { opacity: 0; transform: translateY(-12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    
+    /* === Animaciones de interfaz === */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes successPop {
+      0%   { transform: scale(0); }
+      60%  { transform: scale(1.15); }
+      80%  { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes drawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
     /* Caja Unión Unificada del Buscador (Estilo imagen.jpg) */
     .search-unified-box {
@@ -355,7 +381,7 @@
     }
 
     .search-unified-box input::placeholder {
-      color: #94a3b8;
+      color: #6b7280;
     }
 
     .search-unified-box .btn-primary {
@@ -474,7 +500,7 @@
     .custom-file-upload svg { color: var(--text-muted); flex-shrink: 0; transition: color 0.25s; }
     .file-upload-wrapper.has-file .custom-file-upload svg { color: var(--green-main); }
     .file-name-text { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .file-upload-wrapper.has-file .custom-file-upload { border-color: var(--green-main); border-style: solid; background: rgba(16, 185, 129, 0.02); }
+    .file-upload-wrapper.has-file .custom-file-upload { border-color: var(--green-main); border-style: solid; background: var(--green-surface-subtle); }
     .file-upload-wrapper.has-file .file-name-text { color: var(--text-main); font-weight: 500; }
 
     /* Tablas y Resultados */
@@ -491,7 +517,7 @@
     th { background: var(--bg-secondary); color: var(--text-muted); font-weight: 600; }
     tr:last-child td { border-bottom: none; }
     tbody tr { transition: background 0.2s; opacity: 0; animation: rowFadeIn 0.3s ease forwards; }
-    tbody tr:hover { background: #f0f6ff; }
+    tbody tr:hover { background: var(--blue-surface); }
     @keyframes rowFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
     /* Componentes Generales y Botoneras */
@@ -676,8 +702,26 @@
     .success-icon svg { stroke-dasharray: 27; stroke-dashoffset: 27; animation: drawCheck 0.4s ease 0.45s forwards; }
     .success-content { text-align: center; padding: 16px 0; opacity: 0; animation: fadeUp 0.4s ease 0.5s forwards; }
     .success-link { color: var(--blue-main); font-weight: 600; text-decoration: none; word-break: break-all; display: block; padding: 14px; background: white; border-radius: var(--radius-input); border: 1px solid var(--border-color); transition: all 0.2s; }
-    .success-link:hover { background: #f0f6ff; border-color: var(--blue-main); box-shadow: var(--shadow-sm); }
+    .success-link:hover { background: var(--blue-surface); border-color: var(--blue-main); box-shadow: var(--shadow-sm); }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    
+    .search-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: var(--bg-secondary);
+      padding: var(--space-2) var(--space-4);
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      width: max-content;
+      margin-bottom: var(--space-4);
+    }
+    .search-chip__icon { color: var(--text-muted); flex-shrink: 0; }
+    .search-chip__term { font-weight: 600; font-size: 13.5px; color: var(--text-main); }
+    
+    .success-footer { margin-bottom: 30px; text-align: left; }
+    .success-footer__label { color: var(--text-muted); font-size: 13px; margin-bottom: var(--space-2); }
+    .success-actions { justify-content: center; }
 
     /* Transformación Adaptativa a Tarjetas Élite (Solución 3) */
     @media (max-width: 600px) {
@@ -726,6 +770,7 @@
         <div class="stepper__step stepper__step--active" data-step="1" aria-current="step">
             <div class="stepper__dot">
                 <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                 <span class="stepper__number" aria-hidden="true">1</span>
             </div>
             <span class="stepper__label">Buscar</span>
@@ -734,6 +779,7 @@
         <div class="stepper__step" data-step="2">
             <div class="stepper__dot">
                  <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                 <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                  <span class="stepper__number" aria-hidden="true">2</span>
             </div>
             <span class="stepper__label">Resultados</span>
@@ -742,6 +788,7 @@
         <div class="stepper__step" data-step="3">
             <div class="stepper__dot">
                 <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                 <span class="stepper__number" aria-hidden="true">3</span>
             </div>
             <span class="stepper__label">Confirmar</span>
@@ -750,6 +797,7 @@
         <div class="stepper__step" data-step="4">
             <div class="stepper__dot">
                  <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                 <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                  <span class="stepper__number" aria-hidden="true">4</span>
             </div>
             <span class="stepper__label">Formulario</span>
@@ -758,6 +806,7 @@
         <div class="stepper__step" data-step="5">
             <div class="stepper__dot">
                  <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                 <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
                  <span class="stepper__number" aria-hidden="true">5</span>
             </div>
             <span class="stepper__label">Completado</span>
@@ -788,9 +837,9 @@
 
         <div id="phase-2" class="phase">
           <h2>Resultados de Coincidencia</h2>
-          <div class="search-chip" style="display:inline-flex; align-items:center; gap:8px; background:var(--bg-secondary); padding:8px 16px; border-radius:20px; border:1px solid var(--border-color); width:max-content; margin-bottom:16px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span style="font-weight: 600; font-size: 13.5px; color: var(--text-main)" id="chipSearchTerm"></span>
+          <div class="search-chip">
+            <svg class="search-chip__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span class="search-chip__term" id="chipSearchTerm"></span>
           </div>
           <p id="resultsSubtitle">Revise minuciosamente si alguno de los siguientes registros vigentes ampara su requerimiento técnico.</p>
           <div id="resultsContainer" role="region" aria-live="polite" aria-label="Resultados del Catálogo"></div>
@@ -957,11 +1006,11 @@
             </div>
             <h2>¡Expediente de Inclusión Generado!</h2>
             <p>El trámite ha quedado registrado en el SII HCG conforme a las normativas vigentes.</p>
-            <div class="disclaimer-box" style="margin-bottom: 30px; text-align: left">
-              <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 8px;">Documento de pre-alta generado para revisión del Subcomité:</p>
+            <div class="success-footer">
+              <p class="success-footer__label">Documento de pre-alta generado para revisión del Subcomité:</p>
               <a id="successLink" href="#" target="_blank" class="success-link">Abrir Formato Inclusión Oficial 2026</a>
             </div>
-            <div class="actions" style="justify-content: center">
+            <div class="actions success-actions">
               <button class="btn btn-primary" onclick="irFase(1, true)">Finalizar y Retornar al Inicio</button>
             </div>
           </div>
@@ -1015,37 +1064,33 @@
       }
     }
 
-    const STEP_ICONS = [
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>',
-    ];
-    const DONE_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-
     // PROPUESTA C: Stepper con navegación interactiva fluida hacia atrás
     function updateStepper(currentPhase) {
       const steps = document.querySelectorAll(".stepper__step");
       const lines = document.querySelectorAll(".stepper__line");
+
       steps.forEach((step, i) => {
         const n = i + 1;
+        const dot = step.querySelector(".stepper__dot");
+        const icon = dot.querySelector(".stepper__icon");
+        const checkIcon = dot.querySelector(".stepper__check-icon");
+
         step.classList.remove("stepper__step--active", "stepper__step--done");
         step.removeAttribute("onclick");
-        const dot = step.querySelector(".stepper__dot");
+        step.removeAttribute("aria-current");
 
         if (n === currentPhase) {
           step.classList.add("stepper__step--active");
-          dot.innerHTML = STEP_ICONS[i];
+          step.setAttribute("aria-current", "step");
         } else if (n < currentPhase) {
           step.classList.add("stepper__step--done");
-          dot.innerHTML = DONE_ICON;
-          step.setAttribute("onclick", `irFase(${n})`); // Activación del gatillo clicable
-        } else {
-          dot.innerHTML = STEP_ICONS[i];
+          step.setAttribute("onclick", `irFase(${n})`);
         }
       });
-      lines.forEach((line, i) => line.classList.toggle("stepper__line--filled", i < currentPhase - 1));
+
+      lines.forEach((line, i) => {
+        line.classList.toggle("stepper__line--filled", i < currentPhase - 1);
+      });
     }
 
     function irFase(num, force = false) {
@@ -1082,7 +1127,13 @@
         const term = $("searchInput").value.trim();
         if ($("chipSearchTerm")) $("chipSearchTerm").textContent = term;
       }
-      if (num === 3) $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
+      if (num === 3) {
+        $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
+        const checks = document.querySelectorAll('.disclaimer-check input[type="checkbox"]');
+        const btnPhase3 = document.querySelector('#phase-3 .btn-primary');
+        checks.forEach(c => c.checked = false);
+        if (btnPhase3) btnPhase3.disabled = true;
+      }
       if (num === 4 && !$("formDesc").value && $("searchInput").value) {
         $("formDesc").value = $("searchInput").value;
         updateCharCounter($("formDesc"));
@@ -1160,7 +1211,7 @@
         let scoreClass = score >= 60 ? "red" : score >= 35 ? "orange" : "gray";
         let activeClass = active ? "green" : "gray";
         return `<tr style="animation-delay:${index * 0.04}s">
-          <td data-label="Clave" style="font-family:monospace;color:var(--text-muted)">${escapeHTML(r.id_codigo || "N/A")}</td>
+          <td data-label="Clave" style="font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.02em;color:var(--text-muted)">${escapeHTML(r.id_codigo || "N/A")}</td>
           <td data-label="Descripción" style="font-weight:500">${escapeHTML(r.descripcion || "")}</td>
           <td data-label="Estado"><span class="badge ${activeClass}">${active ? "Activo" : "Inactivo"}</span></td>
           <td data-label="Similitud"><span class="badge ${scoreClass}">${score.toFixed(1)}%</span></td>
@@ -1351,9 +1402,14 @@
       
       const h3 = document.createElement("h3"); 
       h3.textContent = title;
+      h3.id = "modal-title-" + Date.now();
       
       const p = document.createElement("p"); 
       p.textContent = message;
+      p.id = "modal-desc-" + Date.now();
+      
+      overlay.setAttribute("aria-labelledby", h3.id);
+      overlay.setAttribute("aria-describedby", p.id);
       
       const actions = document.createElement("div"); 
       actions.className = "modal-actions";

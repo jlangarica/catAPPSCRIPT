@@ -98,10 +98,13 @@ function buscarSimilitudesBQ(textoUsuario) {
           descripcion_articulo,
           activo,
           (
-            SELECT COALESCE(ARRAY_AGG(DISTINCT SUBSTR(w, i, 3)), [])
-            FROM UNNEST(SPLIT(UPPER(REGEXP_REPLACE(NORMALIZE(descripcion_articulo, NFD), r'\\p{M}', '')), ' ')) AS w,
-                 UNNEST(GENERATE_ARRAY(1, LENGTH(w) - 2)) AS i
-            WHERE LENGTH(w) >= 3
+            SELECT COALESCE(ARRAY_AGG(DISTINCT SUBSTR(wf.w, i, 3)), [])
+            FROM (
+              SELECT w 
+              FROM UNNEST(SPLIT(UPPER(REGEXP_REPLACE(NORMALIZE(descripcion_articulo, NFD), r'\\p{M}', '')), ' ')) AS w
+              WHERE LENGTH(w) >= 3
+            ) AS wf,
+                 UNNEST(GENERATE_ARRAY(1, LENGTH(wf.w) - 2)) AS i
           ) AS trigramas
         FROM \`${bqProject}.${bqDataset}.${bqTable}\`
       ),
@@ -400,7 +403,11 @@ const obtenerClasificadorContexto_ = () => {
     }));
 
     const resultadoTexto = JSON.stringify(catalogoOptimizado);
-    cache.put(cacheKey, resultadoTexto, 21600); // 6 horas en caché
+    try {
+      cache.put(cacheKey, resultadoTexto, 21600); // 6 horas en caché
+    } catch (cacheError) {
+      console.warn("No se pudo cachear el catálogo (excede límite de 100KB de Apps Script): " + cacheError.message);
+    }
     return resultadoTexto;
 
   } catch (e) {

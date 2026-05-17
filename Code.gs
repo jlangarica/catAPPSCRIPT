@@ -99,7 +99,7 @@ function buscarSimilitudesBQ(textoUsuario) {
           activo,
           (
             SELECT COALESCE(ARRAY_AGG(DISTINCT SUBSTR(w, i, 3)), [])
-            FROM UNNEST(SPLIT(norm_desc, ' ')) AS w,
+            FROM UNNEST(SPLIT(UPPER(REGEXP_REPLACE(NORMALIZE(descripcion_articulo, NFD), r'\\p{M}', '')), ' ')) AS w,
                  UNNEST(GENERATE_ARRAY(1, LENGTH(w) - 2)) AS i
             WHERE LENGTH(w) >= 3
           ) AS trigramas

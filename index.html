@@ -1057,10 +1057,12 @@
 
           <div id="phase-4" class="phase">
             <h2>Formulario de Inclusión</h2>
-            <p>
-              Ingrese los datos técnicos correspondientes para el alta en el
-              Catálogo General.
-            </p>
+            <p>Ingrese los datos técnicos correspondientes para el alta en el Catálogo General.</p>
+
+            <div id="iaLoaderBanner" style="display: none; align-items: center; gap: 10px; padding: 12px; background: var(--blue-surface); border: 1px solid rgba(37, 99, 235, 0.15); border-radius: var(--radius-input); margin-bottom: 20px; font-size: 13px; color: var(--blue-main); font-weight: 500;">
+              <div class="spinner" style="width:16px; height:16px; border-width:2px; border-top-color:var(--blue-main);" aria-hidden="true"></div>
+              <span>Estandarizando propuesta técnica automatizada en segundo plano...</span>
+            </div>
 
             <div class="form-grid">
               <div class="form-section form-full">
@@ -1077,17 +1079,19 @@
                   oninput="updateCharCounter(this)"
                 />
                 <label for="formDesc">Descripción del Artículo</label>
-                <div
-                  style="
-                    display: flex;
-                    justify-content: space-between;
-                    margin-top: 6px;
-                  "
-                >
-                  <span style="font-size: 11px; color: var(--text-muted)"
-                    >Regla 2.7: Redacción clara, genérica y sin abreviaturas
-                    complejas.</span
-                  >
+                
+                <div id="iaSuggestionBox" style="display: none; margin-top: 8px; padding: 10px; background: var(--green-surface-subtle); border: 1px dashed var(--green-main); border-radius: 6px; align-items: center; justify-content: space-between; gap: 12px;">
+                  <span style="font-size: 12px; color: var(--text-main); line-height: 1.4;">
+                    ✨ **Propuesta bajo Estándar Internacional:** <span id="iaSuggestedText" style="color:var(--blue-main); font-weight:600;"></span>
+                  </span>
+                  <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                    <button type="button" class="btn" id="btnApproveIA" onclick="aceptarSugerenciaIA(true)" style="padding: 3px 10px; font-size: 11px; background: var(--green-main); color: white; border-radius: 4px; border:none; font-weight:600; cursor:pointer;">Aprobar</button>
+                    <button type="button" class="btn btn-secondary" id="btnRejectIA" onclick="aceptarSugerenciaIA(false)" style="padding: 3px 10px; font-size: 11px; border-radius: 4px; cursor:pointer;">Rechazar</button>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                  <span style="font-size: 11px; color: var(--text-muted)">Regla 2.7: Redacción clara, genérica y sin abreviaturas complejas.</span>
                   <span class="char-counter" id="formDescCounter">0 / 200</span>
                 </div>
               </div>
@@ -1452,41 +1456,148 @@
 
       // ─── GESTIÓN DE FASES Y NAVEGACIÓN ──────────────────────────────────────────
 
+      // Variables globales de control para transiciones de texto
+      let _textoOriginalBusqueda = "";
+      let _propuestaTextoIA = "";
+
       /**
-       * Cambia la fase activa de la aplicación.
-       * @param {number} num - Fase a cargar.
-       * @param {boolean} [force=false] - Forzar transición.
+       * Modificación del Orquestador de Navegación de Fases original.
+       * Dispara la clasificación en segundo plano de manera transparente al cambiar a la Fase 4.
        */
       const irFase = (num, force = false) => {
         if (!force && num === _currentPhase) return;
         const isForward = num > _currentPhase;
         _currentPhase = num;
 
-        document
-          .querySelectorAll(".phase")
-          .forEach((el) => el.classList.remove("active"));
+        document.querySelectorAll(".phase").forEach((el) => el.classList.remove("active"));
         const target = $(`phase-${num}`);
 
         target.style.animation = "none";
         target.offsetHeight;
-        target.style.animation = isForward
-          ? "slideInForward 0.25s var(--ease-out)"
-          : "none";
+        target.style.animation = isForward ? "slideInForward 0.25s var(--ease-out)" : "none";
         target.classList.add("active");
 
         updateStepper_(num);
 
         if (FOCUS_MAP[num]) setTimeout(() => $(FOCUS_MAP[num])?.focus(), 120);
-        if (num === 2)
-          $("chipSearchTerm").textContent = $("searchInput").value.trim();
+        if (num === 2) $("chipSearchTerm").textContent = $("searchInput").value.trim();
         if (num === 3) {
           $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
           resetDisclaimerChecks_();
         }
-        if (num === 4 && !$("formDesc").value) {
-          $("formDesc").value = $("searchInput").value;
+        
+        // LOGIC DISPATCH AUTOMÁTICO AL ENTRAR A LA FASE 4
+        if (num === 4) {
+          _textoOriginalBusqueda = $("searchInput").value.trim();
+          
+          // El campo adopta inmediatamente el texto original del usuario como predeterminado editable
+          $("formDesc").value = _textoOriginalBusqueda;
           updateCharCounter($("formDesc"));
+          
+          // Invocar normalización internacional en segundo plano
+          ejecutarClasificacionAutomaticaIA_(_textoOriginalBusqueda);
         }
+      };
+
+      /**
+       * Llama de manera asíncrona al motor analítico del servidor.
+       * @private
+       */
+      const ejecutarClasificacionAutomaticaIA_ = (termino) => {
+        const banner = $("iaLoaderBanner");
+        const suggestionBox = $("iaSuggestionBox");
+        
+        banner.style.display = "flex";
+        suggestionBox.style.display = "none";
+
+        if (isGASAvailable_()) {
+          google.script.run
+            .withSuccessHandler((sugerencias) => {
+              banner.style.display = "none";
+              if (sugerencias) {
+                poblarFormularioPredeterminado_(sugerencias);
+              }
+            })
+            .withFailureHandler((err) => {
+              banner.style.display = "none";
+              showToast("Catalogación automática suspendida: " + err.message, true);
+            })
+            .sugerirCamposConIA(termino);
+        } else {
+          // Aislamiento DX para pruebas en localhost
+          setTimeout(() => {
+            banner.style.display = "none";
+            poblarFormularioPredeterminado_({
+              descripcionSugerida: termino.toUpperCase() + " PROCESADO BAJO ESTÁNDAR INT",
+              partidaCOG: "2541",
+              unidadMedida: "PIEZA",
+              familia: "MATERIAL DE CURACIÓN"
+            });
+          }, 1200);
+        }
+      };
+
+      /**
+       * Rellena automáticamente los campos predeterminados del clasificador (COG, Familia, UM).
+       * Deja intacto el campo de justificación del usuario. Todos los campos quedan editables.
+       * @private
+       */
+      const poblarFormularioPredeterminado_ = (datos) => {
+        _propuestaTextoIA = datos.descripcionSugerida || "";
+
+        // Habilitar panel de decisión para la descripción
+        $("iaSuggestedText").textContent = _propuestaTextoIA;
+        $("iaSuggestionBox").style.display = "flex";
+
+        // Llenado automático predeterminado de metadatos estructurales (completamente editables)
+        $("formCOG").value = datos.partidaCOG || "";
+        $("formFamilia").value = datos.familia || "";
+
+        // Mapeo adaptativo del selector de Unidad de Medida institucional
+        const selectUM = $("formUM");
+        const unMedida = String(datos.unidadMedida || "").toUpperCase();
+        const opcionesEstandar = ["PIEZA", "CAJA C/100", "CAJA C/50", "FRASCO", "AMPULA", "ENVASE", "EQUIPO"];
+
+        if (opcionesEstandar.includes(unMedida)) {
+          selectUM.value = unMedida;
+          toggleOtroUM(unMedida);
+        } else if (unMedida !== "") {
+          selectUM.value = "OTRO";
+          toggleOtroUM("OTRO");
+          $("formUMOtro").value = unMedida;
+          $("formUMOtro").classList.add("has-value");
+        }
+
+        // Actualizar estados visuales de las etiquetas CSS flotantes de tu UI
+        const camposAI = ["formCOG", "formFamilia", "formUM"];
+        camposAI.forEach(id => {
+          const el = $(id);
+          if (el) {
+            el.classList.add("has-value");
+            el.style.transition = "all 0.3s var(--ease-out)";
+            el.style.borderColor = "rgba(37, 99, 235, 0.4)";
+            setTimeout(() => el.style.borderColor = "", 2000);
+          }
+        });
+      };
+
+      /**
+       * Aplica o descarta la propuesta de redacción con estándar internacional.
+       * @param {boolean} aprobado - True aplica la sugerencia de la IA, False restaura el texto original de búsqueda.
+       */
+      const aceptarSugerenciaIA = (aprobado) => {
+        const inputDesc = $("formDesc");
+        
+        if (aprobado) {
+          inputDesc.value = _propuestaTextoIA;
+          showToast("Redacción internacional aplicada.");
+        } else {
+          inputDesc.value = _textoOriginalBusqueda;
+          showToast("Se restauró tu descripción original.");
+        }
+        
+        updateCharCounter(inputDesc);
+        $("iaSuggestionBox").style.display = "none";
       };
 
       const updateStepper_ = (phase) => {

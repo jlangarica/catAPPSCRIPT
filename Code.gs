@@ -287,7 +287,114 @@ function generarDocumentoInclusion(datos, pdfBase64) {
   }
 }
 
+/**
+ * Endpoint analítico automático. Clasifica el término de búsqueda usando Gemini 1.5 Flash
+ * bajo un esquema estructurado estricto basado en estándares internacionales y el catálogo CONAC.
+ * * @param {string} descripcionCruda - El término de búsqueda original del usuario.
+ * @returns {Object} Objeto estructurado con las clasificaciones predeterminadas.
+ */
+function sugerirCamposConIA(descripcionCruda) {
+  try {
+    const input = String(descripcionCruda || "").trim();
+    const apiKey = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
+    if (!apiKey) throw new Error("La propiedad de entorno 'GEMINI_API_KEY' no está configurada.");
+
+    const conacContexto = obtenerClasificadorContexto_();
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const systemInstruction = `Eres el sistema automatizado de catalogación oficial. Tu función es clasificar el insumo ingresado por el usuario utilizando exclusivamente el catálogo CONAC suministrado.
+
+CATÁLOGO CONAC DE REFERENCIA:
+${conacContexto}
+
+REGLAS DE PROCESAMIENTO Y GENERACIÓN:
+1. descripcionSugerida: Re-escribe y normaliza la descripción del insumo en MAYÚSCULAS. La redacción debe ser técnica, genérica y alineada estrictamente con normas y estándares internacionales de catalogación de bienes (anteponiendo el nombre base, características esenciales, dimensiones o empaque, omitiendo marcas comerciales o términos informales).
+2. partidaCOG: Determina el código de 4 dígitos exacto comparando el insumo con las descripciones e inclusiones del catálogo CONAC de arriba.
+3. unidadMedida: Mapea a una de las siguientes opciones del sistema: "PIEZA", "CAJA C/100", "CAJA C/50", "FRASCO", "AMPULA", "ENVASE", "EQUIPO". Si el estándar internacional del insumo exige otra, escribe su abreviatura corta en mayúsculas.
+4. familia: Deduce la macrocategoría correspondiente a la partida (Ej: "MATERIAL DE CURACIÓN", "MEDICAMENTOS", "EQUIPO MÉDICO", "PAPELERÍA").
+
+Responde única y obligatoriamente con la estructura JSON definida en el responseSchema.`;
+
+    const payload = {
+      contents: [{ parts: [{ text: `Clasifica de forma automática el término: "${input}"` }] }],
+      systemInstruction: { parts: [{ text: systemInstruction }] },
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            descripcionSugerida: { type: "STRING" },
+            partidaCOG: { type: "STRING" },
+            unidadMedida: { type: "STRING" },
+            familia: { type: "STRING" }
+          },
+          required: ["descripcionSugerida", "partidaCOG", "unidadMedida", "familia"]
+        }
+      }
+    };
+
+    const response = UrlFetchApp.fetch(endpoint, {
+      method: "post",
+      contentType: "application/json",
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    if (response.getResponseCode() !== 200) throw new Error(response.getContentText());
+
+    const resJson = JSON.parse(response.getContentText());
+    return JSON.parse(resJson.candidates[0].content.parts[0].text);
+
+  } catch (e) {
+    console.error({ message: "Error en Copiloto Automático", error: e.message });
+    throw new Error(`Asistente IA: ${e.message}`);
+  }
+}
+
 // ─── FUNCIONES PRIVADAS (SUFFIX: _) ──────────────────────────────────────────
+
+/**
+ * Recupera el catálogo de partidas desde el archivo configurado en las propiedades del script.
+ * Cumple estrictamente con la directiva de no almacenar IDs fijos en el código fuente.
+ * * @private
+ * @returns {string} Estructura comprimida de partidas en formato JSON string.
+ * @throws {Error} Si la propiedad de entorno CONAC_JSON_ID no está definida o el archivo no existe.
+ */
+const obtenerClasificadorContexto_ = () => {
+  const cache = CacheService.getScriptCache();
+  const cacheKey = "hcg_conac_comprimido_cache";
+  const cached = cache.get(cacheKey);
+
+  if (cached) return cached;
+
+  try {
+    // Lectura pura desde PropertiesService sin fallbacks hardcoded
+    const propId = PropertiesService.getScriptProperties().getProperty("CONAC_JSON_ID");
+    if (!propId) {
+      throw new Error("La propiedad de entorno 'CONAC_JSON_ID' no se encuentra configurada en este script.");
+    }
+
+    const file = DriveApp.getFileById(propId);
+    const jsonString = file.getBlob().getDataAsString();
+    const partidasRaw = JSON.parse(jsonString);
+
+    // Reducción del catálogo para optimizar la ventana de contexto
+    const catalogoOptimizado = partidasRaw.map(p => ({
+      partida: String(p.id || ""),
+      nombre: String(p.nombre || ""),
+      descripcion: String(p.descripcion || "").substring(0, 220),
+      inclusiones: Array.isArray(p.inclusiones_ejemplos) ? p.inclusiones_ejemplos.slice(0, 8) : []
+    }));
+
+    const resultadoTexto = JSON.stringify(catalogoOptimizado);
+    cache.put(cacheKey, resultadoTexto, 21600); // 6 horas en caché
+    return resultadoTexto;
+
+  } catch (e) {
+    console.error({ message: "Fallo crítico al resolver fuente de datos CONAC", error: e.message });
+    throw new Error(`Infraestructura de Datos: ${e.message}`);
+  }
+};
 
 /**
  * Obtiene o crea la carpeta dedicada para las solicitudes de inclusión en Drive.

@@ -232,28 +232,42 @@
     }
     .input-group.required label::after { content: ' *'; color: var(--red-main); }
     
-    input[type="text"]:focus ~ label,
-    input[type="number"]:focus ~ label,
-    textarea:focus ~ label,
-    input[type="text"]:not(:placeholder-shown) ~ label,
-    input[type="number"]:not(:placeholder-shown) ~ label,
-    textarea:not(:placeholder-shown) ~ label,
-    select:focus ~ label,
-    select:valid ~ label,
-    input[type="file"] ~ label {
-      top: -8px;
-      left: 12px;
-      font-size: 12px;
-      color: var(--blue-main);
-      font-weight: 600;
-    }
-    
-    input[type="text"]:not(:focus):not(:placeholder-shown) ~ label,
-    input[type="number"]:not(:focus):not(:placeholder-shown) ~ label,
-    textarea:not(:focus):not(:placeholder-shown) ~ label,
-    select:not(:focus):valid ~ label {
-      color: var(--text-muted);
-    }
+/* Corrección para selectores y campos con valor (Solución 1) */
+.input-group select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none; /* Limpia el estilo nativo para control total */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 16px;
+}
+
+/* Modificación de la regla flotante para incluir la clase reactiva .has-value */
+input[type="text"]:focus ~ label,
+input[type="number"]:focus ~ label,
+textarea:focus ~ label,
+select:focus ~ label,
+input[type="text"]:not(:placeholder-shown) ~ label,
+input[type="number"]:not(:placeholder-shown) ~ label,
+textarea:not(:placeholder-shown) ~ label,
+select:not([value=""]):valid ~ label,
+.has-value ~ label,
+input[type="file"] ~ label {
+  top: -8px;
+  left: 12px;
+  font-size: 12px;
+  color: var(--blue-main);
+  font-weight: 600;
+}
+
+input[type="text"]:not(:focus):not(:placeholder-shown) ~ label,
+input[type="number"]:not(:focus):not(:placeholder-shown) ~ label,
+textarea:not(:focus):not(:placeholder-shown) ~ label,
+select:not(:focus):valid ~ label {
+  color: var(--text-muted);
+}
 
     input[type="text"], input[type="number"], select, textarea {
       width: 100%;
@@ -722,6 +736,63 @@
       .success-content { opacity: 1 !important; transform: none !important; }
       .success-icon svg { stroke-dashoffset: 0 !important; }
     }
+/* Transformación Responsiva de Tabla a Tarjetas Élite (Solución 3) */
+@media (max-width: 600px) {
+  .table-container {
+    border: none;
+    background: transparent;
+    overflow-x: visible;
+  }
+  
+  /* Forzamos a los elementos de la tabla a comportarse como bloques independientes */
+  table, thead, tbody, th, td, tr { 
+    display: block; 
+  }
+  
+  /* Ocultamos la cabecera original de forma accesible */
+  thead { 
+    display: none; 
+  }
+  
+  tbody tr {
+    background: var(--bg-window);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-win);
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  }
+  
+  tbody tr:hover {
+    background: var(--bg-window);
+    box-shadow: inset 4px 0 0 var(--blue-main), 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+  
+  td {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    text-align: right;
+  }
+  
+  td:last-child {
+    border-bottom: none;
+  }
+  
+  /* Inyección dinámica de las etiquetas de la columna */
+  td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    text-align: left;
+    padding-right: 8px;
+  }
+}
 
   </style>
 </head>
@@ -1071,29 +1142,31 @@
       $('btnSearch').textContent = isLoading ? 'Consultando...' : 'Verificar';
     }
 
-    function renderResultados(data) {
-      const container = $('resultsContainer');
-      const subtitle = $('resultsSubtitle');
-      if (!data || data.length === 0) {
-        subtitle.textContent = 'No se encontraron duplicados evidentes.';
-        container.innerHTML = '<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500">Búsqueda Limpia</h3><p style="margin:0;font-size:13px">Es seguro proceder a solicitar una nueva clave.</p></div>';
-        return;
-      }
-      subtitle.textContent = `Se encontraron ${data.length} coincidencia${data.length !== 1 ? 's' : ''} para "${$('searchInput').value.trim()}". Revisa con cuidado.`;
-      let rows = data.map((r, index) => {
-        const score = Number.parseFloat(r.similitud || 0);
-        const active = Number(r.activo) === 1;
-        let scoreClass = score >= 60 ? 'red' : (score >= 35 ? 'orange' : 'gray');
-        let activeClass = active ? 'green' : 'gray';
-        return `<tr style="animation-delay:${index * 0.04}s">
-            <td style="font-family:monospace;color:var(--text-muted)">${escapeHTML(r.id_codigo || 'N/A')}</td>
-            <td style="font-weight:500">${escapeHTML(r.descripcion || '')}</td>
-            <td><span class="badge ${activeClass}">${active ? 'Activo' : 'Inactivo'}</span></td>
-            <td><span class="badge ${scoreClass}">${score.toFixed(1)}%</span></td>
-          </tr>`;
-      }).join('');
-      container.innerHTML = `<div class="table-container"><table aria-label="Coincidencias encontradas en el catálogo"><caption class="sr-only">Resultados de búsqueda del catálogo</caption><thead><tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-    }
+function renderResultados(data) {
+  const container = $('resultsContainer');
+  const subtitle = $('resultsSubtitle');
+  if (!data || data.length === 0) {
+    subtitle.textContent = 'No se encontraron duplicados evidentes.';
+    container.innerHTML = '<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500">Búsqueda Limpia</h3><p style="margin:0;font-size:13px">Es seguro proceder a solicitar una nueva clave.</p></div>';
+    return;
+  }
+  subtitle.textContent = `Se encontraron ${data.length} coincidencia${data.length !== 1 ? 's' : ''} para "${$('searchInput').value.trim()}". Revisa con cuidado.`;
+  
+  // Agregamos data-label a cada celda para el renderizado adaptativo móvil
+  let rows = data.map((r, index) => {
+    const score = Number.parseFloat(r.similitud || 0);
+    const active = Number(r.activo) === 1;
+    let scoreClass = score >= 60 ? 'red' : (score >= 35 ? 'orange' : 'gray');
+    let activeClass = active ? 'green' : 'gray';
+    return `<tr style="animation-delay:${index * 0.04}s">
+        <td data-label="Clave" style="font-family:monospace;color:var(--text-muted)">${escapeHTML(r.id_codigo || 'N/A')}</td>
+        <td data-label="Descripción" style="font-weight:500">${escapeHTML(r.descripcion || '')}</td>
+        <td data-label="Estado"><span class="badge ${activeClass}">${active ? 'Activo' : 'Inactivo'}</span></td>
+        <td data-label="Similitud"><span class="badge ${scoreClass}">${score.toFixed(1)}%</span></td>
+      </tr>`;
+  }).join('');
+  container.innerHTML = `<div class="table-container"><table aria-label="Coincidencias encontradas en el catálogo"><caption class="sr-only">Resultados de búsqueda del catálogo</caption><thead><tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
 
     function toggleOtroUM(val) {
       const otroInput = $('formUMOtro');
@@ -1388,6 +1461,20 @@
           ripple.addEventListener('animationend', () => ripple.remove());
         });
       });
+  // Control reactivo de clases en elementos SELECT para evitar colisión de texto
+  const interceptarSelects = () => {
+    document.querySelectorAll('.input-group select').forEach(selectElement => {
+      const evaluarFlotado = () => {
+        selectElement.classList.toggle('has-value', selectElement.value !== "");
+      };
+      selectElement.addEventListener('change', evaluarFlotado);
+      evaluarFlotado(); // Evaluación en el primer renderizado de la Fase 4
+    });
+  };
+  
+  // Ejecutamos la validación de los selectores
+  interceptarSelects();
+
       $('searchInput').focus();
     });
   </script>

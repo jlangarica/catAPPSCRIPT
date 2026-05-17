@@ -1591,7 +1591,7 @@
       };
 
       const confirmarCancelar = () => {
-        const isDirty = DIRTY_CHECK_IDS_.some(id => $(id)?.value.trim() !== "");
+        const isDirty = DIRTY_CHECK_IDS.some(id => $(id)?.value.trim() !== "");
         if (!isDirty) { irFase(1); return; }
         showModal(
           "¿Descartar formulario?",

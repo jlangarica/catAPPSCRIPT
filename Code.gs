@@ -12,7 +12,8 @@
 // ─── CONSTANTES DE CONFIGURACIÓN ─────────────────────────────────────────────
 
 /** @const {string} ID de la hoja de cálculo plantilla (HCG Formato Inclusión 2026) */
-const ID_PLANTILLA = "1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8";
+const ID_PLANTILLA = PropertiesService.getScriptProperties().getProperty("TEMPLATE_SHEET_ID") 
+                     || "1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8";
 
 /** @const {string} Nombre de la hoja dentro de la plantilla */
 const NOMBRE_HOJA = "Formato";

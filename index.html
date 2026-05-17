@@ -1,1292 +1,2687 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Verificador de Catálogo HCG</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      /* Paleta Evolucionada de Alta Fidelidad y Contraste WCAG AA */
-      --bg-body: #f7f8fa;
-      --bg-window: #ffffff;
-      --bg-secondary: #f0f2f5;           /* Ligeramente más oscuro para mejor separación */
-      --text-main: #111827;               /* Más profundo que #0f172a para mayor punch */
-      --text-muted: #4b5563;              /* Ajustado — 5.9:1 sobre #ffffff y 4.7:1 sobre bg-secondary */
-      --border-color: #e2e5ea;            /* Suavizado — menos agresivo */
+  <head>
+    <meta charset="UTF-8" />
+    <base target="_top" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verificador de Catálogo HCG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ===================================================================
+     * Design Tokens — Paleta WCAG 2.1 AA · Sistema de espaciado 4px
+     * =================================================================== */
+      :root {
+        --bg-body: #f7f8fa;
+        --bg-window: #ffffff;
+        --bg-secondary: #f0f2f5;
+        --text-main: #111827;
+        --text-muted: #4b5563;
+        --border-color: #e2e5ea;
 
-      /* Accent — Azul institucional más contenido */
-      --blue-main: #1e40af;               /* Más profundo, más autoridad */
-      --blue-hover: #1d3fa0;
-      --blue-focus: rgba(30, 64, 175, 0.2);
-      --blue-surface: #eff3ff;            /* Superficie tinted para highlights sutiles */
+        --blue-main: #1e40af;
+        --blue-hover: #1d3fa0;
+        --blue-focus: rgba(30, 64, 175, 0.2);
+        --blue-surface: #eff3ff;
 
-      /* Semánticos — Todos verificados ≥ 4.5:1 */
-      --red-main: #dc2626;
-      --red-surface: #fef2f2;
-      --green-main: #059669;              /* #059669/#ecfdf5 = 5.0:1 ✅ */
-      --green-surface: #ecfdf5;
-      --amber-main: #b45309;              /* #b45309/#fffbeb = 5.4:1 ✅ — corrige el badge orange */
-      --amber-surface: #fffbeb;
+        --red-main: #dc2626;
+        --red-surface: #fef2f2;
+        --green-main: #059669;
+        --green-surface: #ecfdf5;
+        --amber-main: #b45309;
+        --amber-surface: #fffbeb;
+        --green-surface-subtle: rgba(5, 150, 105, 0.04);
 
-      --green-surface-subtle: rgba(5, 150, 105, 0.04);
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-8: 32px;
+        --space-10: 40px;
+        --space-12: 48px;
+        --space-16: 64px;
 
-      /* Sistema de espaciado — escala 4px */
-      --space-1: 4px;
-      --space-2: 8px;
-      --space-3: 12px;
-      --space-4: 16px;
-      --space-5: 20px;
-      --space-6: 24px;
-      --space-8: 32px;
-      --space-10: 40px;
-      --space-12: 48px;
-      --space-16: 64px;
+        --font-heading: "Syne", "DM Sans", sans-serif;
+        --font-body: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+        --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
-      /* Tipografía */
-      --font-heading: 'Syne', 'DM Sans', sans-serif;
-      --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        --radius-win: 16px;
+        --radius-btn: 12px;
+        --radius-input: 12px;
 
-      --radius-win: 16px;
-      --radius-btn: 12px;
-      --radius-input: 12px;
+        --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+        --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        --duration-fast: 150ms;
+        --duration-normal: 250ms;
+        --duration-slow: 350ms;
 
-      /* Transiciones consistentes */
-      --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
-      --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      --duration-fast: 150ms;
-      --duration-normal: 250ms;
-      --duration-slow: 350ms;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md:
+          0 4px 6px -1px rgba(15, 23, 42, 0.08),
+          0 2px 4px -2px rgba(15, 23, 42, 0.04);
+        --shadow-lg:
+          0 10px 25px -5px rgba(15, 23, 42, 0.1),
+          0 8px 10px -6px rgba(15, 23, 42, 0.05);
+      }
 
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
-      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
-    }
+      /* ─── Reset & Base ─────────────────────────────────────────────── */
+      * {
+        box-sizing: border-box;
+      }
 
-    * { box-sizing: border-box; }
-    
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: var(--font-body);
-      background: var(--bg-body);
-      position: relative;
-      color: var(--text-main);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 0 var(--space-6) var(--space-10);
-      -webkit-font-smoothing: antialiased;
-    }
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--font-body);
+        background: var(--bg-body);
+        position: relative;
+        color: var(--text-main);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        padding: 0 var(--space-6) var(--space-10);
+        -webkit-font-smoothing: antialiased;
+      }
 
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-    }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 0;
+      }
 
-    h1, h2, h3, h4, h5, h6 {
-      font-family: var(--font-heading);
-    }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: var(--font-heading);
+      }
 
-    /* Layout Estilo Hero Abierto y Fluido */
-    .app-container {
-      width: 100%;
-      max-width: 1000px;
-      margin-top: var(--space-10);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-8);
-      position: relative;
-      z-index: 1;
-    }
+      /* ─── Layout ───────────────────────────────────────────────────── */
+      .app-container {
+        width: 100%;
+        max-width: 1000px;
+        margin-top: var(--space-10);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-8);
+        position: relative;
+        z-index: 1;
+      }
 
-    /* Banner Normativo Premium (Glassmorphism sutil) */
-    .compliance-banner {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(29, 78, 216, 0.15);
-      border-left: 4px solid var(--blue-main);
-      border-radius: var(--radius-win);
-      padding: 20px 24px;
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
+      /* ─── Compliance Banner ────────────────────────────────────────── */
+      .compliance-banner {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(29, 78, 216, 0.15);
+        border-left: 4px solid var(--blue-main);
+        border-radius: var(--radius-win);
+        padding: 20px 24px;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
 
-    .compliance-banner svg {
-      color: var(--blue-main);
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
+      .compliance-banner svg {
+        color: var(--blue-main);
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
 
-    .compliance-banner h2 {
-      font-family: var(--font-body);
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--blue-main);
-      margin: 0 0 6px 0;
-    }
+      .compliance-banner h2 {
+        font-family: var(--font-body);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--blue-main);
+        margin: 0 0 6px 0;
+      }
 
-    .compliance-banner p {
-      font-size: 13.5px;
-      line-height: 1.5;
-      color: var(--text-main);
-      margin: 0;
-    }
+      .compliance-banner p {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--text-main);
+        margin: 0;
+      }
 
-    /* Encabezado Corporativo Centralizado */
-    .brand-header {
-      text-align: center;
-      margin-bottom: 8px;
-    }
+      /* ─── Brand Header ─────────────────────────────────────────────── */
+      .brand-header {
+        text-align: center;
+        margin-bottom: 8px;
+      }
 
-    .brand-header p {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
+      .brand-header p {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
 
-    .brand-header h1 {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      margin: 0;
-      color: var(--text-main);
-    }
-    
-    .phase h2 {
+      .brand-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        margin: 0;
+        color: var(--text-main);
+      }
+
+      .phase h2 {
         font-family: var(--font-heading);
         font-weight: 700;
         font-size: 22px;
         letter-spacing: -0.02em;
-    }
+      }
 
-    /* Contenedor Principal de Fases */
-    .main-card {
-      background: var(--bg-window);
-      border-radius: var(--radius-win);
-      border: 1px solid rgba(15, 23, 42, 0.06);
-      box-shadow: var(--shadow-lg);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      min-height: 450px;
-    }
+      /* ─── Main Card ────────────────────────────────────────────────── */
+      .main-card {
+        background: var(--bg-window);
+        border-radius: var(--radius-win);
+        border: 1px solid rgba(15, 23, 42, 0.06);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 450px;
+      }
 
-    /* Stepper Integrado en el Flujo */
-    .stepper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 40px;
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border-color);
-      flex-shrink: 0;
-    }
-    
-    .stepper__step {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      user-select: none;
-    }
-    
-    .stepper__dot {
-      width: 36px;
-      height: 36px;
-      padding: 4px;
-      border-radius: 50%;
-      border: 2px solid var(--border-color);
-      background: var(--bg-window);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      flex-shrink: 0;
-    }
-    
-    .stepper__icon { display: block; }
-    .stepper__number { display: none; }
+      /* ─── Stepper ──────────────────────────────────────────────────── */
+      .stepper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 40px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+      }
 
-    .stepper__label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      white-space: nowrap;
-      transition: color 0.25s ease;
-    }
+      .stepper__step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        user-select: none;
+      }
 
-    .stepper__line {
-      width: 48px;
-      height: 2px;
-      background: var(--border-color);
-      margin: 0 12px;
-      border-radius: 1px;
-      position: relative;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
+      .stepper__dot {
+        width: 36px;
+        height: 36px;
+        padding: 4px;
+        border-radius: 50%;
+        border: 2px solid var(--border-color);
+        background: var(--bg-window);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        flex-shrink: 0;
+      }
 
-    .stepper__line::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: var(--blue-main);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+      .stepper__icon {
+        display: block;
+      }
+      .stepper__number {
+        display: none;
+      }
 
-    .stepper__check-icon { display: none; }
-    
-    .stepper__step--done .stepper__icon { display: none !important; }
-    .stepper__step--done .stepper__check-icon { display: block !important; stroke: white; }
+      .stepper__label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        white-space: nowrap;
+        transition: color 0.25s ease;
+      }
 
-    .stepper__step--done .stepper__dot {
-      background: var(--blue-main);
-      border-color: var(--blue-main);
-      color: white;
-    }
+      .stepper__line {
+        width: 48px;
+        height: 2px;
+        background: var(--border-color);
+        margin: 0 12px;
+        border-radius: 1px;
+        position: relative;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
 
-    .stepper__step--done {
-      cursor: pointer;
-    }
+      .stepper__line::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--blue-main);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-    .stepper__step--done:hover .stepper__dot {
-      background: var(--blue-hover);
-      border-color: var(--blue-hover);
-      transform: scale(1.05);
-    }
+      .stepper__check-icon {
+        display: none;
+      }
 
-    .stepper__line--filled::after { transform: scaleX(1); }
-    
-    .stepper__step--active .stepper__dot {
-      border-color: var(--blue-main);
-      color: var(--blue-main);
-      box-shadow: 0 0 0 4px var(--blue-focus);
-      background: var(--bg-window);
-    }
-    
-    .stepper__step--active .stepper__label {
-      color: var(--text-main);
-      font-weight: 600;
-    }
+      .stepper__step--done .stepper__icon {
+        display: none !important;
+      }
+      .stepper__step--done .stepper__check-icon {
+        display: block !important;
+        stroke: white;
+      }
 
-    /* Componentes del Área de Contenido */
-    .content-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
+      .stepper__step--done .stepper__dot {
+        background: var(--blue-main);
+        border-color: var(--blue-main);
+        color: white;
+      }
 
-    .phase {
-      display: none;
-      padding: var(--space-10) var(--space-12);
-      flex-direction: column;
-      width: 100%;
-      animation: slideInForward 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      will-change: opacity, transform;
-    }
+      .stepper__step--done {
+        cursor: pointer;
+      }
 
-    .phase.active { display: flex; }
+      .stepper__step--done:hover .stepper__dot {
+        background: var(--blue-hover);
+        border-color: var(--blue-hover);
+        transform: scale(1.05);
+      }
 
-    @keyframes slideInForward {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideInBackward {
-      from { opacity: 0; transform: translateY(-12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    
-    /* === Animaciones de interfaz === */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
+      .stepper__line--filled::after {
+        transform: scaleX(1);
+      }
 
-    @keyframes successPop {
-      0%   { transform: scale(0); }
-      60%  { transform: scale(1.15); }
-      80%  { transform: scale(0.95); }
-      100% { transform: scale(1); }
-    }
+      .stepper__step--active .stepper__dot {
+        border-color: var(--blue-main);
+        color: var(--blue-main);
+        box-shadow: 0 0 0 4px var(--blue-focus);
+        background: var(--bg-window);
+      }
 
-    @keyframes drawCheck {
-      to { stroke-dashoffset: 0; }
-    }
+      .stepper__step--active .stepper__label {
+        color: var(--text-main);
+        font-weight: 600;
+      }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+      /* ─── Content Area & Phases ────────────────────────────────────── */
+      .content-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
 
-    /* Caja Unión Unificada del Buscador (Estilo imagen.jpg) */
-    .search-unified-box {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-input);
-      background: var(--bg-window);
-      padding: 4px;
-      box-shadow: var(--shadow-sm);
-      transition: border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+      .phase {
+        display: none;
+        padding: var(--space-10) var(--space-12);
+        flex-direction: column;
+        width: 100%;
+        animation: slideInForward 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: opacity, transform;
+      }
 
-    .search-unified-box:focus-within {
-      border-color: var(--blue-main);
-      box-shadow: 0 0 0 4px var(--blue-focus), var(--shadow-md);
-    }
+      .phase.active {
+        display: flex;
+      }
 
-    .search-unified-box svg {
-      color: var(--text-muted);
-      margin-left: 16px;
-      flex-shrink: 0;
-      transition: color 0.3s;
-    }
+      @keyframes slideInForward {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    .search-unified-box:focus-within svg {
-      color: var(--blue-main);
-    }
+      @keyframes slideInBackward {
+        from {
+          opacity: 0;
+          transform: translateY(-12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    .search-unified-box input {
-      flex: 1;
-      border: none;
-      outline: none;
-      padding: 14px 16px;
-      font-size: 16px;
-      font-family: inherit;
-      color: var(--text-main);
-      background: transparent;
-    }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
 
-    .search-unified-box input::placeholder {
-      color: #6b7280;
-    }
+      @keyframes successPop {
+        0% {
+          transform: scale(0);
+        }
+        60% {
+          transform: scale(1.15);
+        }
+        80% {
+          transform: scale(0.95);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
 
-    .search-unified-box .btn-primary {
-      padding: 12px 28px;
-      height: 48px;
-      font-size: 15px;
-      border-radius: calc(var(--radius-input) - 4px);
-    }
+      @keyframes drawCheck {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
 
-    /* Formulario e Inputs Condicionales Avanzados */
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-8) var(--space-4);
-    }
-    .form-full { grid-column: 1 / -1; }
-    .form-section__title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--text-muted);
-      margin: var(--space-3) 0 var(--space-1);
-      padding-bottom: var(--space-2);
-      border-bottom: 1px solid rgba(15,23,42,0.08);
-    }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    .input-group {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-    }
+      /* ─── Search Box ──────────────────────────────────────────────── */
+      .search-unified-box {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-input);
+        background: var(--bg-window);
+        padding: 4px;
+        box-shadow: var(--shadow-sm);
+        transition:
+          border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
 
-    .input-group label {
-      position: absolute;
-      left: 16px;
-      top: 16px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-muted);
-      pointer-events: none;
-      transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1) all;
-      background: var(--bg-window);
-      padding: 0 6px;
-      border-radius: 4px;
-      z-index: 2;
-    }
+      .search-unified-box:focus-within {
+        border-color: var(--blue-main);
+        box-shadow:
+          0 0 0 4px var(--blue-focus),
+          var(--shadow-md);
+      }
 
-    .input-group.required label::after { content: ' *'; color: var(--red-main); }
+      .search-unified-box svg {
+        color: var(--text-muted);
+        margin-left: 16px;
+        flex-shrink: 0;
+        transition: color 0.3s;
+      }
 
-    .input-group select {
-      cursor: pointer;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
-      background-repeat: no-repeat;
-      background-position: right 16px center;
-      background-size: 16px;
-    }
+      .search-unified-box:focus-within svg {
+        color: var(--blue-main);
+      }
 
-    input[type="text"], input[type="number"], select, textarea {
-      width: 100%;
-      padding: 16px;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-input);
-      font-family: inherit;
-      font-size: 14px;
-      background: var(--bg-window);
-      color: var(--text-main);
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-      outline: none;
-    }
+      .search-unified-box input {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: 14px 16px;
+        font-size: 16px;
+        font-family: inherit;
+        color: var(--text-main);
+        background: transparent;
+      }
 
-    input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
-      border-color: var(--blue-main);
-      box-shadow: 0 0 0 3px var(--blue-focus);
-    }
+      .search-unified-box input::placeholder {
+        color: #6b7280;
+      }
 
-    /* Mecánica de Flotación de Etiquetas */
-    input[type="text"]:focus ~ label,
-    input[type="number"]:focus ~ label,
-    textarea:focus ~ label,
-    select:focus ~ label,
-    input[type="text"]:not(:placeholder-shown) ~ label,
-    input[type="number"]:not(:placeholder-shown) ~ label,
-    textarea:not(:placeholder-shown) ~ label,
-    select:not([value=""]):valid ~ label,
-    .has-value ~ label,
-    input[type="file"] ~ label {
-      top: -10px;
-      left: 12px;
-      font-size: 12px;
-      color: var(--blue-main);
-      font-weight: 600;
-    }
+      .search-unified-box .btn-primary {
+        padding: 12px 28px;
+        height: 48px;
+        font-size: 15px;
+        border-radius: calc(var(--radius-input) - 4px);
+      }
 
-    #formDesc, #formFamilia, #formUMOtro, #formCOG, #formProveedor { text-transform: uppercase; }
-    input::placeholder, textarea::placeholder { color: transparent; }
+      /* ─── Form Grid & Inputs ──────────────────────────────────────── */
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-8) var(--space-4);
+      }
 
-    /* Zona de Carga de Archivos Personalizada (Propuesta B) */
-    .file-upload-wrapper { position: relative; width: 100%; }
-    .file-upload-wrapper input[type="file"] {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0; cursor: pointer; z-index: 3;
-    }
-    .custom-file-upload {
-      display: flex; align-items: center; gap: 12px; width: 100%; padding: 16px;
-      border: 1px dashed var(--border-color); border-radius: var(--radius-input);
-      background: var(--bg-window); min-height: 54px;
-      transition: border-color 0.25s, background-color 0.25s, box-shadow 0.25s;
-    }
-    .file-upload-wrapper input[type="file"]:focus ~ .custom-file-upload {
-      border-color: var(--blue-main); border-style: solid; box-shadow: 0 0 0 3px var(--blue-focus);
-    }
-    .custom-file-upload svg { color: var(--text-muted); flex-shrink: 0; transition: color 0.25s; }
-    .file-upload-wrapper.has-file .custom-file-upload svg { color: var(--green-main); }
-    .file-name-text { font-size: 14px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .file-upload-wrapper.has-file .custom-file-upload { border-color: var(--green-main); border-style: solid; background: var(--green-surface-subtle); }
-    .file-upload-wrapper.has-file .file-name-text { color: var(--text-main); font-weight: 500; }
+      .form-full {
+        grid-column: 1 / -1;
+      }
 
-    /* Tablas y Resultados */
-    .table-container {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-input);
-      overflow: hidden;
-      margin-bottom: 24px;
-      background: var(--bg-window);
-      box-shadow: var(--shadow-sm);
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-    th, td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
-    th { background: var(--bg-secondary); color: var(--text-muted); font-weight: 600; }
-    tr:last-child td { border-bottom: none; }
-    tbody tr { transition: background 0.2s; opacity: 0; animation: rowFadeIn 0.3s ease forwards; }
-    tbody tr:hover { background: var(--blue-surface); }
-    @keyframes rowFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+      .form-section__title {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        margin: var(--space-3) 0 var(--space-1);
+        padding-bottom: var(--space-2);
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      }
 
-    /* Componentes Generales y Botoneras */
-    .btn {
-      padding: 12px 24px;
-      border-radius: var(--radius-btn);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid transparent;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-      outline: none;
-    }
-    .btn:active { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+      .input-group {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
 
-    .btn-primary { background: var(--blue-main); color: white; box-shadow: 0 2px 4px rgba(29, 78, 216, 0.15); }
-    .btn-primary:hover:not(:disabled) { background: var(--blue-hover); box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25); }
-    .btn-secondary { background: transparent; border-color: var(--border-color); color: var(--text-muted); }
-    .btn-secondary:hover:not(:disabled) { background: var(--bg-secondary); color: var(--text-main); border-color: #c8ccd2;}
-    .btn--danger { background: var(--red-main) !important; color: white !important; }
+      .input-group label {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1) all;
+        background: var(--bg-window);
+        padding: 0 6px;
+        border-radius: 4px;
+        z-index: 2;
+      }
 
-    .actions { display: flex; gap: 12px; margin-top: auto; padding-top: 32px; }
-    .actions.right { justify-content: flex-end; }
-    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-    .badge.green  { background: var(--green-surface); color: #047857; }
-    .badge.red    { background: var(--red-surface);   color: #991b1b; }
-    .badge.orange { background: var(--amber-surface);  color: #92400e; }
-    .badge.gray   { background: var(--bg-secondary);  color: var(--text-muted); }
+      .input-group.required label::after {
+        content: " *";
+        color: var(--red-main);
+      }
 
-    .disclaimer-box { background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 24px; border-radius: var(--radius-win); margin-top: 16px; }
-    .disclaimer-box p { margin: 0; color: var(--text-main); font-size: 14px; line-height: 1.6; }
-    .disclaimer-context { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
-    .disclaimer-box--warning { background: #fffbeb; border-color: #fde047; border-left: 4px solid #eab308; }
-    .disclaimer-icon { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .disclaimer-icon span { font-weight: 700; font-size: 14px; color: var(--text-main); }
-    
-    .disclaimer-checklist {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-4);
-      margin: var(--space-6) 0;
-    }
+      .input-group select {
+        cursor: pointer;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        background-size: 16px;
+      }
 
-    .disclaimer-check {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--space-3);
-      padding: var(--space-4) var(--space-5);
-      background: var(--bg-window);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-input);
-      cursor: pointer;
-      transition: border-color var(--duration-normal) var(--ease-out),
-                  background var(--duration-normal) var(--ease-out);
-      font-size: 14px;
-      line-height: 1.5;
-      color: var(--text-main);
-    }
+      input[type="text"],
+      input[type="number"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 16px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-input);
+        font-family: inherit;
+        font-size: 14px;
+        background: var(--bg-window);
+        color: var(--text-main);
+        transition:
+          border-color 0.25s ease,
+          box-shadow 0.25s ease;
+        outline: none;
+      }
 
-    .disclaimer-check:has(input:checked) {
-      border-color: var(--blue-main);
-      background: var(--blue-surface);
-    }
+      input[type="text"]:focus,
+      input[type="number"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--blue-main);
+        box-shadow: 0 0 0 3px var(--blue-focus);
+      }
 
-    .disclaimer-check input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      margin-top: 2px;
-      flex-shrink: 0;
-      accent-color: var(--blue-main);
-    }
+      /* Floating labels */
+      input[type="text"]:focus ~ label,
+      input[type="number"]:focus ~ label,
+      textarea:focus ~ label,
+      select:focus ~ label,
+      input[type="text"]:not(:placeholder-shown) ~ label,
+      input[type="number"]:not(:placeholder-shown) ~ label,
+      textarea:not(:placeholder-shown) ~ label,
+      select:not([value=""]):valid ~ label,
+      .has-value ~ label,
+      input[type="file"] ~ label {
+        top: -10px;
+        left: 12px;
+        font-size: 12px;
+        color: var(--blue-main);
+        font-weight: 600;
+      }
 
-    .disclaimer-actions .btn-primary:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
+      #formDesc,
+      #formFamilia,
+      #formUMOtro,
+      #formCOG,
+      #formProveedor {
+        text-transform: uppercase;
+      }
+      input::placeholder,
+      textarea::placeholder {
+        color: transparent;
+      }
 
-    .input-hint { display: block; font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 4px; }
-    .char-counter { font-size: 11px; color: var(--text-muted); transition: color 0.2s; }
-    .char-counter--warning { color: #c2410c; }
-    .char-counter--limit { color: var(--red-main); font-weight: 700; }
+      /* ─── File Upload ──────────────────────────────────────────────── */
+      .file-upload-wrapper {
+        position: relative;
+        width: 100%;
+      }
 
-    /* Modales y Toasts */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.3); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn 0.2s ease; }
-    .modal-box { background: var(--bg-window); border-radius: var(--radius-win); padding: 32px; max-width: 440px; width: 90%; box-shadow: var(--shadow-lg); animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-    @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-    @keyframes modalOut { from { opacity: 1; transform: scale(1) translateY(0); } to { opacity: 0; transform: scale(0.96) translateY(8px); } }
-    .modal-box h3 { font-size: 18px; font-weight: 700; margin: 0 0 10px; letter-spacing: -0.01em; }
-    .modal-box p { font-size: 14px; margin: 0 0 24px; color: var(--text-muted); line-height: 1.5; }
-    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+      .file-upload-wrapper input[type="file"] {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 3;
+      }
 
-    .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 999; }
-    .toast { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); color: white; padding: 14px 20px; border-radius: var(--radius-input); font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); display: flex; align-items: center; gap: 12px; position: relative; overflow: hidden; }
-    .toast__progress { position: absolute; bottom: 0; left: 0; height: 3px; }
-    .toast__progress--success { background: var(--green-main); }
-    .toast__progress--error { background: var(--red-main); }
-    @keyframes toastProgress { from { width: 100%; } to { width: 0%; } }
-    @keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+      .custom-file-upload {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 16px;
+        border: 1px dashed var(--border-color);
+        border-radius: var(--radius-input);
+        background: var(--bg-window);
+        min-height: 54px;
+        transition:
+          border-color 0.25s,
+          background-color 0.25s,
+          box-shadow 0.25s;
+      }
 
-    .loader { display: none; align-items: center; gap: 10px; color: var(--text-muted); font-size: 14px; margin-top: 20px; justify-content: center; }
-    .empty-state { text-align: center; padding: 48px 24px; background: var(--bg-secondary); border-radius: var(--radius-win); margin-bottom: 24px; }
-    
-    /* Spinner de carga inline */
-    .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2.5px solid var(--border-color);
-      border-top-color: var(--blue-main);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    
-    /* Ripple effect en botones */
-    .btn__ripple {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.35);
-      transform: scale(0);
-      animation: rippleExpand 0.5s ease-out forwards;
-      pointer-events: none;
-    }
-    .btn {
-      position: relative;
-      overflow: hidden;
-    }
-    @keyframes rippleExpand {
-      to { transform: scale(2.5); opacity: 0; }
-    }
-    
-    /* Botón en estado de carga */
-    .btn--loading {
-      color: transparent !important;
-      pointer-events: none;
-    }
-    .btn-spinner {
-      position: absolute;
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    
-    /* Skeleton loading */
-    .skeleton {
-      background: linear-gradient(90deg, var(--bg-secondary) 25%, #e8eaed 50%, var(--bg-secondary) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s ease-in-out infinite;
-      border-radius: 6px;
-    }
-    
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-    
-    .skeleton-table {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .skeleton-row {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      padding: 16px;
-      background: var(--bg-window);
-      border-radius: var(--radius-input);
-      border: 1px solid var(--border-color);
-    }
-    .skeleton-cell--clave  { width: 100px; height: 16px; }
-    .skeleton-cell--desc   { flex: 1; height: 16px; }
-    .skeleton-cell--badge  { width: 72px; height: 24px; border-radius: 6px; }
-    .success-icon { width: 72px; height: 72px; background: var(--green-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; transform: scale(0); animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.15s forwards; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3); }
-    .success-icon svg { stroke-dasharray: 27; stroke-dashoffset: 27; animation: drawCheck 0.4s ease 0.45s forwards; }
-    .success-content { text-align: center; padding: 16px 0; opacity: 0; animation: fadeUp 0.4s ease 0.5s forwards; }
-    .success-link { color: var(--blue-main); font-weight: 600; text-decoration: none; word-break: break-all; display: block; padding: 14px; background: white; border-radius: var(--radius-input); border: 1px solid var(--border-color); transition: all 0.2s; }
-    .success-link:hover { background: var(--blue-surface); border-color: var(--blue-main); box-shadow: var(--shadow-sm); }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-    
-    .search-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-2);
-      background: var(--bg-secondary);
-      padding: var(--space-2) var(--space-4);
-      border-radius: 20px;
-      border: 1px solid var(--border-color);
-      width: max-content;
-      margin-bottom: var(--space-4);
-    }
-    .search-chip__icon { color: var(--text-muted); flex-shrink: 0; }
-    .search-chip__term { font-weight: 600; font-size: 13.5px; color: var(--text-main); }
-    
-    .success-footer { margin-bottom: 30px; text-align: left; }
-    .success-footer__label { color: var(--text-muted); font-size: 13px; margin-bottom: var(--space-2); }
-    .success-actions { justify-content: center; }
+      .file-upload-wrapper input[type="file"]:focus ~ .custom-file-upload {
+        border-color: var(--blue-main);
+        border-style: solid;
+        box-shadow: 0 0 0 3px var(--blue-focus);
+      }
 
-    /* Transformación Adaptativa a Tarjetas Élite (Solución 3) */
-    @media (max-width: 600px) {
-      body { padding: 0 12px 24px; }
-      .app-container { margin-top: 16px; gap: 20px; }
-      .phase { padding: 24px 16px; }
-      .form-grid { grid-template-columns: 1fr; }
-      .stepper { padding: 16px; }
-      .stepper__label { display: none; }
-      .stepper__line { width: 24px; margin: 0 6px; }
-      .search-unified-box { flex-direction: column; gap: 12px; padding: 8px; border: 1px solid var(--border-color); }
-      .search-unified-box svg { display: none; }
-      .search-unified-box input { width: 100%; padding: 10px 4px; }
-      .search-unified-box .btn-primary { width: 100%; }
-      .table-container { border: none; background: transparent; box-shadow: none; }
-      table, thead, tbody, th, td, tr { display: block; }
-      thead { display: none; }
-      tbody tr { background: var(--bg-window); border: 1px solid var(--border-color); border-radius: var(--radius-win); padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
-      td { padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; font-size: 14px; text-align: right; }
-      td:last-child { border-bottom: none; }
-      td::before { content: attr(data-label); font-weight: 600; color: var(--text-muted); font-size: 12px; text-transform: uppercase; text-align: left; }
-    }
-  </style>
-</head>
-<body>
+      .custom-file-upload svg {
+        color: var(--text-muted);
+        flex-shrink: 0;
+        transition: color 0.25s;
+      }
+      .file-upload-wrapper.has-file .custom-file-upload svg {
+        color: var(--green-main);
+      }
+      .file-name-text {
+        font-size: 14px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .file-upload-wrapper.has-file .custom-file-upload {
+        border-color: var(--green-main);
+        border-style: solid;
+        background: var(--green-surface-subtle);
+      }
+      .file-upload-wrapper.has-file .file-name-text {
+        color: var(--text-main);
+        font-weight: 500;
+      }
 
-  <div class="app-container">
-    
-    <div class="compliance-banner" id="normativeBanner">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-      </svg>
-      <div>
-        <h2>Reglas de Operación del Subcomité | Regla 2.5</h2>
-        <p>Constituye una obligación institucional irrenunciable verificar exhaustivamente el catálogo vigente. Esta búsqueda exhaustiva actúa como el filtro legal primario para precaver la duplicidad de registros.</p>
+      /* ─── Table ────────────────────────────────────────────────────── */
+      .table-container {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-input);
+        overflow: hidden;
+        margin-bottom: 24px;
+        background: var(--bg-window);
+        box-shadow: var(--shadow-sm);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      th,
+      td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+      th {
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr {
+        transition: background 0.2s;
+        opacity: 0;
+        animation: rowFadeIn 0.3s ease forwards;
+      }
+      tbody tr:hover {
+        background: var(--blue-surface);
+      }
+
+      @keyframes rowFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ─── Buttons ──────────────────────────────────────────────────── */
+      .btn {
+        padding: 12px 24px;
+        border-radius: var(--radius-btn);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition:
+          background 0.2s,
+          transform 0.1s,
+          box-shadow 0.2s;
+        outline: none;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn:active {
+        transform: scale(0.97);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .btn-primary {
+        background: var(--blue-main);
+        color: white;
+        box-shadow: 0 2px 4px rgba(29, 78, 216, 0.15);
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: var(--blue-hover);
+        box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+      }
+      .btn-secondary {
+        background: transparent;
+        border-color: var(--border-color);
+        color: var(--text-muted);
+      }
+      .btn-secondary:hover:not(:disabled) {
+        background: var(--bg-secondary);
+        color: var(--text-main);
+        border-color: #c8ccd2;
+      }
+      .btn--danger {
+        background: var(--red-main) !important;
+        color: white !important;
+      }
+
+      .btn__ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.35);
+        transform: scale(0);
+        animation: rippleExpand 0.5s ease-out forwards;
+        pointer-events: none;
+      }
+
+      @keyframes rippleExpand {
+        to {
+          transform: scale(2.5);
+          opacity: 0;
+        }
+      }
+
+      .btn--loading {
+        color: transparent !important;
+        pointer-events: none;
+      }
+
+      .btn-spinner {
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+
+      /* ─── Badges & Actions ─────────────────────────────────────────── */
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: auto;
+        padding-top: 32px;
+      }
+      .actions.right {
+        justify-content: flex-end;
+      }
+
+      .badge {
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .badge.green {
+        background: var(--green-surface);
+        color: #047857;
+      }
+      .badge.red {
+        background: var(--red-surface);
+        color: #991b1b;
+      }
+      .badge.orange {
+        background: var(--amber-surface);
+        color: #92400e;
+      }
+      .badge.gray {
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+      }
+
+      /* ─── Disclaimer ───────────────────────────────────────────────── */
+      .disclaimer-box {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        padding: 24px;
+        border-radius: var(--radius-win);
+        margin-top: 16px;
+      }
+
+      .disclaimer-box p {
+        margin: 0;
+        color: var(--text-main);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+      .disclaimer-context {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .disclaimer-box--warning {
+        background: #fffbeb;
+        border-color: #fde047;
+        border-left: 4px solid #eab308;
+      }
+      .disclaimer-icon {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .disclaimer-icon span {
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--text-main);
+      }
+
+      .disclaimer-checklist {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        margin: var(--space-6) 0;
+      }
+
+      .disclaimer-check {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-3);
+        padding: var(--space-4) var(--space-5);
+        background: var(--bg-window);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-input);
+        cursor: pointer;
+        transition:
+          border-color var(--duration-normal) var(--ease-out),
+          background var(--duration-normal) var(--ease-out);
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text-main);
+      }
+
+      .disclaimer-check:has(input:checked) {
+        border-color: var(--blue-main);
+        background: var(--blue-surface);
+      }
+
+      .disclaimer-check input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+        flex-shrink: 0;
+        accent-color: var(--blue-main);
+      }
+
+      .disclaimer-actions .btn-primary:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      /* ─── Hints & Counters ─────────────────────────────────────────── */
+      .input-hint {
+        display: block;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 8px;
+        padding-left: 4px;
+      }
+      .char-counter {
+        font-size: 11px;
+        color: var(--text-muted);
+        transition: color 0.2s;
+      }
+      .char-counter--warning {
+        color: #c2410c;
+      }
+      .char-counter--limit {
+        color: var(--red-main);
+        font-weight: 700;
+      }
+
+      /* ─── Modal ────────────────────────────────────────────────────── */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.3);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        animation: fadeIn 0.2s ease;
+      }
+
+      .modal-box {
+        background: var(--bg-window);
+        border-radius: var(--radius-win);
+        padding: 32px;
+        max-width: 440px;
+        width: 90%;
+        box-shadow: var(--shadow-lg);
+        animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: scale(0.96) translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      @keyframes modalOut {
+        from {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: scale(0.96) translateY(8px);
+        }
+      }
+
+      .modal-box h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 10px;
+        letter-spacing: -0.01em;
+      }
+      .modal-box p {
+        font-size: 14px;
+        margin: 0 0 24px;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+
+      /* ─── Toast ────────────────────────────────────────────────────── */
+      .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 999;
+      }
+
+      .toast {
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(8px);
+        color: white;
+        padding: 14px 20px;
+        border-radius: var(--radius-input);
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: var(--shadow-lg);
+        animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .toast__progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+      }
+      .toast__progress--success {
+        background: var(--green-main);
+      }
+      .toast__progress--error {
+        background: var(--red-main);
+      }
+
+      @keyframes toastProgress {
+        from {
+          width: 100%;
+        }
+        to {
+          width: 0%;
+        }
+      }
+      @keyframes toastIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ─── Loader & Skeleton ────────────────────────────────────────── */
+      .loader {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-muted);
+        font-size: 14px;
+        margin-top: 20px;
+        justify-content: center;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-win);
+        margin-bottom: 24px;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2.5px solid var(--border-color);
+        border-top-color: var(--blue-main);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          var(--bg-secondary) 25%,
+          #e8eaed 50%,
+          var(--bg-secondary) 75%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.5s ease-in-out infinite;
+        border-radius: 6px;
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      .skeleton-table {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .skeleton-row {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        padding: 16px;
+        background: var(--bg-window);
+        border-radius: var(--radius-input);
+        border: 1px solid var(--border-color);
+      }
+      .skeleton-cell--clave {
+        width: 100px;
+        height: 16px;
+      }
+      .skeleton-cell--desc {
+        flex: 1;
+        height: 16px;
+      }
+      .skeleton-cell--badge {
+        width: 72px;
+        height: 24px;
+        border-radius: 6px;
+      }
+
+      /* ─── Success ──────────────────────────────────────────────────── */
+      .success-icon {
+        width: 72px;
+        height: 72px;
+        background: var(--green-main);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        transform: scale(0);
+        animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.15s
+          forwards;
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+      }
+      .success-icon svg {
+        stroke-dasharray: 27;
+        stroke-dashoffset: 27;
+        animation: drawCheck 0.4s ease 0.45s forwards;
+      }
+      .success-content {
+        text-align: center;
+        padding: 16px 0;
+        opacity: 0;
+        animation: fadeUp 0.4s ease 0.5s forwards;
+      }
+      .success-link {
+        color: var(--blue-main);
+        font-weight: 600;
+        text-decoration: none;
+        word-break: break-all;
+        display: block;
+        padding: 14px;
+        background: white;
+        border-radius: var(--radius-input);
+        border: 1px solid var(--border-color);
+        transition: all 0.2s;
+      }
+      .success-link:hover {
+        background: var(--blue-surface);
+        border-color: var(--blue-main);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* ─── Misc ─────────────────────────────────────────────────────── */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .search-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        background: var(--bg-secondary);
+        padding: var(--space-2) var(--space-4);
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        width: max-content;
+        margin-bottom: var(--space-4);
+      }
+
+      .search-chip__icon {
+        color: var(--text-muted);
+        flex-shrink: 0;
+      }
+      .search-chip__term {
+        font-weight: 600;
+        font-size: 13.5px;
+        color: var(--text-main);
+      }
+
+      .success-footer {
+        margin-bottom: 30px;
+        text-align: left;
+      }
+      .success-footer__label {
+        color: var(--text-muted);
+        font-size: 13px;
+        margin-bottom: var(--space-2);
+      }
+      .success-actions {
+        justify-content: center;
+      }
+
+      /* ─── Responsive ───────────────────────────────────────────────── */
+      @media (max-width: 600px) {
+        body {
+          padding: 0 12px 24px;
+        }
+        .app-container {
+          margin-top: 16px;
+          gap: 20px;
+        }
+        .phase {
+          padding: 24px 16px;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .stepper {
+          padding: 16px;
+        }
+        .stepper__label {
+          display: none;
+        }
+        .stepper__line {
+          width: 24px;
+          margin: 0 6px;
+        }
+        .search-unified-box {
+          flex-direction: column;
+          gap: 12px;
+          padding: 8px;
+          border: 1px solid var(--border-color);
+        }
+        .search-unified-box svg {
+          display: none;
+        }
+        .search-unified-box input {
+          width: 100%;
+          padding: 10px 4px;
+        }
+        .search-unified-box .btn-primary {
+          width: 100%;
+        }
+        .table-container {
+          border: none;
+          background: transparent;
+          box-shadow: none;
+        }
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+        thead {
+          display: none;
+        }
+        tbody tr {
+          background: var(--bg-window);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-win);
+          padding: 16px;
+          margin-bottom: 16px;
+          box-shadow: var(--shadow-sm);
+        }
+        td {
+          padding: 10px 0;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 14px;
+          text-align: right;
+        }
+        td:last-child {
+          border-bottom: none;
+        }
+        td::before {
+          content: attr(data-label);
+          font-weight: 600;
+          color: var(--text-muted);
+          font-size: 12px;
+          text-transform: uppercase;
+          text-align: left;
+        }
+      }
+
+      /* ─── Reduced Motion ───────────────────────────────────────────── */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="compliance-banner" id="normativeBanner">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        <div>
+          <h2>Reglas de Operación del Subcomité | Regla 2.5</h2>
+          <p>
+            Constituye una obligación institucional irrenunciable verificar
+            exhaustivamente el catálogo vigente. Esta búsqueda exhaustiva actúa
+            como el filtro legal primario para precaver la duplicidad de
+            registros.
+          </p>
+        </div>
       </div>
-    </div>
 
-    <header class="brand-header">
-      <p>OPD Hospital Civil de Guadalajara</p>
-      <h1>Catálogo Institucional de Bienes, Servicios y Activos</h1>
-    </header>
+      <header class="brand-header">
+        <p>OPD Hospital Civil de Guadalajara</p>
+        <h1>Catálogo Institucional de Bienes, Servicios y Activos</h1>
+      </header>
 
-    <main class="main-card">
-      <nav class="stepper" aria-label="Progreso del flujo institucional" id="stepper">
-        <div class="stepper__step stepper__step--active" data-step="1" aria-current="step">
+      <main class="main-card">
+        <nav
+          class="stepper"
+          aria-label="Progreso del flujo institucional"
+          id="stepper"
+        >
+          <div
+            class="stepper__step stepper__step--active"
+            data-step="1"
+            aria-current="step"
+          >
             <div class="stepper__dot">
-                <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                <span class="stepper__number" aria-hidden="true">1</span>
-            </div>
-            <span class="stepper__label">Buscar</span>
-        </div>
-        <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="2">
-            <div class="stepper__dot">
-                 <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                 <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                 <span class="stepper__number" aria-hidden="true">2</span>
-            </div>
-            <span class="stepper__label">Resultados</span>
-        </div>
-        <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="3">
-            <div class="stepper__dot">
-                <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                <span class="stepper__number" aria-hidden="true">3</span>
-            </div>
-            <span class="stepper__label">Confirmar</span>
-        </div>
-        <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="4">
-            <div class="stepper__dot">
-                 <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                 <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                 <span class="stepper__number" aria-hidden="true">4</span>
-            </div>
-            <span class="stepper__label">Formulario</span>
-        </div>
-        <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="5">
-            <div class="stepper__dot">
-                 <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                 <svg class="stepper__check-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display:none" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                 <span class="stepper__number" aria-hidden="true">5</span>
-            </div>
-            <span class="stepper__label">Completado</span>
-        </div>
-      </nav>
-
-      <div class="content-area">
-        
-        <div id="phase-1" class="phase active">
-          <h2>Verificación Previa Obligatoria</h2>
-          <p>Realice la consulta del insumo o servicio médico para validar su existencia en la base de datos centralizada.</p>
-          
-          <div class="search-unified-box">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <input type="text" id="searchInput" placeholder="Ej: guantes de látex caja 100" autocomplete="off" aria-label="Descripción del bien a consultar">
-            <button class="btn btn-primary" id="btnSearch" onclick="ejecutarBusqueda()" disabled>Verificar</button>
-          </div>
-          <span class="input-hint">Presione Enter o haga clic en Verificar para inicializar el escaneo algorítmico.</span>
-          
-          <div class="loader" id="loader" role="status" aria-live="polite">
-            <div class="spinner" aria-hidden="true"></div>
-            <span>Consultando matriz del catálogo general...</span>
-          </div>
-        </div>
-
-        <div id="phase-2" class="phase">
-          <h2>Resultados de Coincidencia</h2>
-          <div class="search-chip">
-            <svg class="search-chip__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span class="search-chip__term" id="chipSearchTerm"></span>
-          </div>
-          <p id="resultsSubtitle">Revise minuciosamente si alguno de los siguientes registros vigentes ampara su requerimiento técnico.</p>
-          <div id="resultsContainer" role="region" aria-live="polite" aria-label="Resultados del Catálogo"></div>
-          <div class="actions right">
-            <button class="btn btn-secondary" onclick="irFase(1, true)">Nueva Búsqueda</button>
-            <button class="btn btn-primary" onclick="irFase(3)">Solicitar Alta Nueva (Regla 2.6)</button>
-          </div>
-        </div>
-
-        <div id="phase-3" class="phase">
-          <h2>Declaración de Responsabilidad Legal</h2>
-          <p>Validación de procedencia legal y competencia exclusiva de la jefatura o área requirente.</p>
-          <div class="disclaimer-box disclaimer-box--warning">
-            <div class="disclaimer-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.5">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              <svg
+                class="stepper__icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
-              <span>Cumplimiento Normativo: Artículo 10 y Regla 2.6</span>
-            </div>
-            <div class="disclaimer-context">
-              Criterio verificado e inexistente: <strong id="disclaimerSearchTerm"></strong>
-            </div>
-            <div class="disclaimer-checklist">
-              <label class="disclaimer-check">
-                <input type="checkbox" required>
-                <span>He revisado exhaustivamente el catálogo y declaro bajo protesta de decir verdad que <strong>ninguno de los elementos vigentes</strong> satisface la necesidad médica o técnica.</span>
-              </label>
-              <label class="disclaimer-check">
-                <input type="checkbox" required>
-                <span>Asumo la responsabilidad de la creación de una nueva clave conforme al <strong>Artículo 10, Fracción VIII</strong> y la persistencia de la necesidad bajo los términos de la <strong>Regla 2.6</strong>.</span>
-              </label>
-            </div>
-          </div>
-          <div class="actions right disclaimer-actions">
-            <button class="btn btn-secondary" onclick="irFase(2)">Volver a Coincidencias</button>
-            <button class="btn btn-primary" onclick="irFase(4)" disabled>Entiendo y Ratifico Ausencia</button>
-          </div>
-        </div>
-
-        <div id="phase-4" class="phase">
-          <h2>Formulario de Inclusión Oficial</h2>
-          <p>Los campos se han habilitado tras la certificación de no existencia. Ingrese datos fidedignos.</p>
-          <div class="form-grid">
-            <div class="form-section form-full"><h3 class="form-section__title">Datos Técnicos del Artículo</h3></div>
-            
-            <div class="input-group required form-full">
-              <input type="text" id="formDesc" required placeholder=" " maxlength="200" oninput="updateCharCounter(this)">
-              <label for="formDesc">Descripción del Artículo</label>
-              <div style="display:flex; justify-content:space-between; margin-top:6px;">
-                <span style="font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  Regla 2.7: Redacción clara, composición genérica, sin abreviaturas complejas.
-                </span>
-                <span class="char-counter" id="formDescCounter">0 / 200</span>
-              </div>
-            </div>
-            
-            <div class="input-group">
-              <input type="text" id="formFamilia" placeholder=" ">
-              <label for="formFamilia">Familia de Artículos</label>
-            </div>
-            
-            <div class="input-group required">
-              <select id="formUM" required onchange="toggleOtroUM(this.value)">
-                <option value="">Seleccionar...</option>
-                <option value="PIEZA">PIEZA</option>
-                <option value="CAJA C/100">CAJA C/100</option>
-                <option value="CAJA C/50">CAJA C/50</option>
-                <option value="FRASCO">FRASCO</option>
-                <option value="AMPULA">ÁMPULA</option>
-                <option value="ENVASE">ENVASE</option>
-                <option value="EQUIPO">EQUIPO</option>
-                <option value="OTRO">OTRO (ESPECIFICAR)</option>
-              </select>
-              <label for="formUM">Unidad de Medida</label>
-            </div>
-
-            <div class="input-group required" id="wrapUMOtro" style="display: none">
-              <input type="text" id="formUMOtro" placeholder=" " />
-              <label for="formUMOtro">Especificar Unidad de Medida</label>
-            </div>
-            
-            <div class="input-group required">
-              <input type="text" id="formCOG" required placeholder=" " maxlength="10">
-              <label for="formCOG">Partida Presupuestal (COG)</label>
-            </div>
-            
-            <div class="form-section form-full"><h3 class="form-section__title">Datos Identitarios del Solicitante</h3></div>
-            
-            <div class="input-group required">
-              <input type="text" id="formNombre" required placeholder=" " maxlength="100">
-              <label for="formNombre">Nombre del Solicitante</label>
-            </div>
-            
-            <div class="input-group">
-              <input type="text" id="formCargo" placeholder=" ">
-              <label for="formCargo">Cargo Oficial</label>
-            </div>
-            
-            <div class="input-group">
-              <input type="text" id="formServicio" placeholder=" ">
-              <label for="formServicio">Servicio o Departamento</label>
-            </div>
-            
-            <div class="input-group required">
-              <select id="formUnidad" required>
-                <option value="">Seleccionar...</option>
-                <option value="HCG JIM">HCG Dr. Juan I. Menchaca</option>
-                <option value="HCG HAA">HCG Fray Antonio Alcalde</option>
-              </select>
-              <label for="formUnidad">Unidad Hospitalaria</label>
-            </div>
-            
-            <div class="form-section form-full"><h3 class="form-section__title">Sustento Financiero y Justificación</h3></div>
-            
-            <div class="input-group">
-              <input type="number" id="formPrecio" step="0.01" min="0" placeholder=" ">
-              <label for="formPrecio">Costo de Referencia ($)</label>
-            </div>
-            
-            <div class="input-group">
-              <input type="text" id="formProveedor" placeholder=" ">
-              <label for="formProveedor">Proveedor Corporativo Sugerido</label>
-            </div>
-            
-            <div class="input-group form-full">
-              <div class="file-upload-wrapper" id="fileUploadWrapper">
-                <input type="file" id="formPDF" accept="application/pdf" onchange="handleFileChange(this)" aria-label="Adjuntar documento en formato PDF">
-                <div class="custom-file-upload">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="12" y1="18" x2="12" y2="12"></line>
-                    <line x1="9" y1="15" x2="15" y2="15"></line>
-                  </svg>
-                  <span class="file-name-text" id="fileNameDisplay">Adjuntar cotización institucional formal (Solo formato PDF)</span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="input-group form-full">
-              <textarea id="formJustificacion" placeholder=" "></textarea>
-              <label for="formJustificacion">Justificación Dictaminada de la Solicitud</label>
-            </div>
-            
-            <div class="input-group form-full">
-              <textarea id="formObs" placeholder=" "></textarea>
-              <label for="formObs">Observaciones Complementarias</label>
-            </div>
-          </div>
-          <div class="actions right">
-            <button class="btn btn-secondary" onclick="confirmarCancelar()">Descartar Solicitud</button>
-            <button class="btn btn-primary" onclick="enviarFormulario()">Enviar Formato de Inclusión</button>
-          </div>
-        </div>
-
-        <div id="phase-5" class="phase">
-          <div class="success-content">
-            <div class="success-icon" aria-hidden="true">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                class="stepper__check-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="display: none"
+                aria-hidden="true"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
+              <span class="stepper__number" aria-hidden="true">1</span>
             </div>
-            <h2>¡Expediente de Inclusión Generado!</h2>
-            <p>El trámite ha quedado registrado en el SII HCG conforme a las normativas vigentes.</p>
-            <div class="success-footer">
-              <p class="success-footer__label">Documento de pre-alta generado para revisión del Subcomité:</p>
-              <a id="successLink" href="#" target="_blank" class="success-link">Abrir Formato Inclusión Oficial 2026</a>
+            <span class="stepper__label">Buscar</span>
+          </div>
+          <div class="stepper__line"></div>
+          <div class="stepper__step" data-step="2">
+            <div class="stepper__dot">
+              <svg
+                class="stepper__icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+              <svg
+                class="stepper__check-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="display: none"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span class="stepper__number" aria-hidden="true">2</span>
             </div>
-            <div class="actions success-actions">
-              <button class="btn btn-primary" onclick="irFase(1, true)">Finalizar y Retornar al Inicio</button>
+            <span class="stepper__label">Resultados</span>
+          </div>
+          <div class="stepper__line"></div>
+          <div class="stepper__step" data-step="3">
+            <div class="stepper__dot">
+              <svg
+                class="stepper__icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <svg
+                class="stepper__check-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="display: none"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span class="stepper__number" aria-hidden="true">3</span>
+            </div>
+            <span class="stepper__label">Confirmar</span>
+          </div>
+          <div class="stepper__line"></div>
+          <div class="stepper__step" data-step="4">
+            <div class="stepper__dot">
+              <svg
+                class="stepper__icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                ></path>
+                <path
+                  d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                ></path>
+              </svg>
+              <svg
+                class="stepper__check-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="display: none"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span class="stepper__number" aria-hidden="true">4</span>
+            </div>
+            <span class="stepper__label">Formulario</span>
+          </div>
+          <div class="stepper__line"></div>
+          <div class="stepper__step" data-step="5">
+            <div class="stepper__dot">
+              <svg
+                class="stepper__icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                ></polygon>
+              </svg>
+              <svg
+                class="stepper__check-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="display: none"
+                aria-hidden="true"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span class="stepper__number" aria-hidden="true">5</span>
+            </div>
+            <span class="stepper__label">Completado</span>
+          </div>
+        </nav>
+
+        <div class="content-area">
+          <!-- Fase 1: Búsqueda -->
+          <div id="phase-1" class="phase active">
+            <h2>Verificación Previa Obligatoria</h2>
+            <p>
+              Realice la consulta del insumo o servicio médico para validar su
+              existencia en la base de datos centralizada.
+            </p>
+            <div class="search-unified-box">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Ej: guantes de látex caja 100"
+                autocomplete="off"
+                aria-label="Descripción del bien a consultar"
+              />
+              <button
+                class="btn btn-primary"
+                id="btnSearch"
+                onclick="ejecutarBusqueda()"
+                disabled
+              >
+                Verificar
+              </button>
+            </div>
+            <span class="input-hint"
+              >Presione Enter o haga clic en Verificar para inicializar el
+              escaneo algorítmico.</span
+            >
+            <div class="loader" id="loader" role="status" aria-live="polite">
+              <div class="spinner" aria-hidden="true"></div>
+              <span>Consultando matriz del catálogo general...</span>
+            </div>
+          </div>
+
+          <!-- Fase 2: Resultados -->
+          <div id="phase-2" class="phase">
+            <h2>Resultados de Coincidencia</h2>
+            <div class="search-chip">
+              <svg
+                class="search-chip__icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span class="search-chip__term" id="chipSearchTerm"></span>
+            </div>
+            <p id="resultsSubtitle">
+              Revise minuciosamente si alguno de los siguientes registros
+              vigentes ampara su requerimiento técnico.
+            </p>
+            <div
+              id="resultsContainer"
+              role="region"
+              aria-live="polite"
+              aria-label="Resultados del Catálogo"
+            ></div>
+            <div class="actions right">
+              <button class="btn btn-secondary" onclick="irFase(1, true)">
+                Nueva Búsqueda
+              </button>
+              <button class="btn btn-primary" onclick="irFase(3)">
+                Solicitar Alta Nueva (Regla 2.6)
+              </button>
+            </div>
+          </div>
+
+          <!-- Fase 3: Disclaimer -->
+          <div id="phase-3" class="phase">
+            <h2>Declaración de Responsabilidad Legal</h2>
+            <p>
+              Validación de procedencia legal y competencia exclusiva de la
+              jefatura o área requirente.
+            </p>
+            <div class="disclaimer-box disclaimer-box--warning">
+              <div class="disclaimer-icon">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#b45309"
+                  stroke-width="2.5"
+                >
+                  <path
+                    d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                  />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <span>Cumplimiento Normativo: Artículo 10 y Regla 2.6</span>
+              </div>
+              <div class="disclaimer-context">
+                Criterio verificado e inexistente:
+                <strong id="disclaimerSearchTerm"></strong>
+              </div>
+              <div class="disclaimer-checklist">
+                <label class="disclaimer-check">
+                  <input type="checkbox" required />
+                  <span
+                    >He revisado exhaustivamente el catálogo y declaro bajo
+                    protesta de decir verdad que
+                    <strong>ninguno de los elementos vigentes</strong> satisface
+                    la necesidad médica o técnica.</span
+                  >
+                </label>
+                <label class="disclaimer-check">
+                  <input type="checkbox" required />
+                  <span
+                    >Asumo la responsabilidad de la creación de una nueva clave
+                    conforme al <strong>Artículo 10, Fracción VIII</strong> y la
+                    persistencia de la necesidad bajo los términos de la
+                    <strong>Regla 2.6</strong>.</span
+                  >
+                </label>
+              </div>
+            </div>
+            <div class="actions right disclaimer-actions">
+              <button class="btn btn-secondary" onclick="irFase(2)">
+                Volver a Coincidencias
+              </button>
+              <button class="btn btn-primary" onclick="irFase(4)" disabled>
+                Entiendo y Ratifico Ausencia
+              </button>
+            </div>
+          </div>
+
+          <!-- Fase 4: Formulario -->
+          <div id="phase-4" class="phase">
+            <h2>Formulario de Inclusión Oficial</h2>
+            <p>
+              Los campos se han habilitado tras la certificación de no
+              existencia. Ingrese datos fidedignos.
+            </p>
+            <div class="form-grid">
+              <div class="form-section form-full">
+                <h3 class="form-section__title">Datos Técnicos del Artículo</h3>
+              </div>
+
+              <div class="input-group required form-full">
+                <input
+                  type="text"
+                  id="formDesc"
+                  required
+                  placeholder=" "
+                  maxlength="200"
+                  oninput="updateCharCounter(this)"
+                />
+                <label for="formDesc">Descripción del Artículo</label>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 6px;
+                  "
+                >
+                  <span
+                    style="
+                      font-size: 11px;
+                      color: var(--text-muted);
+                      display: flex;
+                      align-items: center;
+                      gap: 4px;
+                    "
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="16" x2="12" y2="12" />
+                      <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    Regla 2.7: Redacción clara, composición genérica, sin
+                    abreviaturas complejas.
+                  </span>
+                  <span class="char-counter" id="formDescCounter">0 / 200</span>
+                </div>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="formFamilia" placeholder=" " />
+                <label for="formFamilia">Familia de Artículos</label>
+              </div>
+
+              <div class="input-group required">
+                <select
+                  id="formUM"
+                  required
+                  onchange="toggleOtroUM(this.value)"
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="PIEZA">PIEZA</option>
+                  <option value="CAJA C/100">CAJA C/100</option>
+                  <option value="CAJA C/50">CAJA C/50</option>
+                  <option value="FRASCO">FRASCO</option>
+                  <option value="AMPULA">ÁMPULA</option>
+                  <option value="ENVASE">ENVASE</option>
+                  <option value="EQUIPO">EQUIPO</option>
+                  <option value="OTRO">OTRO (ESPECIFICAR)</option>
+                </select>
+                <label for="formUM">Unidad de Medida</label>
+              </div>
+
+              <div
+                class="input-group required"
+                id="wrapUMOtro"
+                style="display: none"
+              >
+                <input type="text" id="formUMOtro" placeholder=" " />
+                <label for="formUMOtro">Especificar Unidad de Medida</label>
+              </div>
+
+              <div class="input-group required">
+                <input
+                  type="text"
+                  id="formCOG"
+                  required
+                  placeholder=" "
+                  maxlength="10"
+                />
+                <label for="formCOG">Partida Presupuestal (COG)</label>
+              </div>
+
+              <div class="form-section form-full">
+                <h3 class="form-section__title">
+                  Datos Identitarios del Solicitante
+                </h3>
+              </div>
+
+              <div class="input-group required">
+                <input
+                  type="text"
+                  id="formNombre"
+                  required
+                  placeholder=" "
+                  maxlength="100"
+                />
+                <label for="formNombre">Nombre del Solicitante</label>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="formCargo" placeholder=" " />
+                <label for="formCargo">Cargo Oficial</label>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="formServicio" placeholder=" " />
+                <label for="formServicio">Servicio o Departamento</label>
+              </div>
+
+              <div class="input-group required">
+                <select id="formUnidad" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="HCG JIM">HCG Dr. Juan I. Menchaca</option>
+                  <option value="HCG HAA">HCG Fray Antonio Alcalde</option>
+                </select>
+                <label for="formUnidad">Unidad Hospitalaria</label>
+              </div>
+
+              <div class="form-section form-full">
+                <h3 class="form-section__title">
+                  Sustento Financiero y Justificación
+                </h3>
+              </div>
+
+              <div class="input-group">
+                <input
+                  type="number"
+                  id="formPrecio"
+                  step="0.01"
+                  min="0"
+                  placeholder=" "
+                />
+                <label for="formPrecio">Costo de Referencia ($)</label>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="formProveedor" placeholder=" " />
+                <label for="formProveedor"
+                  >Proveedor Corporativo Sugerido</label
+                >
+              </div>
+
+              <div class="input-group form-full">
+                <div class="file-upload-wrapper" id="fileUploadWrapper">
+                  <input
+                    type="file"
+                    id="formPDF"
+                    accept="application/pdf"
+                    onchange="handleFileChange(this)"
+                    aria-label="Adjuntar documento en formato PDF"
+                  />
+                  <div class="custom-file-upload">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                      ></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="12" y1="18" x2="12" y2="12"></line>
+                      <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    <span class="file-name-text" id="fileNameDisplay"
+                      >Adjuntar cotización institucional formal (Solo formato
+                      PDF)</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="input-group form-full">
+                <textarea id="formJustificacion" placeholder=" "></textarea>
+                <label for="formJustificacion"
+                  >Justificación Dictaminada de la Solicitud</label
+                >
+              </div>
+
+              <div class="input-group form-full">
+                <textarea id="formObs" placeholder=" "></textarea>
+                <label for="formObs">Observaciones Complementarias</label>
+              </div>
+            </div>
+            <div class="actions right">
+              <button class="btn btn-secondary" onclick="confirmarCancelar()">
+                Descartar Solicitud
+              </button>
+              <button class="btn btn-primary" onclick="enviarFormulario()">
+                Enviar Formato de Inclusión
+              </button>
+            </div>
+          </div>
+
+          <!-- Fase 5: Éxito -->
+          <div id="phase-5" class="phase">
+            <div class="success-content">
+              <div class="success-icon" aria-hidden="true">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <h2>¡Expediente de Inclusión Generado!</h2>
+              <p>
+                El trámite ha quedado registrado en el SII HCG conforme a las
+                normativas vigentes.
+              </p>
+              <div class="success-footer">
+                <p class="success-footer__label">
+                  Documento de pre-alta generado para revisión del Subcomité:
+                </p>
+                <a
+                  id="successLink"
+                  href="#"
+                  target="_blank"
+                  class="success-link"
+                  >Abrir Formato Inclusión Oficial 2026</a
+                >
+              </div>
+              <div class="actions success-actions">
+                <button class="btn btn-primary" onclick="irFase(1, true)">
+                  Finalizar y Retornar al Inicio
+                </button>
+              </div>
             </div>
           </div>
         </div>
+      </main>
+    </div>
 
-      </div>
-    </main>
-  </div>
+    <div
+      class="toast-container"
+      id="toastContainer"
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+    ></div>
 
-  <div class="toast-container" id="toastContainer" role="status" aria-live="polite" aria-atomic="false"></div>
+    <script>
+      "use strict";
 
-  <script>
-    const $ = (id) => document.getElementById(id);
-    let _searchInProgress = false;
-    let _submitInProgress = false;
-    let _searchTimer = null;
-    let _currentPhase = 1;
-    const SEARCH_TIMEOUT_MS = 30000;
-    const MAX_PDF_SIZE_MB = 10;
+      /* ===================================================================
+       * Verificador de Catálogo HCG — Cliente SPA (ES6+ · JSDoc · A11y)
+       * =================================================================== */
 
-    function showToast(msg, isError = false) {
-      const container = $("toastContainer");
-      while (container.children.length >= 3) container.firstChild.remove();
-      const toast = document.createElement("div");
-      toast.className = "toast";
-      toast.style.borderLeft = isError ? "4px solid var(--red-main)" : "4px solid var(--green-main)";
-      toast.setAttribute("role", isError ? "alert" : "status");
-      
-      const icon = document.createElement("span");
-      icon.setAttribute("aria-hidden", "true");
-      icon.innerHTML = isError ? "&#x2716;" : "&#x2714;";
-      
-      const span = document.createElement("span");
-      span.textContent = msg;
-      
-      toast.append(icon, span);
-      
-      const progress = document.createElement("div");
-      progress.className = `toast__progress ${isError ? 'toast__progress--error' : 'toast__progress--success'}`;
-      toast.appendChild(progress);
-      container.appendChild(toast);
-      
-      let timeout = setTimeout(dismiss, 3000);
-      toast.addEventListener("mouseenter", () => clearTimeout(timeout));
-      toast.addEventListener("mouseleave", () => { timeout = setTimeout(dismiss, 3000); });
-      
-      function dismiss() {
-        toast.style.opacity = "0";
-        toast.style.transform = "translateY(10px)";
-        setTimeout(() => toast.remove(), 300);
-      }
-    }
+      // ─── Constantes ──────────────────────────────────────────────────
 
-    // PROPUESTA C: Stepper con navegación interactiva fluida hacia atrás
-    function updateStepper(currentPhase) {
-      const steps = document.querySelectorAll(".stepper__step");
-      const lines = document.querySelectorAll(".stepper__line");
+      /** @const {number} Tiempo máximo de espera para búsqueda (ms) */
+      const SEARCH_TIMEOUT_MS = 30000;
 
-      steps.forEach((step, i) => {
-        const n = i + 1;
-        const dot = step.querySelector(".stepper__dot");
-        const icon = dot.querySelector(".stepper__icon");
-        const checkIcon = dot.querySelector(".stepper__check-icon");
+      /** @const {number} Tamaño máximo del PDF adjunto (MB) */
+      const MAX_PDF_SIZE_MB = 10;
 
-        step.classList.remove("stepper__step--active", "stepper__step--done");
-        step.removeAttribute("onclick");
-        step.removeAttribute("aria-current");
+      /** @const {number} Longitud mínima del input de búsqueda */
+      const MIN_SEARCH_LEN = 3;
 
-        if (n === currentPhase) {
-          step.classList.add("stepper__step--active");
-          step.setAttribute("aria-current", "step");
-        } else if (n < currentPhase) {
-          step.classList.add("stepper__step--done");
-          step.setAttribute("onclick", `irFase(${n})`);
+      /** @const {number} Duración de visualización del toast (ms) */
+      const TOAST_DURATION_MS = 3000;
+
+      /** @const {number} Máximo de toasts simultáneos */
+      const MAX_TOASTS = 3;
+
+      /** @const {number} Número de filas skeleton durante carga */
+      const SKELETON_ROWS = 4;
+
+      /** @const {Object<string, string>} Mapa fase → ID de elemento a enfocar */
+      const FOCUS_MAP_ = { 1: "searchInput", 4: "formDesc", 5: "successLink" };
+
+      /** @const {Array<string>} IDs de campos del formulario a limpiar */
+      const FORM_FIELD_IDS_ = [
+        "formDesc",
+        "formUM",
+        "formCOG",
+        "formPrecio",
+        "formProveedor",
+        "formJustificacion",
+        "formUnidad",
+        "formFamilia",
+        "formNombre",
+        "formCargo",
+        "formServicio",
+        "formObs",
+        "formUMOtro",
+      ];
+
+      /** @const {Array<string>} IDs de campos para detectar datos ingresados */
+      const DIRTY_CHECK_IDS_ = [
+        "formDesc",
+        "formNombre",
+        "formCOG",
+        "formJustificacion",
+      ];
+
+      // ─── Estado ──────────────────────────────────────────────────────
+
+      let _searchInProgress = false;
+      let _submitInProgress = false;
+      let _searchTimer = null;
+      let _currentPhase = 1;
+
+      // ─── DOM Helper ──────────────────────────────────────────────────
+
+      /**
+       * Atajo para `document.getElementById`.
+       * @param {string} id - ID del elemento DOM.
+       * @returns {HTMLElement|null} Elemento encontrado o null.
+       * @private
+       */
+      const $ = (id) => document.getElementById(id);
+
+      // ─── Funciones Públicas (llamadas desde onclick en HTML) ─────────
+
+      /**
+       * Ejecuta la búsqueda semántica contra BigQuery vía google.script.run.
+       * Valida longitud mínima, muestra skeleton, y maneja timeout.
+       */
+      function ejecutarBusqueda() {
+        if (_searchInProgress) return;
+
+        const input = $("searchInput");
+        const val = input.value.trim();
+
+        if (val.length < MIN_SEARCH_LEN) {
+          showToast("Ingresa al menos 3 caracteres.", true);
+          input.focus();
+          return;
         }
-      });
 
-      lines.forEach((line, i) => {
-        line.classList.toggle("stepper__line--filled", i < currentPhase - 1);
-      });
-    }
+        _searchInProgress = true;
+        setLoading_(true);
+        irFase(2);
+        renderSkeleton_();
 
-    function irFase(num, force = false) {
-      if (!force && num === _currentPhase) return;
-      const isForward = num > _currentPhase;
-      _currentPhase = num;
-      document.querySelectorAll(".phase").forEach((el) => el.classList.remove("active"));
-      
-      const target = $(`phase-${num}`);
-      // Control de visibilidad del banner normativo de la Regla 2.5
-      const banner = $("normativeBanner");
-      if (banner) {
-        banner.style.display = num === 1 ? "flex" : "none";
+        _searchTimer = setTimeout(() => {
+          _searchInProgress = false;
+          setLoading_(false);
+          showToast(
+            "La consulta tardó demasiado. Intenta con un término más específico.",
+            true,
+          );
+        }, SEARCH_TIMEOUT_MS);
+
+        if (isGASAvailable_()) {
+          google.script.run
+            .withSuccessHandler((res) => {
+              clearTimeout(_searchTimer);
+              _searchInProgress = false;
+              setLoading_(false);
+              renderResultados(Array.isArray(res) ? res : []);
+            })
+            .withFailureHandler((err) => {
+              clearTimeout(_searchTimer);
+              _searchInProgress = false;
+              setLoading_(false);
+              $("resultsContainer").innerHTML = buildErrorStateHTML_(
+                err.message || "No se pudo conectar.",
+              );
+              $("resultsSubtitle").textContent =
+                "Ocurrió un error al consultar.";
+            })
+            .buscarSimilitudesBQ(val);
+        } else {
+          setTimeout(() => {
+            clearTimeout(_searchTimer);
+            _searchInProgress = false;
+            setLoading_(false);
+            renderResultados([]);
+          }, 1000);
+        }
       }
 
-      target.style.animation = "none";
-      target.offsetHeight;
-      target.style.animation = isForward ? "slideInForward 0.35s cubic-bezier(0.4,0,0.2,1)" : "slideInBackward 0.35s cubic-bezier(0.4,0,0.2,1)";
-      target.classList.add("active");
+      /**
+       * Navega entre fases del flujo, actualizando stepper, banner y foco.
+       * @param {number} num - Fase destino (1–5).
+       * @param {boolean} [force=false] - Forzar navegación aunque sea la misma fase.
+       */
+      function irFase(num, force = false) {
+        if (!force && num === _currentPhase) return;
 
-      if (num === 5) {
+        const isForward = num > _currentPhase;
+        _currentPhase = num;
+
+        document
+          .querySelectorAll(".phase")
+          .forEach((el) => el.classList.remove("active"));
+
+        const target = $(`phase-${num}`);
+        toggleBanner_(num);
+
+        // Forzar reflow para reiniciar animación
+        target.style.animation = "none";
+        target.offsetHeight; // eslint-disable-line no-unused-expressions
+        target.style.animation = isForward
+          ? "slideInForward 0.35s cubic-bezier(0.4,0,0.2,1)"
+          : "slideInBackward 0.35s cubic-bezier(0.4,0,0.2,1)";
+        target.classList.add("active");
+
+        resetSuccessAnimations_(target, num);
+        updateStepper_(num);
+
+        if (FOCUS_MAP_[num]) {
+          setTimeout(() => $(FOCUS_MAP_[num])?.focus(), 120);
+        }
+
+        if (num === 2) {
+          const term = $("searchInput").value.trim();
+          const chip = $("chipSearchTerm");
+          if (chip) chip.textContent = term;
+        }
+
+        if (num === 3) {
+          $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
+          resetDisclaimerChecks_();
+        }
+
+        if (num === 4 && !$("formDesc").value && $("searchInput").value) {
+          $("formDesc").value = $("searchInput").value;
+          updateCharCounter($("formDesc"));
+        }
+      }
+
+      /**
+       * Renderiza los resultados de la búsqueda en la tabla.
+       * @param {Array<Object>} data - Arreglo de coincidencias con id_codigo, descripcion, activo, similitud.
+       */
+      function renderResultados(data) {
+        const container = $("resultsContainer");
+        const subtitle = $("resultsSubtitle");
+
+        if (!data || data.length === 0) {
+          subtitle.textContent = "No se encontraron duplicados evidentes.";
+          container.innerHTML = buildEmptyStateHTML_();
+          return;
+        }
+
+        const searchTerm = $("searchInput").value.trim();
+        subtitle.textContent = `Se encontraron ${data.length} coincidencia${data.length !== 1 ? "s" : ""} para "${searchTerm}".`;
+
+        const rows = data
+          .map((r, index) => buildResultRowHTML_(r, index))
+          .join("");
+        container.innerHTML = `<div class="table-container"><table aria-label="Resultados"><caption class="sr-only">Resultados del catálogo</caption><thead><tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+      }
+
+      /**
+       * Alterna la visibilidad del campo "Especificar Unidad de Medida".
+       * @param {string} val - Valor seleccionado del select de unidad de medida.
+       */
+      function toggleOtroUM(val) {
+        const otroWrap = $("wrapUMOtro");
+        const otroInput = $("formUMOtro");
+
+        if (val === "OTRO") {
+          otroWrap.style.display = "flex";
+          otroInput.required = true;
+          otroInput.focus();
+        } else {
+          otroWrap.style.display = "none";
+          otroInput.value = "";
+          otroInput.required = false;
+          otroInput.classList.remove("has-value");
+        }
+      }
+
+      /**
+       * Maneja el cambio de archivo en el input PDF.
+       * Valida tipo MIME y actualiza la visualización del nombre.
+       * @param {HTMLInputElement} input - Elemento input[type="file"].
+       */
+      function handleFileChange(input) {
+        const wrapper = $("fileUploadWrapper");
+        const display = $("fileNameDisplay");
+        const file = input.files[0];
+
+        if (file) {
+          if (file.type !== "application/pdf") {
+            showToast("El archivo seleccionado no es un PDF válido.", true);
+            input.value = "";
+            wrapper.classList.remove("has-file");
+            display.textContent =
+              "Adjuntar cotización institucional (Solo formato PDF)";
+            return;
+          }
+          wrapper.classList.add("has-file");
+          display.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+        } else {
+          wrapper.classList.remove("has-file");
+          display.textContent =
+            "Adjuntar cotización institucional (Solo formato PDF)";
+        }
+      }
+
+      /**
+       * Envía el formulario de inclusión al servidor.
+       * Valida campos obligatorios, procesa PDF si existe, y llama guardarSolicitud.
+       */
+      function enviarFormulario() {
+        if (_submitInProgress) return;
+
+        const requiredInputs = document.querySelectorAll("#phase-4 [required]");
+        for (const input of requiredInputs) {
+          if (!input.checkValidity()) {
+            input.reportValidity();
+            input.focus();
+            return;
+          }
+        }
+
+        const umSelect = $("formUM").value;
+        const umOtro = $("formUMOtro").value.trim();
+        const umFinal = umSelect === "OTRO" ? umOtro : umSelect;
+
+        if (umSelect === "OTRO" && !umOtro) {
+          showToast("Especifica la unidad de medida personalizada.", true);
+          $("wrapUMOtro").style.display = "flex";
+          $("formUMOtro").focus();
+          return;
+        }
+
+        const payload = buildPayload_(umFinal);
+        const file = $("formPDF").files[0];
+
+        if (file) {
+          if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
+            showToast(
+              `El PDF excede el límite de ${MAX_PDF_SIZE_MB} MB.`,
+              true,
+            );
+            return;
+          }
+          if (file.type !== "application/pdf") {
+            showToast("El archivo seleccionado no es un PDF válido.", true);
+            return;
+          }
+        }
+
+        if (file) {
+          readPdfAndSubmit_(file, payload);
+        } else {
+          submitPayload_(null, payload);
+        }
+      }
+
+      /**
+       * Actualiza el contador de caracteres de un input.
+       * @param {HTMLInputElement} input - Input con maxlength.
+       */
+      function updateCharCounter(input) {
+        const max = parseInt(input.maxLength, 10);
+        const len = input.value.length;
+        const counter = $(`${input.id}Counter`);
+
+        if (!counter || isNaN(max)) return;
+
+        counter.textContent = `${len} / ${max}`;
+        counter.classList.remove(
+          "char-counter--warning",
+          "char-counter--limit",
+        );
+
+        if (len >= max) counter.classList.add("char-counter--limit");
+        else if (len >= max * 0.85)
+          counter.classList.add("char-counter--warning");
+      }
+
+      /**
+       * Muestra modal de confirmación para descartar el formulario.
+       * Si no hay datos, descarta directamente sin modal.
+       */
+      function confirmarCancelar() {
+        const tieneDatos = DIRTY_CHECK_IDS_.some(
+          (id) => $(id) && $(id).value.trim() !== "",
+        );
+
+        if (!tieneDatos) {
+          limpiarFormulario();
+          irFase(1);
+          return;
+        }
+
+        showModal(
+          "¿Descartar formulario?",
+          "Detectamos cambios en los campos. Si cancela, se perderá la información normada ingresada.",
+          "Descartar",
+          "Volver",
+          () => {
+            limpiarFormulario();
+            irFase(1);
+          },
+        );
+      }
+
+      /**
+       * Limpia todos los campos del formulario y restaura el estado inicial.
+       */
+      function limpiarFormulario() {
+        FORM_FIELD_IDS_.forEach((id) => {
+          const el = $(id);
+          if (el) {
+            el.value = "";
+            el.classList.remove("has-value");
+          }
+        });
+
+        $("formPDF").value = "";
+        $("wrapUMOtro").style.display = "none";
+        $("formUMOtro").required = false;
+        $("fileUploadWrapper").classList.remove("has-file");
+        $("fileNameDisplay").textContent =
+          "Adjuntar cotización institucional (Solo formato PDF)";
+        $("searchInput").value = "";
+
+        const counter = $("formDescCounter");
+        if (counter) {
+          counter.textContent = "0 / 200";
+          counter.classList.remove(
+            "char-counter--warning",
+            "char-counter--limit",
+          );
+        }
+      }
+
+      /**
+       * Muestra un toast de notificación en la esquina inferior derecha.
+       * @param {string} msg - Mensaje a mostrar.
+       * @param {boolean} [isError=false] - Si es true, muestra estilo de error.
+       */
+      function showToast(msg, isError = false) {
+        const container = $("toastContainer");
+
+        while (container.children.length >= MAX_TOASTS) {
+          container.firstChild.remove();
+        }
+
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.style.borderLeft = isError
+          ? "4px solid var(--red-main)"
+          : "4px solid var(--green-main)";
+        toast.setAttribute("role", isError ? "alert" : "status");
+
+        const icon = document.createElement("span");
+        icon.setAttribute("aria-hidden", "true");
+        icon.innerHTML = isError ? "&#x2716;" : "&#x2714;";
+
+        const span = document.createElement("span");
+        span.textContent = msg;
+
+        toast.append(icon, span);
+
+        const progress = document.createElement("div");
+        progress.className = `toast__progress ${isError ? "toast__progress--error" : "toast__progress--success"}`;
+        toast.appendChild(progress);
+        container.appendChild(toast);
+
+        let timeout = setTimeout(dismiss, TOAST_DURATION_MS);
+        toast.addEventListener("mouseenter", () => clearTimeout(timeout));
+        toast.addEventListener("mouseleave", () => {
+          timeout = setTimeout(dismiss, TOAST_DURATION_MS);
+        });
+
+        function dismiss() {
+          toast.style.opacity = "0";
+          toast.style.transform = "translateY(10px)";
+          setTimeout(() => toast.remove(), 300);
+        }
+      }
+
+      /**
+       * Muestra un modal de confirmación accesible con trampa de foco.
+       * @param {string} title - Título del modal.
+       * @param {string} message - Mensaje descriptivo.
+       * @param {string} confirmText - Texto del botón de confirmación.
+       * @param {string} cancelText - Texto del botón de cancelación.
+       * @param {Function} [onConfirm] - Callback al confirmar.
+       */
+      function showModal(title, message, confirmText, cancelText, onConfirm) {
+        const prev = document.querySelector(".modal-overlay");
+        if (prev) prev.remove();
+
+        const prevFocus = document.activeElement;
+        const uid = Date.now();
+
+        const overlay = document.createElement("div");
+        overlay.className = "modal-overlay";
+        overlay.setAttribute("role", "dialog");
+        overlay.setAttribute("aria-modal", "true");
+
+        const box = document.createElement("div");
+        box.className = "modal-box";
+
+        const h3 = document.createElement("h3");
+        h3.textContent = title;
+        h3.id = `modal-title-${uid}`;
+
+        const p = document.createElement("p");
+        p.textContent = message;
+        p.id = `modal-desc-${uid}`;
+
+        overlay.setAttribute("aria-labelledby", h3.id);
+        overlay.setAttribute("aria-describedby", p.id);
+
+        const actions = document.createElement("div");
+        actions.className = "modal-actions";
+
+        const btnCancel = document.createElement("button");
+        btnCancel.className = "btn btn-secondary";
+        btnCancel.textContent = cancelText;
+
+        const btnConfirm = document.createElement("button");
+        btnConfirm.className = "btn btn-primary btn--danger";
+        btnConfirm.textContent = confirmText;
+
+        actions.append(btnCancel, btnConfirm);
+        box.append(h3, p, actions);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        const focusables = [btnCancel, btnConfirm];
+        let focusIndex = 0;
+        focusables[0].focus();
+
+        const close = () => {
+          overlay.style.animation = "modalOut 0.15s ease forwards";
+          overlay.addEventListener(
+            "animationend",
+            () => {
+              overlay.remove();
+              prevFocus?.focus();
+            },
+            { once: true },
+          );
+        };
+
+        overlay.addEventListener("keydown", (e) => {
+          if (e.key === "Tab") {
+            e.preventDefault();
+            focusIndex = e.shiftKey
+              ? (focusIndex - 1 + focusables.length) % focusables.length
+              : (focusIndex + 1) % focusables.length;
+            focusables[focusIndex].focus();
+          }
+          if (e.key === "Escape") close();
+        });
+
+        btnCancel.addEventListener("click", close);
+        btnConfirm.addEventListener("click", () => {
+          close();
+          if (onConfirm) onConfirm();
+        });
+      }
+
+      // ─── Funciones Privadas (suffix: _) ──────────────────────────────
+
+      /**
+       * Actualiza el stepper visual según la fase actual.
+       * @param {number} currentPhase - Fase activa (1–5).
+       * @private
+       */
+      const updateStepper_ = (currentPhase) => {
+        const steps = document.querySelectorAll(".stepper__step");
+        const lines = document.querySelectorAll(".stepper__line");
+
+        steps.forEach((step, i) => {
+          const n = i + 1;
+          step.classList.remove("stepper__step--active", "stepper__step--done");
+          step.removeAttribute("onclick");
+          step.removeAttribute("aria-current");
+
+          if (n === currentPhase) {
+            step.classList.add("stepper__step--active");
+            step.setAttribute("aria-current", "step");
+          } else if (n < currentPhase) {
+            step.classList.add("stepper__step--done");
+            step.setAttribute("onclick", `irFase(${n})`);
+          }
+        });
+
+        lines.forEach((line, i) => {
+          line.classList.toggle("stepper__line--filled", i < currentPhase - 1);
+        });
+      };
+
+      /**
+       * Controla la visibilidad del banner normativo.
+       * @param {number} phase - Fase activa.
+       * @private
+       */
+      const toggleBanner_ = (phase) => {
+        const banner = $("normativeBanner");
+        if (banner) {
+          banner.style.display = phase === 1 ? "flex" : "none";
+        }
+      };
+
+      /**
+       * Reinicia las animaciones de la fase de éxito.
+       * @param {HTMLElement} target - Elemento de la fase 5.
+       * @param {number} num - Número de fase actual.
+       * @private
+       */
+      const resetSuccessAnimations_ = (target, num) => {
+        if (num !== 5) return;
+
         const icon = target.querySelector(".success-icon");
         const content = target.querySelector(".success-content");
         const svg = icon?.querySelector("svg");
-        if (icon) { icon.style.animation = "none"; icon.offsetHeight; icon.style.animation = ""; }
-        if (svg) { svg.style.animation = "none"; svg.offsetHeight; svg.style.animation = ""; }
-        if (content) { content.style.animation = "none"; content.offsetHeight; content.style.animation = ""; }
-      }
 
-      updateStepper(num);
-      const focusMap = { 1: "searchInput", 4: "formDesc", 5: "successLink" };
-      if (focusMap[num]) setTimeout(() => $(focusMap[num])?.focus(), 120);
-      if (num === 2) {
-        const term = $("searchInput").value.trim();
-        if ($("chipSearchTerm")) $("chipSearchTerm").textContent = term;
-      }
-      if (num === 3) {
-        $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
-        const checks = document.querySelectorAll('.disclaimer-check input[type="checkbox"]');
-        const btnPhase3 = document.querySelector('#phase-3 .btn-primary');
-        checks.forEach(c => c.checked = false);
-        if (btnPhase3) btnPhase3.disabled = true;
-      }
-      if (num === 4 && !$("formDesc").value && $("searchInput").value) {
-        $("formDesc").value = $("searchInput").value;
-        updateCharCounter($("formDesc"));
-      }
-    }
-
-    function renderSkeleton() {
-      const container = $("resultsContainer");
-      $("resultsSubtitle").textContent = "Buscando coincidencias...";
-      let rows = "";
-      for (let i = 0; i < 4; i++) {
-        rows += '<div class="skeleton-row">' +
-          '<div class="skeleton-cell skeleton-cell--clave skeleton"></div>' +
-          '<div class="skeleton-cell skeleton-cell--desc skeleton"></div>' +
-          '<div class="skeleton-cell skeleton-cell--badge skeleton"></div>' +
-          '<div class="skeleton-cell skeleton-cell--badge skeleton"></div></div>';
-      }
-      container.innerHTML = '<div class="skeleton-table">' + rows + "</div>";
-    }
-
-    function ejecutarBusqueda() {
-      if (_searchInProgress) return;
-      const input = $("searchInput");
-      const val = input.value.trim();
-      if (val.length < 3) { showToast("Ingresa al menos 3 caracteres.", true); input.focus(); return; }
-      _searchInProgress = true;
-      setLoading(true);
-      irFase(2);
-      renderSkeleton();
-      _searchTimer = setTimeout(() => {
-        _searchInProgress = false; setLoading(false);
-        showToast("La consulta tardó demasiado. Intenta con un término más específico.", true);
-      }, SEARCH_TIMEOUT_MS);
-      
-      if (typeof google !== "undefined" && google.script && google.script.run) {
-        google.script.run
-          .withSuccessHandler((res) => {
-            clearTimeout(_searchTimer); _searchInProgress = false; setLoading(false);
-            renderResultados(Array.isArray(res) ? res : []);
-          })
-          .withFailureHandler((err) => {
-            clearTimeout(_searchTimer); _searchInProgress = false; setLoading(false);
-            $("resultsContainer").innerHTML = '<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500;color:var(--red-main)">Error en la búsqueda</h3><p style="margin:0;font-size:13px">' + escapeHTML(err.message || "No se pudo conectar.") + "</p></div>";
-            $("resultsSubtitle").textContent = "Ocurrió un error al consultar.";
-          })
-          .buscarSimilitudesBQ(val);
-      } else {
-        setTimeout(() => {
-          clearTimeout(_searchTimer); _searchInProgress = false; setLoading(false);
-          renderResultados([]);
-        }, 1000);
-      }
-    }
-
-    function setLoading(isLoading) {
-      $("btnSearch").disabled = isLoading || $("searchInput").value.trim().length < 3;
-      $("searchInput").disabled = isLoading;
-      $("loader").style.display = isLoading ? "flex" : "none";
-      $("btnSearch").textContent = isLoading ? "Buscando..." : "Verificar";
-    }
-
-    function renderResultados(data) {
-      const container = $("resultsContainer");
-      const subtitle = $("resultsSubtitle");
-      if (!data || data.length === 0) {
-        subtitle.textContent = "No se encontraron duplicados evidentes.";
-        container.innerHTML = '<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500">Búsqueda Limpia (Escenario B)</h3><p style="margin:0;font-size:13px">No existen registros idénticos vigentes. Es conforme avanzar con la inclusión de clave.</p></div>';
-        return;
-      }
-      subtitle.textContent = `Se encontraron ${data.length} coincidencia${data.length !== 1 ? "s" : ""} para "${$("searchInput").value.trim()}".`;
-
-      let rows = data.map((r, index) => {
-        const score = Number.parseFloat(r.similitud || 0);
-        const active = Number(r.activo) === 1;
-        let scoreClass = score >= 60 ? "red" : score >= 35 ? "orange" : "gray";
-        let activeClass = active ? "green" : "gray";
-        return `<tr style="animation-delay:${index * 0.04}s">
-          <td data-label="Clave" style="font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.02em;color:var(--text-muted)">${escapeHTML(r.id_codigo || "N/A")}</td>
-          <td data-label="Descripción" style="font-weight:500">${escapeHTML(r.descripcion || "")}</td>
-          <td data-label="Estado"><span class="badge ${activeClass}">${active ? "Activo" : "Inactivo"}</span></td>
-          <td data-label="Similitud"><span class="badge ${scoreClass}">${score.toFixed(1)}%</span></td>
-        </tr>`;
-      }).join("");
-      container.innerHTML = `<div class="table-container"><table aria-label="Resultados"><caption class="sr-only">Resultados del catálogo</caption><thead><tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-    }
-
-    // PROPUESTA A: Despliegue independiente en Grid para campos condicionales
-    function toggleOtroUM(val) {
-      const otroWrap = $("wrapUMOtro");
-      const otroInput = $("formUMOtro");
-      if (val === "OTRO") {
-        otroWrap.style.display = "flex";
-        otroInput.required = true;
-        otroInput.focus();
-      } else {
-        otroWrap.style.display = "none";
-        otroInput.value = "";
-        otroInput.required = false;
-        otroInput.classList.remove("has-value");
-      }
-    }
-
-    // PROPUESTA B: Manejador para el cargador de PDF adaptado visualmente
-    function handleFileChange(input) {
-      const wrapper = $("fileUploadWrapper");
-      const display = $("fileNameDisplay");
-      const file = input.files[0];
-
-      if (file) {
-        if (file.type !== "application/pdf") {
-          showToast("El archivo seleccionado no es un PDF válido.", true);
-          input.value = "";
-          wrapper.classList.remove("has-file");
-          display.textContent = "Adjuntar cotización institucional (Solo formato PDF)";
-          return;
-        }
-        wrapper.classList.add("has-file");
-        display.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
-      } else {
-        wrapper.classList.remove("has-file");
-        display.textContent = "Adjuntar cotización institucional (Solo formato PDF)";
-      }
-    }
-
-    function enviarFormulario() {
-      if (_submitInProgress) return;
-      const requiredInputs = document.querySelectorAll("#phase-4 [required]");
-      for (const input of requiredInputs) {
-        if (!input.checkValidity()) { input.reportValidity(); input.focus(); return; }
-      }
-
-      const umSelect = $("formUM").value;
-      const umOtro = $("formUMOtro").value.trim();
-      const umFinal = umSelect === "OTRO" ? umOtro : umSelect;
-      if (umSelect === "OTRO" && !umOtro) {
-        showToast("Especifica la unidad de medida personalizada.", true);
-        $("wrapUMOtro").style.display = "flex";
-        $("formUMOtro").focus();
-        return;
-      }
-
-      const fields = {
-        desc: $("formDesc").value.trim().toUpperCase(),
-        um: umFinal.toUpperCase(),
-        cog: $("formCOG").value.trim().toUpperCase(),
-        unidad: $("formUnidad").value,
+        [icon, svg, content].forEach((el) => {
+          if (el) {
+            el.style.animation = "none";
+            el.offsetHeight; // eslint-disable-line no-unused-expressions
+            el.style.animation = "";
+          }
+        });
       };
 
-      const payload = {
-        descripcion: fields.desc,
-        unidadMedida: fields.um,
-        partidaCOG: fields.cog,
-        unidadHospitalaria: fields.unidad,
+      /**
+       * Resetea los checkboxes del disclaimer de la fase 3.
+       * @private
+       */
+      const resetDisclaimerChecks_ = () => {
+        const checks = document.querySelectorAll(
+          '.disclaimer-check input[type="checkbox"]',
+        );
+        const btnPhase3 = document.querySelector("#phase-3 .btn-primary");
+
+        checks.forEach((cb) => {
+          cb.checked = false;
+        });
+        if (btnPhase3) btnPhase3.disabled = true;
+      };
+
+      /**
+       * Renderiza el skeleton loader durante la búsqueda.
+       * @private
+       */
+      const renderSkeleton_ = () => {
+        const container = $("resultsContainer");
+        $("resultsSubtitle").textContent = "Buscando coincidencias...";
+
+        let rows = "";
+        for (let i = 0; i < SKELETON_ROWS; i++) {
+          rows +=
+            '<div class="skeleton-row">' +
+            '<div class="skeleton-cell skeleton-cell--clave skeleton"></div>' +
+            '<div class="skeleton-cell skeleton-cell--desc skeleton"></div>' +
+            '<div class="skeleton-cell skeleton-cell--badge skeleton"></div>' +
+            '<div class="skeleton-cell skeleton-cell--badge skeleton"></div></div>';
+        }
+        container.innerHTML = `<div class="skeleton-table">${rows}</div>`;
+      };
+
+      /**
+       * Controla el estado de carga del buscador.
+       * @param {boolean} isLoading - Estado de carga.
+       * @private
+       */
+      const setLoading_ = (isLoading) => {
+        $("btnSearch").disabled =
+          isLoading || $("searchInput").value.trim().length < MIN_SEARCH_LEN;
+        $("searchInput").disabled = isLoading;
+        $("loader").style.display = isLoading ? "flex" : "none";
+        $("btnSearch").textContent = isLoading ? "Buscando..." : "Verificar";
+      };
+
+      /**
+       * Controla el estado de carga del formulario de envío.
+       * @param {boolean} isLoading - Estado de carga.
+       * @private
+       */
+      const setLoadingForm_ = (isLoading) => {
+        const btns = document.querySelectorAll("#phase-4 .btn-primary");
+        btns.forEach((btn) => {
+          if (isLoading && !btn.querySelector(".btn-spinner")) {
+            const spinner = document.createElement("span");
+            spinner.className = "btn-spinner";
+            spinner.setAttribute("aria-hidden", "true");
+            btn.prepend(spinner);
+          }
+          btn.disabled = isLoading;
+          btn.classList.toggle("btn--loading", isLoading);
+          if (!isLoading) {
+            const s = btn.querySelector(".btn-spinner");
+            if (s) s.remove();
+          }
+        });
+      };
+
+      /**
+       * Verifica si google.script.run está disponible (entorno GAS).
+       * @returns {boolean} True si el API de GAS está disponible.
+       * @private
+       */
+      const isGASAvailable_ = () =>
+        typeof google !== "undefined" && google.script && google.script.run;
+
+      /**
+       * Escapa caracteres HTML para prevenir XSS al inyectar en el DOM.
+       * @param {string} str - Cadena a escapar.
+       * @returns {string} Cadena escapada segura para HTML.
+       * @private
+       */
+      const escapeHTML_ = (str) =>
+        String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+
+      /**
+       * Genera el HTML del estado vacío (sin coincidencias).
+       * @returns {string} Markup HTML del empty state.
+       * @private
+       */
+      const buildEmptyStateHTML_ = () =>
+        '<div class="empty-state">' +
+        '<h3 style="margin:0 0 8px;font-weight:500">Búsqueda Limpia (Escenario B)</h3>' +
+        '<p style="margin:0;font-size:13px">No existen registros idénticos vigentes. Es conforme avanzar con la inclusión de clave.</p>' +
+        "</div>";
+
+      /**
+       * Genera el HTML del estado de error en la búsqueda.
+       * @param {string} message - Mensaje de error a mostrar.
+       * @returns {string} Markup HTML del error state.
+       * @private
+       */
+      const buildErrorStateHTML_ = (message) =>
+        '<div class="empty-state">' +
+        `<h3 style="margin:0 0 8px;font-weight:500;color:var(--red-main)">Error en la búsqueda</h3>` +
+        `<p style="margin:0;font-size:13px">${escapeHTML_(message)}</p>` +
+        "</div>";
+
+      /**
+       * Genera el HTML de una fila de resultado.
+       * @param {Object} r - Resultado con id_codigo, descripcion, activo, similitud.
+       * @param {number} index - Índice de la fila (para animation-delay).
+       * @returns {string} Markup HTML del <tr>.
+       * @private
+       */
+      const buildResultRowHTML_ = (r, index) => {
+        const score = Number.parseFloat(r.similitud || 0);
+        const active = Number(r.activo) === 1;
+        const scoreClass =
+          score >= 60 ? "red" : score >= 35 ? "orange" : "gray";
+        const activeClass = active ? "green" : "gray";
+
+        return `<tr style="animation-delay:${index * 0.04}s">
+        <td data-label="Clave" style="font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.02em;color:var(--text-muted)">${escapeHTML_(r.id_codigo || "N/A")}</td>
+        <td data-label="Descripción" style="font-weight:500">${escapeHTML_(r.descripcion || "")}</td>
+        <td data-label="Estado"><span class="badge ${activeClass}">${active ? "Activo" : "Inactivo"}</span></td>
+        <td data-label="Similitud"><span class="badge ${scoreClass}">${score.toFixed(1)}%</span></td>
+      </tr>`;
+      };
+
+      /**
+       * Construye el objeto payload a partir de los campos del formulario.
+       * @param {string} umFinal - Unidad de medida final (resuelta).
+       * @returns {Object} Payload listo para enviar al servidor.
+       * @private
+       */
+      const buildPayload_ = (umFinal) => ({
+        descripcion: $("formDesc").value.trim().toUpperCase(),
+        unidadMedida: umFinal.toUpperCase(),
+        partidaCOG: $("formCOG").value.trim().toUpperCase(),
+        unidadHospitalaria: $("formUnidad").value,
         familia: $("formFamilia").value.trim().toUpperCase(),
         nombreSolicitante: $("formNombre").value.trim(),
         cargoSolicitante: $("formCargo").value.trim(),
@@ -1295,35 +2690,58 @@
         proveedor: $("formProveedor").value.trim().toUpperCase(),
         justificacion: $("formJustificacion").value.trim(),
         observacion: $("formObs").value.trim(),
+      });
+
+      /**
+       * Lee un archivo PDF como Base64 y envía el payload al servidor.
+       * @param {File} file - Archivo PDF a leer.
+       * @param {Object} payload - Payload del formulario.
+       * @private
+       */
+      const readPdfAndSubmit_ = (file, payload) => {
+        const reader = new FileReader();
+        reader.onload = () =>
+          submitPayload_(reader.result.split(",")[1], payload);
+        reader.onerror = () => showToast("Error al leer el PDF.", true);
+        reader.readAsDataURL(file);
       };
 
-      const fileInput = $("formPDF");
-      const file = fileInput.files[0];
-
-      if (file) {
-        if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) { showToast(`El PDF excede el límite de ${MAX_PDF_SIZE_MB} MB.`, true); return; }
-        if (file.type !== "application/pdf") { showToast("El archivo seleccionado no es un PDF válido.", true); return; }
-      }
-
-      const procesarYEnviar = (pdfBase64) => {
+      /**
+       * Envía el payload al servidor vía google.script.run.
+       * @param {string|null} pdfBase64 - PDF codificado en Base64 o null.
+       * @param {Object} payload - Datos del formulario.
+       * @private
+       */
+      const submitPayload_ = (pdfBase64, payload) => {
         payload.cotizacionPDF = pdfBase64;
         _submitInProgress = true;
-        setLoadingForm(true);
-        if (typeof google !== "undefined" && google.script && google.script.run) {
+        setLoadingForm_(true);
+
+        if (isGASAvailable_()) {
           google.script.run
             .withSuccessHandler((res) => {
-              _submitInProgress = false; setLoadingForm(false);
+              _submitInProgress = false;
+              setLoadingForm_(false);
               showToast("Solicitud enviada correctamente.");
-              if (res && res.url) { $("successLink").href = res.url; irFase(5); } else { limpiarFormulario(); setTimeout(() => irFase(1, true), 1200); }
+
+              if (res && res.url) {
+                $("successLink").href = res.url;
+                irFase(5);
+              } else {
+                limpiarFormulario();
+                setTimeout(() => irFase(1, true), 1200);
+              }
             })
             .withFailureHandler((err) => {
-              _submitInProgress = false; setLoadingForm(false);
+              _submitInProgress = false;
+              setLoadingForm_(false);
               showToast(err.message || "Error al enviar", true);
             })
             .guardarSolicitud(payload);
         } else {
           setTimeout(() => {
-            _submitInProgress = false; setLoadingForm(false);
+            _submitInProgress = false;
+            setLoadingForm_(false);
             showToast("Solicitud enviada (demo).");
             limpiarFormulario();
             setTimeout(() => irFase(1, true), 1500);
@@ -1331,168 +2749,100 @@
         }
       };
 
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => procesarYEnviar(reader.result.split(",")[1]);
-        reader.onerror = () => showToast("Error al leer el PDF.", true);
-        reader.readAsDataURL(file);
-      } else {
-        procesarYEnviar(null);
-      }
-    }
+      /**
+       * Inicializa el efecto ripple en todos los botones.
+       * @private
+       */
+      const initRipple_ = () => {
+        document.querySelectorAll(".btn").forEach((btn) => {
+          btn.addEventListener("click", function (e) {
+            const rect = this.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height) * 2;
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
 
-    function setLoadingForm(isLoading) {
-      const btns = document.querySelectorAll("#phase-4 .btn-primary");
-      btns.forEach((b) => {
-        if (isLoading && !b.querySelector(".btn-spinner")) {
-          const spinner = document.createElement("span");
-          spinner.className = "btn-spinner";
-          spinner.setAttribute("aria-hidden", "true");
-          b.prepend(spinner);
-        }
-        b.disabled = isLoading;
-        b.classList.toggle("btn--loading", isLoading);
-        if (!isLoading) { const s = b.querySelector(".btn-spinner"); if (s) s.remove(); }
-      });
-    }
+            const ripple = document.createElement("span");
+            ripple.className = "btn__ripple";
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${x}px`;
+            ripple.style.top = `${y}px`;
 
-    function limpiarFormulario() {
-      const ids = ["formDesc", "formUM", "formCOG", "formPrecio", "formProveedor", "formJustificacion", "formUnidad", "formFamilia", "formNombre", "formCargo", "formServicio", "formObs", "formUMOtro"];
-      ids.forEach((id) => {
-        if ($(id)) { $(id).value = ""; $(id).classList.remove("has-value"); }
-      });
-      $("formPDF").value = "";
-      $("wrapUMOtro").style.display = "none";
-      $("formUMOtro").required = false;
-      $("fileUploadWrapper").classList.remove("has-file");
-      $("fileNameDisplay").textContent = "Adjuntar cotización institucional (Solo formato PDF)";
-      $("searchInput").value = "";
-      const counter = $("formDescCounter");
-      if (counter) { counter.textContent = "0 / 200"; counter.classList.remove("char-counter--warning", "char-counter--limit"); }
-    }
-
-    function updateCharCounter(input) {
-      const max = parseInt(input.maxLength, 10);
-      const len = input.value.length;
-      const counter = $(`${input.id}Counter`);
-      if (!counter || isNaN(max)) return;
-      counter.textContent = `${len} / ${max}`;
-      counter.classList.remove("char-counter--warning", "char-counter--limit");
-      if (len >= max) counter.classList.add("char-counter--limit");
-      else if (len >= max * 0.85) counter.classList.add("char-counter--warning");
-    }
-
-    function confirmarCancelar() {
-      const tieneDatos = ["formDesc", "formNombre", "formCOG", "formJustificacion"].some((id) => $(id) && $(id).value.trim() !== "");
-      if (!tieneDatos) { limpiarFormulario(); irFase(1); return; }
-      showModal("¿Descartar formulario?", "Detectamos cambios en los campos. Si cancela, se perderá la información normada ingresada.", "Descartar", "Volver", () => { limpiarFormulario(); irFase(1); });
-    }
-
-    function showModal(title, message, confirmText, cancelText, onConfirm) {
-      const prev = document.querySelector(".modal-overlay"); if (prev) prev.remove();
-      const prevFocus = document.activeElement;
-      
-      const overlay = document.createElement("div"); 
-      overlay.className = "modal-overlay"; 
-      overlay.setAttribute("role", "dialog"); 
-      overlay.setAttribute("aria-modal", "true");
-      
-      const box = document.createElement("div"); 
-      box.className = "modal-box";
-      
-      const h3 = document.createElement("h3"); 
-      h3.textContent = title;
-      h3.id = "modal-title-" + Date.now();
-      
-      const p = document.createElement("p"); 
-      p.textContent = message;
-      p.id = "modal-desc-" + Date.now();
-      
-      overlay.setAttribute("aria-labelledby", h3.id);
-      overlay.setAttribute("aria-describedby", p.id);
-      
-      const actions = document.createElement("div"); 
-      actions.className = "modal-actions";
-      
-      const btnCancel = document.createElement("button"); 
-      btnCancel.className = "btn btn-secondary"; 
-      btnCancel.textContent = cancelText;
-      
-      const btnConfirm = document.createElement("button"); 
-      btnConfirm.className = "btn btn-primary btn--danger"; 
-      btnConfirm.textContent = confirmText;
-
-      actions.append(btnCancel, btnConfirm); 
-      box.append(h3, p, actions); 
-      overlay.appendChild(box); 
-      document.body.appendChild(overlay);
-      
-      const focusables = [btnCancel, btnConfirm];
-      let focusIndex = 0;
-      focusables[0].focus();
-
-      overlay.addEventListener("keydown", (e) => {
-        if (e.key === "Tab") {
-          e.preventDefault();
-          focusIndex = e.shiftKey
-            ? (focusIndex - 1 + focusables.length) % focusables.length
-            : (focusIndex + 1) % focusables.length;
-          focusables[focusIndex].focus();
-        }
-        if (e.key === "Escape") {
-          close();
-        }
-      });
-      
-      const close = () => { overlay.style.animation = "modalOut 0.15s ease forwards"; overlay.addEventListener("animationend", () => { overlay.remove(); prevFocus?.focus(); }, { once: true }); };
-      
-      btnCancel.addEventListener("click", close);
-      btnConfirm.addEventListener("click", () => { close(); if (onConfirm) onConfirm(); });
-    }
-
-    function escapeHTML(str) { return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const searchInput = $("searchInput");
-      const btnSearch = $("btnSearch");
-      
-      btnSearch.disabled = searchInput.value.trim().length < 3;
-      searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter" && !btnSearch.disabled) ejecutarBusqueda(); });
-      searchInput.addEventListener("input", () => { btnSearch.disabled = searchInput.value.trim().length < 3; });
-
-      document.querySelectorAll(".btn").forEach((btn) => {
-        btn.addEventListener("click", function (e) {
-          const rect = this.getBoundingClientRect(); const size = Math.max(rect.width, rect.height) * 2;
-          const x = e.clientX - rect.left - size / 2; const y = e.clientY - rect.top - size / 2;
-          const ripple = document.createElement("span"); ripple.className = "btn__ripple";
-          ripple.style.width = ripple.style.height = `${size}px`; ripple.style.left = `${x}px`; ripple.style.top = `${y}px`;
-          this.appendChild(ripple); ripple.addEventListener("animationend", () => ripple.remove());
-        });
-      });
-
-      const interceptarSelects = () => {
-        document.querySelectorAll(".input-group select").forEach((sel) => {
-          const evaluarFlotado = () => { sel.classList.toggle("has-value", sel.value !== ""); };
-          sel.addEventListener("change", evaluarFlotado); evaluarFlotado();
+            this.appendChild(ripple);
+            ripple.addEventListener("animationend", () => ripple.remove());
+          });
         });
       };
-      interceptarSelects();
 
-      const inputOtro = $("formUMOtro");
-      if (inputOtro) { inputOtro.addEventListener("input", () => { inputOtro.classList.toggle("has-value", inputOtro.value.trim() !== ""); }); }
-      
-      // Inicializar checks del disclaimer
-      const checks = document.querySelectorAll('.disclaimer-check input[type="checkbox"]');
-      const btnContinuePhase3 = document.querySelector('#phase-3 .btn-primary');
-
-      checks.forEach((cb) => {
-        cb.addEventListener("change", () => {
-          btnContinuePhase3.disabled = ![...checks].every((c) => c.checked);
+      /**
+       * Inicializa la evaluación de floating labels para selects.
+       * @private
+       */
+      const initSelectFloatingLabels_ = () => {
+        document.querySelectorAll(".input-group select").forEach((sel) => {
+          const evaluarFlotado = () => {
+            sel.classList.toggle("has-value", sel.value !== "");
+          };
+          sel.addEventListener("change", evaluarFlotado);
+          evaluarFlotado();
         });
+      };
+
+      /**
+       * Inicializa el campo "Otro" de unidad de medida con detección de valor.
+       * @private
+       */
+      const initOtroUMInput_ = () => {
+        const inputOtro = $("formUMOtro");
+        if (inputOtro) {
+          inputOtro.addEventListener("input", () => {
+            inputOtro.classList.toggle(
+              "has-value",
+              inputOtro.value.trim() !== "",
+            );
+          });
+        }
+      };
+
+      /**
+       * Inicializa los checkboxes del disclaimer con lógica de habilitación.
+       * @private
+       */
+      const initDisclaimerChecks_ = () => {
+        const checks = document.querySelectorAll(
+          '.disclaimer-check input[type="checkbox"]',
+        );
+        const btnContinue = document.querySelector("#phase-3 .btn-primary");
+
+        checks.forEach((cb) => {
+          cb.addEventListener("change", () => {
+            btnContinue.disabled = ![...checks].every((c) => c.checked);
+          });
+        });
+      };
+
+      // ─── Inicialización ──────────────────────────────────────────────
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = $("searchInput");
+        const btnSearch = $("btnSearch");
+
+        btnSearch.disabled = searchInput.value.trim().length < MIN_SEARCH_LEN;
+
+        searchInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !btnSearch.disabled) ejecutarBusqueda();
+        });
+
+        searchInput.addEventListener("input", () => {
+          btnSearch.disabled = searchInput.value.trim().length < MIN_SEARCH_LEN;
+        });
+
+        initRipple_();
+        initSelectFloatingLabels_();
+        initOtroUMInput_();
+        initDisclaimerChecks_();
+
+        searchInput.focus();
       });
-      
-      searchInput.focus();
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>

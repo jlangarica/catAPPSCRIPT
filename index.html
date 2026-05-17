@@ -31,7 +31,14 @@
       margin: 0;
       padding: 0;
       font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background-color: var(--bg-body);
+      
+      /* Gradiente premium: tonos institucionales, limpios y muy suaves */
+      background: linear-gradient(-45deg, #f5f5f7, #edf3fe, #fcfcfd, #f1f4f8);
+      background-size: 400% 400%;
+      
+      /* Movimiento ultra-lento de 26 segundos para máxima sofisticación */
+      animation: gradientePremium 26s ease infinite;
+      
       color: var(--text-main);
       display: flex;
       justify-content: center;
@@ -39,6 +46,27 @@
       min-height: 100vh;
       padding-top: 5vh;
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* El ciclo de movimiento suave */
+    @keyframes gradientePremium {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* Cláusula de accesibilidad para evitar mareos en usuarios sensibles */
+    @media (prefers-reduced-motion: reduce) {
+      body {
+        animation: none !important;
+        background: #f5f5f7 !important;
+      }
     }
 
     .app-window {
@@ -682,7 +710,7 @@
             <input type="text" id="searchInput" placeholder="Ej: guantes de látex caja 100" autocomplete="off" aria-label="Descripción">
             <span class="input-hint">Presiona Enter o haz clic en Verificar</span>
           </div>
-          <button class="btn btn-primary" id="btnSearch" onclick="ejecutarBusqueda()">Verificar</button>
+          <button class="btn btn-primary" id="btnSearch" onclick="ejecutarBusqueda()" disabled>Verificar</button>
         </div>
         <div class="loader" id="loader" role="status" aria-live="polite">
           <div class="spinner" aria-hidden="true"></div>
@@ -969,7 +997,7 @@
     }
 
     function setLoading(isLoading) {
-      $('btnSearch').disabled = isLoading;
+      $('btnSearch').disabled = isLoading || $('searchInput').value.trim().length < 3;
       $('searchInput').disabled = isLoading;
       $('loader').style.display = isLoading ? 'flex' : 'none';
       $('btnSearch').textContent = isLoading ? 'Consultando...' : 'Verificar';
@@ -1263,8 +1291,18 @@
 
     // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
-      $('searchInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') ejecutarBusqueda();
+      const searchInput = $('searchInput');
+      const btnSearch = $('btnSearch');
+      
+      // Deshabilitar inicialmente si es necesario
+      btnSearch.disabled = searchInput.value.trim().length < 3;
+
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !btnSearch.disabled) ejecutarBusqueda();
+      });
+
+      searchInput.addEventListener('input', () => {
+        btnSearch.disabled = searchInput.value.trim().length < 3;
       });
       // Ripple en todos los botones
       document.querySelectorAll('.btn').forEach(btn => {

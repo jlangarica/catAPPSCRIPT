@@ -169,56 +169,71 @@ function buscarSimilitudesBQ(textoUsuario) {
  * @param {string} [payload.cotizacionPDF]   - PDF de cotización en Base64.
  * @returns {{ success: boolean, url?: string, id?: string, message?: string }}
  *   Resultado de la operación.
- * @throws {Error} Si la generación del documento falla.
+ * @throws {Error} Si la validación o generación del documento falla.
  */
 function guardarSolicitud(payload) {
   if (!payload) {
-    console.info("Verificando acceso a DriveApp...");
+    console.info({ message: "Verificando acceso a DriveApp..." });
     DriveApp.getRootFolder();
-    console.info("Acceso a Drive confirmado.");
+    console.info({ message: "Acceso a Drive confirmado." });
     return { success: true, message: "Autorización exitosa" };
+  }
+
+  const { valido, mensaje } = validarPayloadEntrada_(payload);
+  if (!valido) {
+    console.warn({ message: "Validación de payload fallida", error: mensaje });
+    throw new Error(`Validación: ${mensaje}`);
   }
 
   console.info({
     message: "Nueva solicitud recibida",
     descripcion: payload.descripcion,
+    partida: payload.partidaCOG,
   });
 
   try {
+    const {
+      partidaCOG: partida,
+      familia = "",
+      unidadHospitalaria: unidad = "",
+      descripcion,
+      unidadMedida,
+      nombreSolicitante = "",
+      cargoSolicitante = "",
+      servicio = "",
+      precio: costoReferencia = "",
+      proveedor = "",
+      justificacion = "",
+      observacion = "",
+      cotizacionPDF,
+    } = payload;
+
     const datosDoc = {
-      partida: payload.partidaCOG,
-      familia: payload.familia || "",
-      unidad: payload.unidadHospitalaria || "",
-      descripcion: payload.descripcion,
-      unidadMedida: payload.unidadMedida,
-      nombreSolicitante: payload.nombreSolicitante || "",
-      cargoSolicitante: payload.cargoSolicitante || "",
-      servicio: payload.servicio || "",
-      costoReferencia: payload.precio || "",
-      proveedor: payload.proveedor || "",
-      justificacion: payload.justificacion || "",
-      observacion: payload.observacion || "",
+      partida,
+      familia,
+      unidad,
+      descripcion,
+      unidadMedida,
+      nombreSolicitante,
+      cargoSolicitante,
+      servicio,
+      costoReferencia,
+      proveedor,
+      justificacion,
+      observacion,
     };
 
-    const resultadoDoc = generarDocumentoInclusion(
-      datosDoc,
-      payload.cotizacionPDF,
-    );
+    const resultadoDoc = generarDocumentoInclusion(datosDoc, cotizacionPDF);
 
     console.info({ message: "Documento generado", id: resultadoDoc.id });
-
-    return {
-      success: true,
-      url: resultadoDoc.url,
-      id: resultadoDoc.id,
-    };
+    return { success: true, url: resultadoDoc.url, id: resultadoDoc.id };
   } catch (e) {
     console.error({
       message: "Error en guardarSolicitud",
       error: e.message,
       stack: e.stack,
     });
-    throw new Error("No se pudo procesar la solicitud: " + e.message);
+    throw new Error(`No se pudo procesar la solicitud: ${e.message}`);
   }
 }
 
@@ -309,6 +324,25 @@ function getCarpetaSolicitudes() {
 }
 
 // ─── Funciones Privadas (suffix: _) ──────────────────────────────────────────
+
+/**
+ * Valida que el payload de solicitud contenga los campos críticos.
+ *
+ * @param {Object} payload - Payload crudo del cliente.
+ * @returns {{ valido: boolean, mensaje?: string }}
+ * @private
+ */
+const validarPayloadEntrada_ = (payload) => {
+  if (!payload || typeof payload !== "object") {
+    return { valido: false, mensaje: "Payload nulo o malformado." };
+  }
+  const camposObligatorios = ["descripcion", "unidadMedida", "partidaCOG"];
+  const faltantes = camposObligatorios.filter((c) => !payload[c] || String(payload[c]).trim() === "");
+  if (faltantes.length) {
+    return { valido: false, mensaje: `Campos obligatorios faltantes: ${faltantes.join(", ")}.` };
+  }
+  return { valido: true };
+};
 
 /**
  * Normaliza un texto para búsqueda: NFD → elimina diacríticos → mayúsculas →

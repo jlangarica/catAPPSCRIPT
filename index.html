@@ -1,1050 +1,1761 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Verificador de Catálogo HCG</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      /* Paleta Minimalista de Alto Contraste y Calma Visual */
-      --bg-body: #f8fafc;
-      --bg-window: #ffffff;
-      --bg-secondary: #f1f5f9;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
-
-      --blue-main: #2563eb;
-      --blue-hover: #1d4ed8;
-      --blue-focus: rgba(37, 99, 235, 0.15);
-      --blue-surface: #eff6ff;
-
-      --red-main: #ef4444;
-      --red-surface: #fef2f2;
-      --green-main: #10b981;
-      --green-surface-subtle: rgba(16, 185, 129, 0.03);
-
-      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-
-      --radius-win: 12px;
-      --radius-btn: 8px;
-      --radius-input: 8px;
-
-      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-      --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    @keyframes gradientBackground {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    body {
-      font-family: var(--font-body);
-      background: linear-gradient(-45deg, #e0f2fe, #f8fafc, #ffffff, #eff6ff);
-      background-size: 400% 400%;
-      animation: gradientBackground 15s ease infinite;
-      color: var(--text-main);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      padding: 30px 24px;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 960px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .page-title-section {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .page-title-section h1 {
-      font-size: 32px;
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .page-title-section p {
-      font-size: 16px;
-      color: var(--text-muted);
-      margin-top: 6px;
-    }
-
-    .brand-header h1 {
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      color: var(--text-main);
-    }
-
-    .brand-header p {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-    }
-
-    /* Contenedor Flat Premium */
-    .main-card {
-      background: var(--bg-window);
-      border-radius: var(--radius-win);
-      border: 1px solid var(--border-color);
-      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 20px 50px -12px rgba(37, 99, 235, 0.15), 0 0 0 1px rgba(37, 99, 235, 0.05);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transform: translateY(0);
-      transition: box-shadow 0.4s var(--ease-out), transform 0.4s var(--ease-out);
-    }
-    
-    .main-card:hover {
-      box-shadow: 0 15px 30px -5px rgba(15, 23, 42, 0.1), 0 25px 60px -10px rgba(37, 99, 235, 0.25), 0 0 0 1px rgba(37, 99, 235, 0.1);
-      transform: translateY(-4px);
-    }
-
-    /* Stepper Minimalista de Líneas Finas */
-    .stepper {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 32px;
-      background: #ffffff;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .stepper__step {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .stepper__dot {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      border: 1px solid var(--border-color);
-      background: var(--bg-window);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-muted);
-      transition: all 0.2s var(--ease-out);
-    }
-
-    .stepper__label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-muted);
-    }
-
-    .stepper__line {
-      flex: 1;
-      height: 1px;
-      background: var(--border-color);
-      margin: 0 16px;
-      position: relative;
-    }
-
-    .stepper__line::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: var(--blue-main);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.3s var(--ease-out);
-    }
-
-    .stepper__step--done .stepper__dot {
-      background: var(--blue-main);
-      border-color: var(--blue-main);
-      color: white;
-    }
-
-    .stepper__step--done .stepper__label { color: var(--text-main); }
-    .stepper__step--done { cursor: pointer; }
-    .stepper__line--filled::after { transform: scaleX(1); }
-    
-    .stepper__step--active .stepper__dot {
-      border-color: var(--blue-main);
-      color: var(--blue-main);
-      box-shadow: 0 0 0 3px var(--blue-focus);
-    }
-
-    .stepper__step--active .stepper__label {
-      color: var(--text-main);
-      font-weight: 600;
-    }
-
-    /* Área de Trabajo Limpia */
-    .content-area { padding: 40px; }
-
-    .phase {
-      display: none;
-      flex-direction: column;
-      width: 100%;
-      animation: slideInForward 0.25s var(--ease-out);
-    }
-
-    .phase.active { display: flex; }
-
-    .phase h2 {
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      margin-bottom: 8px;
-    }
-
-    .phase p {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 24px;
-    }
-
-    @keyframes slideInForward {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Caja de Búsqueda Integrada Estilo Flat */
-    .search-unified-box {
-      display: flex;
-      align-items: center;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-input);
-      background: var(--bg-window);
-      padding: 4px;
-      transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
-    }
-
-    .search-unified-box:focus-within {
-      border-color: var(--blue-main);
-      box-shadow: 0 0 0 3px var(--blue-focus);
-    }
-
-    .search-unified-box svg {
-      color: var(--text-muted);
-      margin-left: 12px;
-      flex-shrink: 0;
-    }
-
-    .search-unified-box input {
-      flex: 1;
-      border: none;
-      outline: none;
-      padding: 12px;
-      font-size: 15px;
-      font-family: inherit;
-      color: var(--text-main);
-      background: transparent;
-    }
-
-    .search-unified-box input::placeholder { color: #94a3b8; }
-
-    /* Inputs con Etiquetas Flotantes Limpias */
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 16px; }
-    .form-full { grid-column: 1 / -1; }
-    
-    .form-section__title {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
-      margin-top: 12px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .input-group { position: relative; display: flex; flex-direction: column; }
-    .input-group label {
-      position: absolute; left: 14px; top: 14px; font-size: 13.5px;
-      color: var(--text-muted); pointer-events: none;
-      transition: 0.15s var(--ease-out) all; background: var(--bg-window);
-      padding: 0 4px; z-index: 2;
-    }
-    .input-group.required label::after { content: " *"; color: var(--red-main); }
-
-    input[type="text"], input[type="number"], select, textarea {
-      width: 100%; padding: 14px; border: 1px solid var(--border-color);
-      border-radius: var(--radius-input); font-family: inherit; font-size: 14px;
-      background: var(--bg-window); color: var(--text-main); outline: none;
-      transition: border-color 0.15s var(--ease-out);
-    }
-
-    input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
-      border-color: var(--blue-main);
-    }
-
-    input[type="text"]:focus ~ label,
-    input[type="number"]:focus ~ label,
-    textarea:focus ~ label,
-    select:focus ~ label,
-    input[type="text"]:not(:placeholder-shown) ~ label,
-    input[type="number"]:not(:placeholder-shown) ~ label,
-    textarea:not(:placeholder-shown) ~ label,
-    select:not([value=""]):valid ~ label,
-    .has-value ~ label,
-    input[type="file"] ~ label {
-      top: -8px; left: 10px; font-size: 11px; color: var(--blue-main); font-weight: 600;
-    }
-
-    /* Animación Elástica del Campo Condicional */
-    .conditional-field-wrapper {
-      grid-column: span 1; display: grid; grid-template-rows: 0fr;
-      opacity: 0; overflow: hidden; transition: grid-template-rows 0.25s var(--ease-out), opacity 0.2s;
-    }
-    .conditional-field-wrapper.is-visible { grid-template-rows: 1fr; opacity: 1; }
-    .conditional-field-inner { min-height: 0; }
-
-    .input-error-active {
-      border-color: var(--red-main) !important;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
-    }
-
-    /* Zona de Carga de Archivos */
-    .file-upload-wrapper { position: relative; width: 100%; }
-    .file-upload-wrapper input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 3; }
-    .custom-file-upload {
-      display: flex; align-items: center; gap: 10px; width: 100%; padding: 14px;
-      border: 1px dashed var(--border-color); border-radius: var(--radius-input); background: var(--bg-window);
-      font-size: 13.5px; color: var(--text-muted); transition: all 0.2s;
-    }
-    .file-upload-wrapper input[type="file"]:focus ~ .custom-file-upload { border-color: var(--blue-main); }
-    .file-upload-wrapper.has-file .custom-file-upload { border-color: var(--green-main); background: var(--green-surface-subtle); color: var(--text-main); }
-
-    /* Tablas y Badges */
-    .table-container { border: 1px solid var(--border-color); border-radius: var(--radius-input); overflow: hidden; margin-bottom: 24px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
-    th { background: var(--bg-secondary); color: var(--text-muted); font-weight: 600; }
-    tr:last-child td { border-bottom: none; }
-    tbody tr { opacity: 0; animation: rowFadeIn 0.2s var(--ease-out) forwards; }
-    tbody tr:hover { background: var(--blue-surface); }
-    @keyframes rowFadeIn { to { opacity: 1; transform: translateY(0); } }
-
-    .badge { padding: 3px 6px; border-radius: 4px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; }
-    .badge.green { background: #d1fae5; color: #065f46; }
-    .badge.red { background: #fee2e2; color: #991b1b; }
-    .badge.orange { background: #fef3c7; color: #92400e; }
-    .badge.gray { background: var(--bg-secondary); color: var(--text-muted); }
-
-    /* Botones Puros */
-    .btn {
-      padding: 10px 20px; border-radius: var(--radius-btn); font-size: 13.5px; font-weight: 500;
-      cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center;
-      justify-content: center; gap: 6px; transition: all 0.15s var(--ease-out); outline: none;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-    .btn-primary { background: var(--blue-main); color: white; }
-    .btn-primary:hover:not(:disabled) { background: var(--blue-hover); }
-    .btn-secondary { background: transparent; border-color: var(--border-color); color: var(--text-muted); }
-    .btn-secondary:hover:not(:disabled) { background: var(--bg-secondary); color: var(--text-main); }
-    .actions { display: flex; gap: 12px; margin-top: auto; padding-top: 24px; }
-    .actions.right { justify-content: flex-end; }
-
-    /* Bloques Informativos Simplificados (Legal Design) */
-    .disclaimer-box { background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius-win); }
-    .disclaimer-box p { font-size: 13.5px; line-height: 1.5; color: var(--text-main); margin-bottom: 0; }
-    .disclaimer-context { font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
-    .disclaimer-box--warning { border-left: 3px solid #d97706; background: #fffbeb; }
-
-    .disclaimer-checklist { display: flex; flex-direction: column; gap: 12px; margin: 20px 0 0; }
-    .disclaimer-check { display: flex; align-items: flex-start; gap: 10px; padding: 12px; background: var(--bg-window); border: 1px solid var(--border-color); border-radius: var(--radius-input); cursor: pointer; font-size: 13px; line-height: 1.4; }
-    .disclaimer-check:has(input:checked) { border-color: var(--blue-main); background: var(--blue-surface); }
-    .disclaimer-check input { width: 16px; height: 16px; margin-top: 1px; accent-color: var(--blue-main); }
-
-    .input-hint { display: block; font-size: 12px; color: var(--text-muted); margin-top: 6px; }
-    .char-counter { font-size: 11px; color: var(--text-muted); }
-
-    /* Loader, Toast y Modal */
-    .loader { display: none; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13.5px; margin-top: 16px; justify-content: center; }
-    .empty-state { text-align: center; padding: 32px 16px; background: var(--bg-secondary); border-radius: var(--radius-win); }
-    .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
-    .toast { background: #0f172a; color: white; padding: 12px 16px; border-radius: var(--radius-input); font-size: 13px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-md); }
-    
-    .success-content { text-align: center; padding: 12px 0; }
-    .success-icon { width: 64px; height: 64px; background: var(--green-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; color: white; }
-    .success-link { color: var(--blue-main); font-weight: 600; text-decoration: none; display: block; padding: 12px; background: white; border-radius: var(--radius-input); border: 1px solid var(--border-color); font-size: 13.5px; }
-    .success-link:hover { background: var(--blue-surface); border-color: var(--blue-main); }
-    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
-
-    .institutional-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 8px;
-    }
-
-    .institutional-header__logo {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .institutional-header__logo img {
-      height: 48px;
-      border-radius: 4px;
-    }
-
-    .institutional-header__title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-main);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .institutional-header__subtitle {
-      font-size: 11px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.02em;
-    }
-
-    /* Adaptabilidad Móvil Pura */
-    @media (max-width: 600px) {
-      body { padding: 16px 12px; }
-      .phase { padding: 0; }
-      .content-area { padding: 24px 16px; }
-      .form-grid { grid-template-columns: 1fr; }
-      .stepper { padding: 16px; }
-      .stepper__label { display: none; }
-      .stepper__line { margin: 0 8px; }
-      table, thead, tbody, th, td, tr { display: block; }
-      thead { display: none; }
-      tbody tr { background: var(--bg-window); border: 1px solid var(--border-color); border-radius: var(--radius-win); padding: 12px; margin-bottom: 12px; }
-      td { padding: 8px 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; font-size: 13px; text-align: right; }
-      td:last-child { border-bottom: none; }
-      td::before { content: attr(data-label); font-weight: 600; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
-    }
-  </style>
-</head>
-<body>
-
-  <div class="app-container">
-    
-    <div class="institutional-header">
-      <div class="institutional-header__logo">
-        <img src="https://portal.hcg.gob.mx/hcg/sites/hcgtransparencia.dd/files/styles/boletines_galeria_eventos/public/imgEventosCS/Logotipo%20HCG_17.jpg?itok=Hix5xedr" alt="Logo HCG">
-        <div>
-          <div class="institutional-header__title">OPD Hospital Civil de Guadalajara</div>
-          <div class="institutional-header__subtitle">División de Servicios Administrativos</div>
-        </div>
-      </div>
-      <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Unidad Digital</span>
-    </div>
-    
-    <div class="page-title-section">
-      <h1>
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search-check"><path d="m21 21-4.3-4.3"/><circle cx="11" cy="11" r="8"/><path d="m8 11 2 2 4-4"/></svg>
-        Verificación de Catálogo
-      </h1>
-      <p>Consulte si el insumo médico ya se encuentra registrado antes de iniciar una nueva solicitud.</p>
-    </div>
-
-    <main class="main-card">
-      <nav class="stepper" aria-label="Progreso" id="stepper">
-        <div class="stepper__step stepper__step--active" data-step="1"><div class="stepper__dot">1</div><span class="stepper__label">Buscar</span></div>
-        <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="2"><div class="stepper__dot">2</div><span class="stepper__label">Resultados</span></div>
-        <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="3"><div class="stepper__dot">3</div><span class="stepper__label">Confirmar</span></div>
-        <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="4"><div class="stepper__dot">4</div><span class="stepper__label">Formulario</span></div>
-        <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="5"><div class="stepper__dot">5</div><span class="stepper__label">Completado</span></div>
-      </nav>
-
-      <div class="content-area">
-        
-        <div id="phase-1" class="phase active">
-
-          
-          <div class="search-unified-box">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="searchInput" placeholder="Ej: guantes de látex caja 100" autocomplete="off" aria-label="Artículo a verificar">
-            <button class="btn btn-primary" id="btnSearch" onclick="ejecutarBusqueda()" disabled>Verificar</button>
-          </div>
-          <span class="input-hint"><strong>Regla 2.5:</strong> Es obligatorio consultar el catálogo vigente antes de solicitar una nueva clave.</span>
-          
-          <div class="loader" id="loader" role="status" aria-live="polite">
-            <div class="spinner" aria-hidden="true"></div>
-            <span>Consultando catálogo institucional...</span>
-          </div>
-        </div>
-
-        <div id="phase-2" class="phase">
-          <h2>Coincidencias Encontradas</h2>
-          <div class="search-chip">
-            <span class="search-chip__term" id="chipSearchTerm"></span>
-          </div>
-          <p id="resultsSubtitle">Valide con rigor si alguno de los siguientes ítems ampara su necesidad.</p>
-          <div id="resultsContainer" role="region" aria-live="polite"></div>
-          <div class="actions right">
-            <button class="btn btn-secondary" onclick="irFase(1, true)">Nueva Búsqueda</button>
-            <button class="btn btn-primary" onclick="irFase(3)">Crear Clave Nueva (Regla 2.6)</button>
-          </div>
-        </div>
-
-        <div id="phase-3" class="phase">
-          <h2>Declaración de Responsabilidad</h2>
-          <p>El área requirente debe validar los criterios del Reglamento Interno antes de habilitar el formulario.</p>
-          <div class="disclaimer-box disclaimer-box--warning">
-            <div class="disclaimer-context">
-              Término inspeccionado: <strong id="disclaimerSearchTerm"></strong>
-            </div>
-            <p>Conforme al <strong>Artículo 10, Fracción VIII</strong>, asumo la responsabilidad de crear una clave nueva declarando que ningún elemento vigente cubre los requerimientos técnicos indispensables del servicio.</p>
-            
-            <div class="disclaimer-checklist">
-              <label class="disclaimer-check">
-                <input type="checkbox" required />
-                <span>Confirmo la inexistencia técnica o médica en los resultados previos.</span>
-              </label>
-              <label class="disclaimer-check">
-                <input type="checkbox" required />
-                <span>Autorizo la apertura del módulo de inclusión bajo los términos de la Regla 2.6.</span>
-              </label>
-            </div>
-          </div>
-          <div class="actions right">
-            <button class="btn btn-secondary" onclick="irFase(2)">Revisar Resultados</button>
-            <button class="btn btn-primary" onclick="irFase(4)" disabled>Habilitar Formulario</button>
-          </div>
-        </div>
-
-        <div id="phase-4" class="phase">
-          <h2>Formulario de Inclusión</h2>
-          <p>Ingrese los datos técnicos correspondientes para el alta en el Catálogo General.</p>
-          
-          <div class="form-grid">
-            <div class="form-section form-full"><h3 class="form-section__title">Datos del Artículo</h3></div>
-            
-            <div class="input-group required form-full">
-              <input type="text" id="formDesc" required placeholder=" " maxlength="200" oninput="updateCharCounter(this)">
-              <label for="formDesc">Descripción del Artículo</label>
-              <div style="display:flex; justify-content:space-between; margin-top:6px;">
-                <span style="font-size:11px; color:var(--text-muted);">Regla 2.7: Redacción clara, genérica y sin abreviaturas complejas.</span>
-                <span class="char-counter" id="formDescCounter">0 / 200</span>
-              </div>
-            </div>
-            
-            <div class="input-group">
-              <input type="text" id="formFamilia" placeholder=" " />
-              <label for="formFamilia">Familia de Artículos</label>
-            </div>
-            
-            <div class="input-group required">
-              <select id="formUM" required onchange="toggleOtroUM(this.value)">
-                <option value="">Seleccionar...</option>
-                <option value="PIEZA">PIEZA</option>
-                <option value="CAJA C/100">CAJA C/100</option>
-                <option value="CAJA C/50">CAJA C/50</option>
-                <option value="FRASCO">FRASCO</option>
-                <option value="AMPULA">ÁMPULA</option>
-                <option value="ENVASE">ENVASE</option>
-                <option value="EQUIPO">EQUIPO</option>
-                <option value="OTRO">OTRO (ESPECIFICAR)</option>
-              </select>
-              <label for="formUM">Unidad de Medida</label>
-            </div>
-
-            <div class="conditional-field-wrapper" id="wrapUMOtro">
-              <div class="conditional-field-inner">
-                <div class="input-group required" style="margin-top:4px;">
-                  <input type="text" id="formUMOtro" placeholder=" " />
-                  <label for="formUMOtro">Especificar Unidad</label>
-                </div>
-              </div>
-            </div>
-            
-            <div class="input-group required">
-              <input type="text" id="formCOG" required placeholder=" " maxlength="10">
-              <label for="formCOG">Partida Presupuestal (COG)</label>
-            </div>
-            
-            <div class="form-section form-full"><h3 class="form-section__title">Datos del Solicitante</h3></div>
-            
-            <div class="input-group required">
-              <input type="text" id="formNombre" required placeholder=" " maxlength="100">
-              <label for="formNombre">Nombre del Solicitante</label>
-            </div>
-            
-            <div class="input-group">
-              <input type="text" id="formCargo" placeholder=" ">
-              <label for="formCargo">Cargo Oficial</label>
-            </div>
-            
-            <div class="input-group">
-              <input type="text" id="formServicio" placeholder=" ">
-              <label for="formServicio">Servicio o Departamento</label>
-            </div>
-            
-            <div class="input-group required">
-              <select id="formUnidad" required>
-                <option value="">Seleccionar...</option>
-                <option value="HCG JIM">HCG Dr. Juan I. Menchaca</option>
-                <option value="HCG HAA">HCG Fray Antonio Alcalde</option>
-              </select>
-              <label for="formUnidad">Unidad Hospitalaria</label>
-            </div>
-            
-            <div class="form-section form-full"><h3 class="form-section__title">Información Complementaria</h3></div>
-            
-            <div class="input-group">
-              <input type="number" id="formPrecio" step="0.01" min="0" placeholder=" ">
-              <label for="formPrecio">Costo de Referencia ($)</label>
-            </div>
-            
-            <div class="input-group">
-              <input type="text" id="formProveedor" placeholder=" ">
-              <label for="formProveedor">Proveedor Sugerido</label>
-            </div>
-            
-            <div class="input-group form-full">
-              <div class="file-upload-wrapper" id="fileUploadWrapper">
-                <input type="file" id="formPDF" accept="application/pdf" onchange="handleFileChange(this)" aria-label="Adjuntar PDF">
-                <div class="custom-file-upload">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                  <span class="file-name-text" id="fileNameDisplay">Adjuntar cotización formal (Solo formato PDF)</span>
-                </div>
-              </div>
-            </div>
-            
-            <div class="input-group form-full">
-              <textarea id="formJustificacion" placeholder=" "></textarea>
-              <label for="formJustificacion">Justificación de la Solicitud</label>
-            </div>
-            
-            <div class="input-group form-full">
-              <textarea id="formObs" placeholder=" "></textarea>
-              <label for="formObs">Observaciones Adicionales</label>
-            </div>
-          </div>
-          <div class="actions right">
-            <button class="btn btn-secondary" onclick="confirmarCancelar()">Cancelar</button>
-            <button class="btn btn-primary" onclick="enviarFormulario()">Enviar Formato</button>
-          </div>
-        </div>
-
-        <div id="phase-5" class="phase">
-          <div class="success-content">
-            <div class="success-icon" aria-hidden="true">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <h2>Solicitud Generada</h2>
-            <p>El expediente técnico ha quedado guardado y normado de manera conforme.</p>
-            <div class="success-footer">
-              <a id="successLink" href="#" target="_blank" class="success-link">Abrir Formato Inclusión Oficial 2026</a>
-            </div>
-            <div class="actions success-actions">
-              <button class="btn btn-primary" onclick="irFase(1, true)">Finalizar Trámite</button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </main>
-  </div>
-
-  <div class="toast-container" id="toastContainer" role="status" aria-live="polite" aria-atomic="false"></div>
-
-  <script>
-    "use strict";
-
-    const SEARCH_TIMEOUT_MS = 30000;
-    const MAX_PDF_SIZE_MB = 10;
-    const MIN_SEARCH_LEN = 3;
-    const TOAST_DURATION_MS = 3000;
-    const MAX_TOASTS = 3;
-    const SKELETON_ROWS = 4;
-    const FOCUS_MAP_ = { 1: "searchInput", 4: "formDesc", 5: "successLink" };
-    
-    const FORM_FIELD_IDS_ = ["formDesc", "formUM", "formCOG", "formPrecio", "formProveedor", "formJustificacion", "formUnidad", "formFamilia", "formNombre", "formCargo", "formServicio", "formObs", "formUMOtro"];
-    const DIRTY_CHECK_IDS_ = ["formDesc", "formNombre", "formCOG", "formJustificacion"];
-
-    let _searchInProgress = false;
-    let _submitInProgress = false;
-    let _searchTimer = null;
-    let _currentPhase = 1;
-
-    const $ = (id) => document.getElementById(id);
-
-    function ejecutarBusqueda() {
-      if (_searchInProgress) return;
-      const input = $("searchInput");
-      const val = input.value.trim();
-
-      if (val.length < MIN_SEARCH_LEN) {
-        showToast("Ingresa al menos 3 caracteres.", true);
-        input.focus();
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <base target="_top" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verificador de Catálogo HCG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        /* Paleta Minimalista de Alto Contraste y Calma Visual */
+        --bg-body: #f8fafc;
+        --bg-window: #ffffff;
+        --bg-secondary: #f1f5f9;
+        --text-main: #0f172a;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+
+        --blue-main: #2563eb;
+        --blue-hover: #1d4ed8;
+        --blue-focus: rgba(37, 99, 235, 0.15);
+        --blue-surface: #eff6ff;
+
+        --red-main: #ef4444;
+        --red-surface: #fef2f2;
+        --green-main: #10b981;
+        --green-surface-subtle: rgba(16, 185, 129, 0.03);
+
+        --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+
+        --radius-win: 12px;
+        --radius-btn: 8px;
+        --radius-input: 8px;
+
+        --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.05);
       }
 
-      _searchInProgress = true;
-      setLoading_(true);
-      irFase(2);
-      renderSkeleton_();
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-      _searchTimer = setTimeout(() => {
-        _searchInProgress = false;
-        setLoading_(false);
-        showToast("La consulta tardó demasiado. Intenta con un término más específico.", true);
-      }, SEARCH_TIMEOUT_MS);
+      @keyframes gradientBackground {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
 
-      if (isGASAvailable_()) {
-        google.script.run
-          .withSuccessHandler((res) => {
-            clearTimeout(_searchTimer);
-            _searchInProgress = false;
-            setLoading_(false);
-            renderResultados(Array.isArray(res) ? res : []);
-          })
-          .withFailureHandler((err) => {
-            clearTimeout(_searchTimer);
-            _searchInProgress = false;
-            setLoading_(false);
-            $("resultsContainer").innerHTML = buildErrorStateHTML_(err.message || "No se pudo conectar.");
-            $("resultsSubtitle").textContent = "Ocurrió un error al consultar.";
-          })
-          .buscarSimilitudesBQ(val);
-      } else {
-        setTimeout(() => {
-          clearTimeout(_searchTimer);
+      body {
+        font-family: var(--font-body);
+        background: linear-gradient(-45deg, #e0f2fe, #f8fafc, #ffffff, #eff6ff);
+        background-size: 400% 400%;
+        animation: gradientBackground 15s ease infinite;
+        color: var(--text-main);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding: 30px 24px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .app-container {
+        width: 100%;
+        max-width: 960px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .page-title-section {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .page-title-section h1 {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .page-title-section p {
+        font-size: 16px;
+        color: var(--text-muted);
+        margin-top: 6px;
+      }
+
+      .brand-header h1 {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--text-main);
+      }
+
+      .brand-header p {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+      }
+
+      /* Contenedor Flat Premium */
+      .main-card {
+        background: var(--bg-window);
+        border-radius: var(--radius-win);
+        border: 1px solid var(--border-color);
+        box-shadow:
+          0 10px 25px -5px rgba(15, 23, 42, 0.05),
+          0 20px 50px -12px rgba(37, 99, 235, 0.15),
+          0 0 0 1px rgba(37, 99, 235, 0.05);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(0);
+        transition:
+          box-shadow 0.4s var(--ease-out),
+          transform 0.4s var(--ease-out);
+      }
+
+      .main-card:hover {
+        box-shadow:
+          0 15px 30px -5px rgba(15, 23, 42, 0.1),
+          0 25px 60px -10px rgba(37, 99, 235, 0.25),
+          0 0 0 1px rgba(37, 99, 235, 0.1);
+        transform: translateY(-4px);
+      }
+
+      /* Stepper Minimalista de Líneas Finas */
+      .stepper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 32px;
+        background: #ffffff;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .stepper__step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .stepper__dot {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 1px solid var(--border-color);
+        background: var(--bg-window);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        transition: all 0.2s var(--ease-out);
+      }
+
+      .stepper__label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-muted);
+      }
+
+      .stepper__line {
+        flex: 1;
+        height: 1px;
+        background: var(--border-color);
+        margin: 0 16px;
+        position: relative;
+      }
+
+      .stepper__line::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--blue-main);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s var(--ease-out);
+      }
+
+      .stepper__step--done .stepper__dot {
+        background: var(--blue-main);
+        border-color: var(--blue-main);
+        color: white;
+      }
+
+      .stepper__step--done .stepper__label {
+        color: var(--text-main);
+      }
+      .stepper__step--done {
+        cursor: pointer;
+      }
+      .stepper__line--filled::after {
+        transform: scaleX(1);
+      }
+
+      .stepper__step--active .stepper__dot {
+        border-color: var(--blue-main);
+        color: var(--blue-main);
+        box-shadow: 0 0 0 3px var(--blue-focus);
+      }
+
+      .stepper__step--active .stepper__label {
+        color: var(--text-main);
+        font-weight: 600;
+      }
+
+      /* Área de Trabajo Limpia */
+      .content-area {
+        padding: 40px;
+      }
+
+      .phase {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        animation: slideInForward 0.25s var(--ease-out);
+      }
+
+      .phase.active {
+        display: flex;
+      }
+
+      .phase h2 {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin-bottom: 8px;
+      }
+
+      .phase p {
+        font-size: 14px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 24px;
+      }
+
+      @keyframes slideInForward {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Caja de Búsqueda Integrada Estilo Flat */
+      .search-unified-box {
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-input);
+        background: var(--bg-window);
+        padding: 4px;
+        transition:
+          border-color 0.2s var(--ease-out),
+          box-shadow 0.2s var(--ease-out);
+      }
+
+      .search-unified-box:focus-within {
+        border-color: var(--blue-main);
+        box-shadow: 0 0 0 3px var(--blue-focus);
+      }
+
+      .search-unified-box svg {
+        color: var(--text-muted);
+        margin-left: 12px;
+        flex-shrink: 0;
+      }
+
+      .search-unified-box input {
+        flex: 1;
+        border: none;
+        outline: none;
+        padding: 12px;
+        font-size: 15px;
+        font-family: inherit;
+        color: var(--text-main);
+        background: transparent;
+      }
+
+      .search-unified-box input::placeholder {
+        color: #94a3b8;
+      }
+
+      /* Inputs con Etiquetas Flotantes Limpias */
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px 16px;
+      }
+      .form-full {
+        grid-column: 1 / -1;
+      }
+
+      .form-section__title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-top: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .input-group {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      .input-group label {
+        position: absolute;
+        left: 14px;
+        top: 14px;
+        font-size: 13.5px;
+        color: var(--text-muted);
+        pointer-events: none;
+        transition: 0.15s var(--ease-out) all;
+        background: var(--bg-window);
+        padding: 0 4px;
+        z-index: 2;
+      }
+      .input-group.required label::after {
+        content: " *";
+        color: var(--red-main);
+      }
+
+      input[type="text"],
+      input[type="number"],
+      select,
+      textarea {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-input);
+        font-family: inherit;
+        font-size: 14px;
+        background: var(--bg-window);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color 0.15s var(--ease-out);
+      }
+
+      input[type="text"]:focus,
+      input[type="number"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--blue-main);
+      }
+
+      input[type="text"]:focus ~ label,
+      input[type="number"]:focus ~ label,
+      textarea:focus ~ label,
+      select:focus ~ label,
+      input[type="text"]:not(:placeholder-shown) ~ label,
+      input[type="number"]:not(:placeholder-shown) ~ label,
+      textarea:not(:placeholder-shown) ~ label,
+      select:not([value=""]):valid ~ label,
+      .has-value ~ label,
+      input[type="file"] ~ label {
+        top: -8px;
+        left: 10px;
+        font-size: 11px;
+        color: var(--blue-main);
+        font-weight: 600;
+      }
+
+      /* Animación Elástica del Campo Condicional */
+      .conditional-field-wrapper {
+        grid-column: span 1;
+        display: grid;
+        grid-template-rows: 0fr;
+        opacity: 0;
+        overflow: hidden;
+        transition:
+          grid-template-rows 0.25s var(--ease-out),
+          opacity 0.2s;
+      }
+      .conditional-field-wrapper.is-visible {
+        grid-template-rows: 1fr;
+        opacity: 1;
+      }
+      .conditional-field-inner {
+        min-height: 0;
+      }
+
+      .input-error-active {
+        border-color: var(--red-main) !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+      }
+
+      /* Zona de Carga de Archivos */
+      .file-upload-wrapper {
+        position: relative;
+        width: 100%;
+      }
+      .file-upload-wrapper input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 3;
+      }
+      .custom-file-upload {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 14px;
+        border: 1px dashed var(--border-color);
+        border-radius: var(--radius-input);
+        background: var(--bg-window);
+        font-size: 13.5px;
+        color: var(--text-muted);
+        transition: all 0.2s;
+      }
+      .file-upload-wrapper input[type="file"]:focus ~ .custom-file-upload {
+        border-color: var(--blue-main);
+      }
+      .file-upload-wrapper.has-file .custom-file-upload {
+        border-color: var(--green-main);
+        background: var(--green-surface-subtle);
+        color: var(--text-main);
+      }
+
+      /* Tablas y Badges */
+      .table-container {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-input);
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+      }
+      th {
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr {
+        opacity: 0;
+        animation: rowFadeIn 0.2s var(--ease-out) forwards;
+      }
+      tbody tr:hover {
+        background: var(--blue-surface);
+      }
+      @keyframes rowFadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .badge {
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 10.5px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .badge.green {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .badge.red {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .badge.orange {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .badge.gray {
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+      }
+
+      /* Botones Puros */
+      .btn {
+        padding: 10px 20px;
+        border-radius: var(--radius-btn);
+        font-size: 13.5px;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.15s var(--ease-out);
+        outline: none;
+      }
+      .btn:active {
+        transform: scale(0.98);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+      .btn-primary {
+        background: var(--blue-main);
+        color: white;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: var(--blue-hover);
+      }
+      .btn-secondary {
+        background: transparent;
+        border-color: var(--border-color);
+        color: var(--text-muted);
+      }
+      .btn-secondary:hover:not(:disabled) {
+        background: var(--bg-secondary);
+        color: var(--text-main);
+      }
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: auto;
+        padding-top: 24px;
+      }
+      .actions.right {
+        justify-content: flex-end;
+      }
+
+      /* Bloques Informativos Simplificados (Legal Design) */
+      .disclaimer-box {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        padding: 20px;
+        border-radius: var(--radius-win);
+      }
+      .disclaimer-box p {
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--text-main);
+        margin-bottom: 0;
+      }
+      .disclaimer-context {
+        font-size: 12.5px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .disclaimer-box--warning {
+        border-left: 3px solid #d97706;
+        background: #fffbeb;
+      }
+
+      .disclaimer-checklist {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 20px 0 0;
+      }
+      .disclaimer-check {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+        background: var(--bg-window);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-input);
+        cursor: pointer;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .disclaimer-check:has(input:checked) {
+        border-color: var(--blue-main);
+        background: var(--blue-surface);
+      }
+      .disclaimer-check input {
+        width: 16px;
+        height: 16px;
+        margin-top: 1px;
+        accent-color: var(--blue-main);
+      }
+
+      .input-hint {
+        display: block;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 6px;
+      }
+      .char-counter {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+
+      /* Loader, Toast y Modal */
+      .loader {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-muted);
+        font-size: 13.5px;
+        margin-top: 16px;
+        justify-content: center;
+      }
+      .empty-state {
+        text-align: center;
+        padding: 32px 16px;
+        background: var(--bg-secondary);
+        border-radius: var(--radius-win);
+      }
+      .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 999;
+      }
+      .toast {
+        background: #0f172a;
+        color: white;
+        padding: 12px 16px;
+        border-radius: var(--radius-input);
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: var(--shadow-md);
+      }
+
+      .success-content {
+        text-align: center;
+        padding: 12px 0;
+      }
+      .success-icon {
+        width: 64px;
+        height: 64px;
+        background: var(--green-main);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        color: white;
+      }
+      .success-link {
+        color: var(--blue-main);
+        font-weight: 600;
+        text-decoration: none;
+        display: block;
+        padding: 12px;
+        background: white;
+        border-radius: var(--radius-input);
+        border: 1px solid var(--border-color);
+        font-size: 13.5px;
+      }
+      .success-link:hover {
+        background: var(--blue-surface);
+        border-color: var(--blue-main);
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+
+      .institutional-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 8px;
+      }
+
+      .institutional-header__logo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .institutional-header__logo img {
+        height: 48px;
+        border-radius: 4px;
+      }
+
+      .institutional-header__title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-main);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .institutional-header__subtitle {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+
+      /* Adaptabilidad Móvil Pura */
+      @media (max-width: 600px) {
+        body {
+          padding: 16px 12px;
+        }
+        .phase {
+          padding: 0;
+        }
+        .content-area {
+          padding: 24px 16px;
+        }
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+        .stepper {
+          padding: 16px;
+        }
+        .stepper__label {
+          display: none;
+        }
+        .stepper__line {
+          margin: 0 8px;
+        }
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+        thead {
+          display: none;
+        }
+        tbody tr {
+          background: var(--bg-window);
+          border: 1px solid var(--border-color);
+          border-radius: var(--radius-win);
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+        td {
+          padding: 8px 0;
+          border-bottom: 1px solid #f1f5f9;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 13px;
+          text-align: right;
+        }
+        td:last-child {
+          border-bottom: none;
+        }
+        td::before {
+          content: attr(data-label);
+          font-weight: 600;
+          color: var(--text-muted);
+          font-size: 11px;
+          text-transform: uppercase;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="institutional-header">
+        <div class="institutional-header__logo">
+          <img
+            src="https://portal.hcg.gob.mx/hcg/sites/hcgtransparencia.dd/files/styles/boletines_galeria_eventos/public/imgEventosCS/Logotipo%20HCG_17.jpg?itok=Hix5xedr"
+            alt="Logo HCG"
+          />
+          <div>
+            <div class="institutional-header__title">
+              OPD Hospital Civil de Guadalajara
+            </div>
+            <div class="institutional-header__subtitle">
+              División de Servicios Administrativos
+            </div>
+          </div>
+        </div>
+        <span
+          style="
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+          "
+          >Unidad Digital</span
+        >
+      </div>
+
+      <div class="page-title-section">
+        <h1>
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="lucide lucide-search-check"
+          >
+            <path d="m21 21-4.3-4.3" />
+            <circle cx="11" cy="11" r="8" />
+            <path d="m8 11 2 2 4-4" />
+          </svg>
+          Catálogo de Bienes, Servicios y Activos
+        </h1>
+        <p>Comité de Insumos, Servicios, Infraestructura y Equipamiento</p>
+      </div>
+
+      <main class="main-card">
+        <nav class="stepper" aria-label="Progreso" id="stepper">
+          <div class="stepper__step stepper__step--active" data-step="1">
+            <div class="stepper__dot">1</div>
+            <span class="stepper__label">Buscar</span>
+          </div>
+          <div class="stepper__line"></div>
+          <div class="stepper__step" data-step="2">
+            <div class="stepper__dot">2</div>
+            <span class="stepper__label">Resultados</span>
+          </div>
+          <div class="stepper__line"></div>
+          <div class="stepper__step" data-step="3">
+            <div class="stepper__dot">3</div>
+            <span class="stepper__label">Confirmar</span>
+          </div>
+          <div class="stepper__line"></div>
+          <div class="stepper__step" data-step="4">
+            <div class="stepper__dot">4</div>
+            <span class="stepper__label">Formulario</span>
+          </div>
+          <div class="stepper__line"></div>
+          <div class="stepper__step" data-step="5">
+            <div class="stepper__dot">5</div>
+            <span class="stepper__label">Completado</span>
+          </div>
+        </nav>
+
+        <div class="content-area">
+          <div id="phase-1" class="phase active">
+            <div class="search-unified-box">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Ej: guantes de látex caja 100"
+                autocomplete="off"
+                aria-label="Artículo a verificar"
+              />
+              <button
+                class="btn btn-primary"
+                id="btnSearch"
+                onclick="ejecutarBusqueda()"
+                disabled
+              >
+                Verificar
+              </button>
+            </div>
+            <span class="input-hint"
+              ><strong>Regla 2.5:</strong> Es obligatorio consultar el catálogo
+              vigente antes de solicitar una nueva clave.</span
+            >
+
+            <div class="loader" id="loader" role="status" aria-live="polite">
+              <div class="spinner" aria-hidden="true"></div>
+              <span>Consultando catálogo institucional...</span>
+            </div>
+          </div>
+
+          <div id="phase-2" class="phase">
+            <h2>Coincidencias Encontradas</h2>
+            <div class="search-chip">
+              <span class="search-chip__term" id="chipSearchTerm"></span>
+            </div>
+            <p id="resultsSubtitle">
+              Valide con rigor si alguno de los siguientes ítems ampara su
+              necesidad.
+            </p>
+            <div id="resultsContainer" role="region" aria-live="polite"></div>
+            <div class="actions right">
+              <button class="btn btn-secondary" onclick="irFase(1, true)">
+                Nueva Búsqueda
+              </button>
+              <button class="btn btn-primary" onclick="irFase(3)">
+                Crear Clave Nueva (Regla 2.6)
+              </button>
+            </div>
+          </div>
+
+          <div id="phase-3" class="phase">
+            <h2>Declaración de Responsabilidad</h2>
+            <p>
+              El área requirente debe validar los criterios del Reglamento
+              Interno antes de habilitar el formulario.
+            </p>
+            <div class="disclaimer-box disclaimer-box--warning">
+              <div class="disclaimer-context">
+                Término inspeccionado:
+                <strong id="disclaimerSearchTerm"></strong>
+              </div>
+              <p>
+                Conforme al <strong>Artículo 10, Fracción VIII</strong>, asumo
+                la responsabilidad de crear una clave nueva declarando que
+                ningún elemento vigente cubre los requerimientos técnicos
+                indispensables del servicio.
+              </p>
+
+              <div class="disclaimer-checklist">
+                <label class="disclaimer-check">
+                  <input type="checkbox" required />
+                  <span
+                    >Confirmo la inexistencia técnica o médica en los resultados
+                    previos.</span
+                  >
+                </label>
+                <label class="disclaimer-check">
+                  <input type="checkbox" required />
+                  <span
+                    >Autorizo la apertura del módulo de inclusión bajo los
+                    términos de la Regla 2.6.</span
+                  >
+                </label>
+              </div>
+            </div>
+            <div class="actions right">
+              <button class="btn btn-secondary" onclick="irFase(2)">
+                Revisar Resultados
+              </button>
+              <button class="btn btn-primary" onclick="irFase(4)" disabled>
+                Habilitar Formulario
+              </button>
+            </div>
+          </div>
+
+          <div id="phase-4" class="phase">
+            <h2>Formulario de Inclusión</h2>
+            <p>
+              Ingrese los datos técnicos correspondientes para el alta en el
+              Catálogo General.
+            </p>
+
+            <div class="form-grid">
+              <div class="form-section form-full">
+                <h3 class="form-section__title">Datos del Artículo</h3>
+              </div>
+
+              <div class="input-group required form-full">
+                <input
+                  type="text"
+                  id="formDesc"
+                  required
+                  placeholder=" "
+                  maxlength="200"
+                  oninput="updateCharCounter(this)"
+                />
+                <label for="formDesc">Descripción del Artículo</label>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 6px;
+                  "
+                >
+                  <span style="font-size: 11px; color: var(--text-muted)"
+                    >Regla 2.7: Redacción clara, genérica y sin abreviaturas
+                    complejas.</span
+                  >
+                  <span class="char-counter" id="formDescCounter">0 / 200</span>
+                </div>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="formFamilia" placeholder=" " />
+                <label for="formFamilia">Familia de Artículos</label>
+              </div>
+
+              <div class="input-group required">
+                <select
+                  id="formUM"
+                  required
+                  onchange="toggleOtroUM(this.value)"
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="PIEZA">PIEZA</option>
+                  <option value="CAJA C/100">CAJA C/100</option>
+                  <option value="CAJA C/50">CAJA C/50</option>
+                  <option value="FRASCO">FRASCO</option>
+                  <option value="AMPULA">ÁMPULA</option>
+                  <option value="ENVASE">ENVASE</option>
+                  <option value="EQUIPO">EQUIPO</option>
+                  <option value="OTRO">OTRO (ESPECIFICAR)</option>
+                </select>
+                <label for="formUM">Unidad de Medida</label>
+              </div>
+
+              <div class="conditional-field-wrapper" id="wrapUMOtro">
+                <div class="conditional-field-inner">
+                  <div class="input-group required" style="margin-top: 4px">
+                    <input type="text" id="formUMOtro" placeholder=" " />
+                    <label for="formUMOtro">Especificar Unidad</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="input-group required">
+                <input
+                  type="text"
+                  id="formCOG"
+                  required
+                  placeholder=" "
+                  maxlength="10"
+                />
+                <label for="formCOG">Partida Presupuestal (COG)</label>
+              </div>
+
+              <div class="form-section form-full">
+                <h3 class="form-section__title">Datos del Solicitante</h3>
+              </div>
+
+              <div class="input-group required">
+                <input
+                  type="text"
+                  id="formNombre"
+                  required
+                  placeholder=" "
+                  maxlength="100"
+                />
+                <label for="formNombre">Nombre del Solicitante</label>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="formCargo" placeholder=" " />
+                <label for="formCargo">Cargo Oficial</label>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="formServicio" placeholder=" " />
+                <label for="formServicio">Servicio o Departamento</label>
+              </div>
+
+              <div class="input-group required">
+                <select id="formUnidad" required>
+                  <option value="">Seleccionar...</option>
+                  <option value="HCG JIM">HCG Dr. Juan I. Menchaca</option>
+                  <option value="HCG HAA">HCG Fray Antonio Alcalde</option>
+                </select>
+                <label for="formUnidad">Unidad Hospitalaria</label>
+              </div>
+
+              <div class="form-section form-full">
+                <h3 class="form-section__title">Información Complementaria</h3>
+              </div>
+
+              <div class="input-group">
+                <input
+                  type="number"
+                  id="formPrecio"
+                  step="0.01"
+                  min="0"
+                  placeholder=" "
+                />
+                <label for="formPrecio">Costo de Referencia ($)</label>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="formProveedor" placeholder=" " />
+                <label for="formProveedor">Proveedor Sugerido</label>
+              </div>
+
+              <div class="input-group form-full">
+                <div class="file-upload-wrapper" id="fileUploadWrapper">
+                  <input
+                    type="file"
+                    id="formPDF"
+                    accept="application/pdf"
+                    onchange="handleFileChange(this)"
+                    aria-label="Adjuntar PDF"
+                  />
+                  <div class="custom-file-upload">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                      ></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="12" y1="18" x2="12" y2="12"></line>
+                      <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    <span class="file-name-text" id="fileNameDisplay"
+                      >Adjuntar cotización formal (Solo formato PDF)</span
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="input-group form-full">
+                <textarea id="formJustificacion" placeholder=" "></textarea>
+                <label for="formJustificacion"
+                  >Justificación de la Solicitud</label
+                >
+              </div>
+
+              <div class="input-group form-full">
+                <textarea id="formObs" placeholder=" "></textarea>
+                <label for="formObs">Observaciones Adicionales</label>
+              </div>
+            </div>
+            <div class="actions right">
+              <button class="btn btn-secondary" onclick="confirmarCancelar()">
+                Cancelar
+              </button>
+              <button class="btn btn-primary" onclick="enviarFormulario()">
+                Enviar Formato
+              </button>
+            </div>
+          </div>
+
+          <div id="phase-5" class="phase">
+            <div class="success-content">
+              <div class="success-icon" aria-hidden="true">
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="white"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <h2>Solicitud Generada</h2>
+              <p>
+                El expediente técnico ha quedado guardado y normado de manera
+                conforme.
+              </p>
+              <div class="success-footer">
+                <a
+                  id="successLink"
+                  href="#"
+                  target="_blank"
+                  class="success-link"
+                  >Abrir Formato Inclusión Oficial 2026</a
+                >
+              </div>
+              <div class="actions success-actions">
+                <button class="btn btn-primary" onclick="irFase(1, true)">
+                  Finalizar Trámite
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div
+      class="toast-container"
+      id="toastContainer"
+      role="status"
+      aria-live="polite"
+      aria-atomic="false"
+    ></div>
+
+    <script>
+      "use strict";
+
+      const SEARCH_TIMEOUT_MS = 30000;
+      const MAX_PDF_SIZE_MB = 10;
+      const MIN_SEARCH_LEN = 3;
+      const TOAST_DURATION_MS = 3000;
+      const MAX_TOASTS = 3;
+      const SKELETON_ROWS = 4;
+      const FOCUS_MAP_ = { 1: "searchInput", 4: "formDesc", 5: "successLink" };
+
+      const FORM_FIELD_IDS_ = [
+        "formDesc",
+        "formUM",
+        "formCOG",
+        "formPrecio",
+        "formProveedor",
+        "formJustificacion",
+        "formUnidad",
+        "formFamilia",
+        "formNombre",
+        "formCargo",
+        "formServicio",
+        "formObs",
+        "formUMOtro",
+      ];
+      const DIRTY_CHECK_IDS_ = [
+        "formDesc",
+        "formNombre",
+        "formCOG",
+        "formJustificacion",
+      ];
+
+      let _searchInProgress = false;
+      let _submitInProgress = false;
+      let _searchTimer = null;
+      let _currentPhase = 1;
+
+      const $ = (id) => document.getElementById(id);
+
+      function ejecutarBusqueda() {
+        if (_searchInProgress) return;
+        const input = $("searchInput");
+        const val = input.value.trim();
+
+        if (val.length < MIN_SEARCH_LEN) {
+          showToast("Ingresa al menos 3 caracteres.", true);
+          input.focus();
+          return;
+        }
+
+        _searchInProgress = true;
+        setLoading_(true);
+        irFase(2);
+        renderSkeleton_();
+
+        _searchTimer = setTimeout(() => {
           _searchInProgress = false;
           setLoading_(false);
-          renderResultados([]);
-        }, 1000);
-      }
-    }
+          showToast(
+            "La consulta tardó demasiado. Intenta con un término más específico.",
+            true,
+          );
+        }, SEARCH_TIMEOUT_MS);
 
-    function irFase(num, force = false) {
-      if (!force && num === _currentPhase) return;
-      const isForward = num > _currentPhase;
-      _currentPhase = num;
-
-      document.querySelectorAll(".phase").forEach((el) => el.classList.remove("active"));
-      const target = $(`phase-${num}`);
-
-      target.style.animation = "none";
-      target.offsetHeight;
-      target.style.animation = isForward ? "slideInForward 0.25s var(--ease-out)" : "slideInBackward 0.25s var(--ease-out)";
-      target.classList.add("active");
-
-      resetSuccessAnimations_(target, num);
-      updateStepper_(num);
-
-      if (FOCUS_MAP_[num]) setTimeout(() => $(FOCUS_MAP_[num])?.focus(), 120);
-      if (num === 2) {
-        const term = $("searchInput").value.trim();
-        if ($("chipSearchTerm")) $("chipSearchTerm").textContent = term;
-      }
-      if (num === 3) {
-        $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
-        resetDisclaimerChecks_();
-      }
-      if (num === 4 && !$("formDesc").value && $("searchInput").value) {
-        $("formDesc").value = $("searchInput").value;
-        updateCharCounter($("formDesc"));
-      }
-    }
-
-    function renderResultados(data) {
-      const container = $("resultsContainer");
-      const subtitle = $("resultsSubtitle");
-
-      if (!Array.isArray(data) || data.length === 0) {
-        subtitle.textContent = "No se encontraron duplicados evidentes.";
-        container.innerHTML = buildEmptyStateHTML_();
-        return;
+        if (isGASAvailable_()) {
+          google.script.run
+            .withSuccessHandler((res) => {
+              clearTimeout(_searchTimer);
+              _searchInProgress = false;
+              setLoading_(false);
+              renderResultados(Array.isArray(res) ? res : []);
+            })
+            .withFailureHandler((err) => {
+              clearTimeout(_searchTimer);
+              _searchInProgress = false;
+              setLoading_(false);
+              $("resultsContainer").innerHTML = buildErrorStateHTML_(
+                err.message || "No se pudo conectar.",
+              );
+              $("resultsSubtitle").textContent =
+                "Ocurrió un error al consultar.";
+            })
+            .buscarSimilitudesBQ(val);
+        } else {
+          setTimeout(() => {
+            clearTimeout(_searchTimer);
+            _searchInProgress = false;
+            setLoading_(false);
+            renderResultados([]);
+          }, 1000);
+        }
       }
 
-      const count = data.length;
-      subtitle.textContent = `Se encontraron ${count} coincidencia${count !== 1 ? "s" : ""} para "${$("searchInput").value.trim()}".`;
-      const rows = data.map((r, i) => buildResultRowHTML_(r, i)).join("");
-      
-      container.innerHTML = `
+      function irFase(num, force = false) {
+        if (!force && num === _currentPhase) return;
+        const isForward = num > _currentPhase;
+        _currentPhase = num;
+
+        document
+          .querySelectorAll(".phase")
+          .forEach((el) => el.classList.remove("active"));
+        const target = $(`phase-${num}`);
+
+        target.style.animation = "none";
+        target.offsetHeight;
+        target.style.animation = isForward
+          ? "slideInForward 0.25s var(--ease-out)"
+          : "slideInBackward 0.25s var(--ease-out)";
+        target.classList.add("active");
+
+        resetSuccessAnimations_(target, num);
+        updateStepper_(num);
+
+        if (FOCUS_MAP_[num]) setTimeout(() => $(FOCUS_MAP_[num])?.focus(), 120);
+        if (num === 2) {
+          const term = $("searchInput").value.trim();
+          if ($("chipSearchTerm")) $("chipSearchTerm").textContent = term;
+        }
+        if (num === 3) {
+          $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
+          resetDisclaimerChecks_();
+        }
+        if (num === 4 && !$("formDesc").value && $("searchInput").value) {
+          $("formDesc").value = $("searchInput").value;
+          updateCharCounter($("formDesc"));
+        }
+      }
+
+      function renderResultados(data) {
+        const container = $("resultsContainer");
+        const subtitle = $("resultsSubtitle");
+
+        if (!Array.isArray(data) || data.length === 0) {
+          subtitle.textContent = "No se encontraron duplicados evidentes.";
+          container.innerHTML = buildEmptyStateHTML_();
+          return;
+        }
+
+        const count = data.length;
+        subtitle.textContent = `Se encontraron ${count} coincidencia${count !== 1 ? "s" : ""} para "${$("searchInput").value.trim()}".`;
+        const rows = data.map((r, i) => buildResultRowHTML_(r, i)).join("");
+
+        container.innerHTML = `
         <div class="table-container">
           <table aria-label="Resultados">
             <thead><tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>`;
-    }
-
-    function toggleOtroUM(val) {
-      const otroWrap = $("wrapUMOtro");
-      const otroInput = $("formUMOtro");
-
-      if (val === "OTRO") {
-        otroWrap.style.display = "grid";
-        setTimeout(() => otroWrap.classList.add("is-visible"), 10);
-        otroInput.required = true;
-        otroInput.focus();
-      } else {
-        otroWrap.classList.remove("is-visible");
-        otroInput.required = false;
-        setTimeout(() => {
-          if(!otroWrap.classList.contains('is-visible')) {
-            otroWrap.style.display = "none";
-            otroInput.value = "";
-            otroInput.classList.remove("has-value");
-          }
-        }, 250);
       }
-    }
 
-    function handleFileChange(input) {
-      const wrapper = $("fileUploadWrapper");
-      const display = $("fileNameDisplay");
-      const file = input.files[0];
+      function toggleOtroUM(val) {
+        const otroWrap = $("wrapUMOtro");
+        const otroInput = $("formUMOtro");
 
-      if (file) {
-        if (file.type !== "application/pdf") {
-          showToast("El archivo seleccionado no es un PDF válido.", true);
-          input.value = "";
+        if (val === "OTRO") {
+          otroWrap.style.display = "grid";
+          setTimeout(() => otroWrap.classList.add("is-visible"), 10);
+          otroInput.required = true;
+          otroInput.focus();
+        } else {
+          otroWrap.classList.remove("is-visible");
+          otroInput.required = false;
+          setTimeout(() => {
+            if (!otroWrap.classList.contains("is-visible")) {
+              otroWrap.style.display = "none";
+              otroInput.value = "";
+              otroInput.classList.remove("has-value");
+            }
+          }, 250);
+        }
+      }
+
+      function handleFileChange(input) {
+        const wrapper = $("fileUploadWrapper");
+        const display = $("fileNameDisplay");
+        const file = input.files[0];
+
+        if (file) {
+          if (file.type !== "application/pdf") {
+            showToast("El archivo seleccionado no es un PDF válido.", true);
+            input.value = "";
+            wrapper.classList.remove("has-file");
+            display.textContent =
+              "Adjuntar cotización formal (Solo formato PDF)";
+            return;
+          }
+          wrapper.classList.add("has-file");
+          display.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+        } else {
           wrapper.classList.remove("has-file");
           display.textContent = "Adjuntar cotización formal (Solo formato PDF)";
+        }
+      }
+
+      function enviarFormulario() {
+        if (_submitInProgress) return;
+
+        document
+          .querySelectorAll(
+            "#phase-4 input, #phase-4 select, #phase-4 textarea",
+          )
+          .forEach((el) => {
+            el.classList.remove("input-error-active");
+          });
+
+        const requiredInputs = document.querySelectorAll("#phase-4 [required]");
+        let primerInvalido = null;
+
+        for (const input of requiredInputs) {
+          if (!input.checkValidity()) {
+            input.classList.add("input-error-active");
+            if (!primerInvalido) primerInvalido = input;
+          }
+        }
+
+        if (primerInvalido) {
+          showToast(
+            "Por favor, rellene los campos obligatorios resaltados.",
+            true,
+          );
+          primerInvalido.focus();
           return;
         }
-        wrapper.classList.add("has-file");
-        display.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
-      } else {
-        wrapper.classList.remove("has-file");
-        display.textContent = "Adjuntar cotización formal (Solo formato PDF)";
-      }
-    }
 
-    function enviarFormulario() {
-      if (_submitInProgress) return;
-
-      document.querySelectorAll("#phase-4 input, #phase-4 select, #phase-4 textarea").forEach(el => {
-        el.classList.remove("input-error-active");
-      });
-
-      const requiredInputs = document.querySelectorAll("#phase-4 [required]");
-      let primerInvalido = null;
-
-      for (const input of requiredInputs) {
-        if (!input.checkValidity()) {
-          input.classList.add("input-error-active");
-          if (!primerInvalido) primerInvalido = input;
+        const { unidad, error } = resolverUnidadMedida_();
+        if (error) {
+          showToast(error, true);
+          toggleOtroUM("OTRO");
+          $("formUMOtro").classList.add("input-error-active");
+          $("formUMOtro").focus();
+          return;
         }
+
+        const payload = buildPayload_(unidad);
+        const file = $("formPDF").files[0];
+
+        if (file) {
+          if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
+            showToast(
+              `El PDF excede el límite de ${MAX_PDF_SIZE_MB} MB.`,
+              true,
+            );
+            return;
+          }
+          if (file.type !== "application/pdf") {
+            showToast("El archivo seleccionado no es un PDF válido.", true);
+            return;
+          }
+        }
+
+        file ? readPdfAndSubmit_(file, payload) : submitPayload_(null, payload);
       }
 
-      if (primerInvalido) {
-        showToast("Por favor, rellene los campos obligatorios resaltados.", true);
-        primerInvalido.focus();
-        return;
+      function updateCharCounter(input) {
+        const max = parseInt(input.maxLength, 10);
+        const len = input.value.length;
+        const counter = $(`${input.id}Counter`);
+        if (!counter || isNaN(max)) return;
+        counter.textContent = `${len} / ${max}`;
       }
 
-      const { unidad, error } = resolverUnidadMedida_();
-      if (error) {
-        showToast(error, true);
-        toggleOtroUM("OTRO");
-        $("formUMOtro").classList.add("input-error-active");
-        $("formUMOtro").focus();
-        return;
+      function confirmarCancelar() {
+        const tieneDatos = DIRTY_CHECK_IDS_.some(
+          (id) => $(id) && $(id).value.trim() !== "",
+        );
+        if (!tieneDatos) {
+          limpiarFormulario();
+          irFase(1);
+          return;
+        }
+        showModal(
+          "¿Descartar formulario?",
+          "Detectamos cambios en los campos. Si cancela, se perderá la información ingresada.",
+          "Descartar",
+          "Volver",
+          () => {
+            limpiarFormulario();
+            irFase(1);
+          },
+        );
       }
 
-      const payload = buildPayload_(unidad);
-      const file = $("formPDF").files[0];
+      function limpiarFormulario() {
+        FORM_FIELD_IDS_.forEach((id) => {
+          const el = $(id);
+          if (el) {
+            el.value = "";
+            el.classList.remove("has-value");
+          }
+        });
+        $("formPDF").value = "";
+        $("wrapUMOtro").style.display = "none";
+        $("formUMOtro").required = false;
+        $("fileUploadWrapper").classList.remove("has-file");
+        $("fileNameDisplay").textContent =
+          "Adjuntar cotización formal (Solo formato PDF)";
+        $("searchInput").value = "";
 
-      if (file) {
-        if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) { showToast(`El PDF excede el límite de ${MAX_PDF_SIZE_MB} MB.`, true); return; }
-        if (file.type !== "application/pdf") { showToast("El archivo seleccionado no es un PDF válido.", true); return; }
+        counter = $("formDescCounter");
+        if (counter) counter.textContent = "0 / 200";
+        document
+          .querySelectorAll(
+            ".input-group select, .input-group input, .input-group textarea",
+          )
+          .forEach((el) => el.classList.remove("has-value"));
       }
 
-      file ? readPdfAndSubmit_(file, payload) : submitPayload_(null, payload);
-    }
+      function showToast(msg, isError = false) {
+        const container = $("toastContainer");
+        while (container.children.length >= MAX_TOASTS)
+          container.firstChild.remove();
 
-    function updateCharCounter(input) {
-      const max = parseInt(input.maxLength, 10);
-      const len = input.value.length;
-      const counter = $(`${input.id}Counter`);
-      if (!counter || isNaN(max)) return;
-      counter.textContent = `${len} / ${max}`;
-    }
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.style.borderLeft = isError
+          ? "4px solid var(--red-main)"
+          : "4px solid var(--green-main)";
+        toast.innerHTML = `<span>${isError ? "&#x2716;" : "&#x2714;"}</span> <span>${msg}</span>`;
 
-    function confirmarCancelar() {
-      const tieneDatos = DIRTY_CHECK_IDS_.some((id) => $(id) && $(id).value.trim() !== "");
-      if (!tieneDatos) { limpiarFormulario(); irFase(1); return; }
-      showModal("¿Descartar formulario?", "Detectamos cambios en los campos. Si cancela, se perderá la información ingresada.", "Descartar", "Volver", () => { limpiarFormulario(); irFase(1); });
-    }
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = "0";
+          setTimeout(() => toast.remove(), 300);
+        }, TOAST_DURATION_MS);
+      }
 
-    function limpiarFormulario() {
-      FORM_FIELD_IDS_.forEach((id) => {
-        const el = $(id);
-        if (el) { el.value = ""; el.classList.remove("has-value"); }
+      const resolverUnidadMedida_ = () => {
+        const umSelect = $("formUM").value;
+        const umOtro = $("formUMOtro").value.trim();
+        const unidad = umSelect === "OTRO" ? umOtro : umSelect;
+        if (umSelect === "OTRO" && !umOtro)
+          return {
+            unidad: "",
+            error: "Especifica la unidad de medida personalizada.",
+          };
+        if (!unidad)
+          return {
+            unidad: "",
+            error: "Selecciona una unidad de medida válida.",
+          };
+        return { unidad };
+      };
+
+      const updateStepper_ = (currentPhase) => {
+        const steps = document.querySelectorAll(".stepper__step");
+        const lines = document.querySelectorAll(".stepper__line");
+        steps.forEach((step, i) => {
+          const n = i + 1;
+          step.classList.remove("stepper__step--active", "stepper__step--done");
+          step.removeAttribute("onclick");
+          if (n === currentPhase) step.classList.add("stepper__step--active");
+          else if (n < currentPhase) {
+            step.classList.add("stepper__step--done");
+            step.setAttribute("onclick", `irFase(${n})`);
+          }
+        });
+        lines.forEach((line, i) =>
+          line.classList.toggle("stepper__line--filled", i < currentPhase - 1),
+        );
+      };
+
+      const resetSuccessAnimations_ = (target, num) => {
+        if (num !== 5) return;
+        const icon = target.querySelector(".success-icon");
+        const content = target.querySelector(".success-content");
+        [icon, content].forEach((el) => {
+          if (el) {
+            el.style.animation = "none";
+            el.offsetHeight;
+            el.style.animation = "";
+          }
+        });
+      };
+
+      const resetDisclaimerChecks_ = () => {
+        const checks = document.querySelectorAll(
+          '.disclaimer-check input[type="checkbox"]',
+        );
+        const btnPhase3 = document.querySelector("#phase-3 .btn-primary");
+        checks.forEach((cb) => (cb.checked = false));
+        if (btnPhase3) btnPhase3.disabled = true;
+      };
+
+      const renderSkeleton_ = () => {
+        const container = $("resultsContainer");
+        $("resultsSubtitle").textContent = "Buscando coincidencias...";
+        let rows = "";
+        for (let i = 0; i < SKELETON_ROWS; i++) {
+          rows +=
+            '<div class="skeleton-row"><div class="skeleton-cell skeleton-cell--clave skeleton"></div><div class="skeleton-cell skeleton-cell--desc skeleton"></div><div class="skeleton-cell skeleton-cell--badge skeleton"></div><div class="skeleton-cell skeleton-cell--badge skeleton"></div></div>';
+        }
+        container.innerHTML = `<div class="skeleton-table">${rows}</div>`;
+      };
+
+      const setLoading_ = (isLoading) => {
+        $("btnSearch").disabled =
+          isLoading || $("searchInput").value.trim().length < MIN_SEARCH_LEN;
+        $("searchInput").disabled = isLoading;
+        $("loader").style.display = isLoading ? "flex" : "none";
+        $("btnSearch").textContent = isLoading ? "Buscando..." : "Verificar";
+      };
+
+      const setLoadingForm_ = (isLoading) => {
+        const btns = document.querySelectorAll("#phase-4 .btn-primary");
+        btns.forEach((btn) => {
+          btn.disabled = isLoading;
+          btn.classList.toggle("btn--loading", isLoading);
+        });
+      };
+
+      const isGASAvailable_ = () =>
+        typeof google !== "undefined" && google.script && google.script.run;
+      const escapeHTML_ = (str) =>
+        String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      const buildEmptyStateHTML_ = () =>
+        '<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500">Catálogo Limpio</h3><p style="margin:0;font-size:13px">No existen registros idénticos vigentes. Es conforme avanzar con la inclusión de clave.</p></div>';
+      const buildErrorStateHTML_ = (message) =>
+        `<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500;color:var(--red-main)">Error</h3><p style="margin:0;font-size:13px">${escapeHTML_(message)}</p></div>`;
+
+      const buildResultRowHTML_ = (row, index) => {
+        const { id_codigo: idCodigo, descripcion, activo, similitud } = row;
+        const score = Number.parseFloat(similitud || 0);
+        const isActive = Number(activo) === 1;
+        return `<tr style="animation-delay:${index * 0.02}s"><td data-label="Clave" style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">${escapeHTML_(idCodigo || "N/A")}</td><td data-label="Descripción" style="font-weight:500">${escapeHTML_(descripcion || "")}</td><td data-label="Estado"><span class="badge ${isActive ? "green" : "gray"}">${isActive ? "Activo" : "Inactivo"}</span></td><td data-label="Similitud"><span class="badge ${score >= 60 ? "red" : score >= 35 ? "orange" : "gray"}">${score.toFixed(1)}%</span></td></tr>`;
+      };
+
+      const buildPayload_ = (umFinal) => ({
+        descripcion: $("formDesc").value.trim().toUpperCase(),
+        unidadMedida: umFinal.toUpperCase(),
+        partidaCOG: $("formCOG").value.trim().toUpperCase(),
+        unidadHospitalaria: $("formUnidad").value,
+        familia: $("formFamilia").value.trim().toUpperCase(),
+        nombreSolicitante: $("formNombre").value.trim(),
+        cargoSolicitante: $("formCargo").value.trim(),
+        servicio: $("formServicio").value.trim(),
+        precio: $("formPrecio").value,
+        proveedor: $("formProveedor").value.trim().toUpperCase(),
+        justificacion: $("formJustificacion").value.trim(),
+        observacion: $("formObs").value.trim(),
       });
-      $("formPDF").value = "";
-      $("wrapUMOtro").style.display = "none";
-      $("formUMOtro").required = false;
-      $("fileUploadWrapper").classList.remove("has-file");
-      $("fileNameDisplay").textContent = "Adjuntar cotización formal (Solo formato PDF)";
-      $("searchInput").value = "";
-      
-      counter = $("formDescCounter");
-      if (counter) counter.textContent = "0 / 200";
-      document.querySelectorAll(".input-group select, .input-group input, .input-group textarea").forEach(el => el.classList.remove("has-value"));
-    }
 
-    function showToast(msg, isError = false) {
-      const container = $("toastContainer");
-      while (container.children.length >= MAX_TOASTS) container.firstChild.remove();
+      const readPdfAndSubmit_ = (file, payload) => {
+        const reader = new FileReader();
+        reader.onload = () =>
+          submitPayload_(reader.result.split(",")[1], payload);
+        reader.onerror = () => showToast("Error al leer el PDF.", true);
+        reader.readAsDataURL(file);
+      };
 
-      const toast = document.createElement("div");
-      toast.className = "toast";
-      toast.style.borderLeft = isError ? "4px solid var(--red-main)" : "4px solid var(--green-main)";
-      toast.innerHTML = `<span>${isError ? "&#x2716;" : "&#x2714;"}</span> <span>${msg}</span>`;
+      const submitPayload_ = (pdfBase64, payload) => {
+        payload.cotizacionPDF = pdfBase64;
+        _submitInProgress = true;
+        setLoadingForm_(true);
+        if (isGASAvailable_()) {
+          google.script.run
+            .withSuccessHandler((res) => {
+              _submitInProgress = false;
+              setLoadingForm_(false);
+              showToast("Solicitud enviada correctamente.");
+              if (res && res.url) {
+                $("successLink").href = res.url;
+                irFase(5);
+              } else {
+                limpiarFormulario();
+                setTimeout(() => irFase(1, true), 1200);
+              }
+            })
+            .withFailureHandler((err) => {
+              _submitInProgress = false;
+              setLoadingForm_(false);
+              showToast(err.message || "Error al enviar", true);
+            })
+            .guardarSolicitud(payload);
+        } else {
+          setTimeout(() => {
+            _submitInProgress = false;
+            setLoadingForm_(false);
+            showToast("Solicitud enviada (demo).");
+            limpiarFormulario();
+            setTimeout(() => irFase(1, true), 1500);
+          }, 1500);
+        }
+      };
 
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.style.opacity = "0";
-        setTimeout(() => toast.remove(), 300);
-      }, TOAST_DURATION_MS);
-    }
+      document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = $("searchInput");
+        const btnSearch = $("btnSearch");
+        btnSearch.disabled = searchInput.value.trim().length < MIN_SEARCH_LEN;
+        searchInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !btnSearch.disabled) ejecutarBusqueda();
+        });
+        searchInput.addEventListener("input", () => {
+          btnSearch.disabled = searchInput.value.trim().length < MIN_SEARCH_LEN;
+        });
 
-    const resolverUnidadMedida_ = () => {
-      const umSelect = $("formUM").value;
-      const umOtro = $("formUMOtro").value.trim();
-      const unidad = umSelect === "OTRO" ? umOtro : umSelect;
-      if (umSelect === "OTRO" && !umOtro) return { unidad: "", error: "Especifica la unidad de medida personalizada." };
-      if (!unidad) return { unidad: "", error: "Selecciona una unidad de medida válida." };
-      return { unidad };
-    };
+        document
+          .querySelectorAll(
+            ".input-group select, .input-group input, .input-group textarea",
+          )
+          .forEach((el) => {
+            const checkVal = () =>
+              el.classList.toggle("has-value", el.value !== "");
+            el.addEventListener("change", checkVal);
+            el.addEventListener("input", checkVal);
+            checkVal();
+          });
 
-    const updateStepper_ = (currentPhase) => {
-      const steps = document.querySelectorAll(".stepper__step");
-      const lines = document.querySelectorAll(".stepper__line");
-      steps.forEach((step, i) => {
-        const n = i + 1;
-        step.classList.remove("stepper__step--active", "stepper__step--done");
-        step.removeAttribute("onclick");
-        if (n === currentPhase) step.classList.add("stepper__step--active");
-        else if (n < currentPhase) { step.classList.add("stepper__step--done"); step.setAttribute("onclick", `irFase(${n})`); }
+        const checks = document.querySelectorAll(
+          '.disclaimer-check input[type="checkbox"]',
+        );
+        const btnContinue = document.querySelector("#phase-3 .btn-primary");
+        checks.forEach((cb) =>
+          cb.addEventListener("change", () => {
+            btnContinue.disabled = ![...checks].every((c) => c.checked);
+          }),
+        );
+
+        searchInput.focus();
       });
-      lines.forEach((line, i) => line.classList.toggle("stepper__line--filled", i < currentPhase - 1));
-    };
-
-    const resetSuccessAnimations_ = (target, num) => {
-      if (num !== 5) return;
-      const icon = target.querySelector(".success-icon");
-      const content = target.querySelector(".success-content");
-      [icon, content].forEach((el) => { if (el) { el.style.animation = "none"; el.offsetHeight; el.style.animation = ""; } });
-    };
-
-    const resetDisclaimerChecks_ = () => {
-      const checks = document.querySelectorAll('.disclaimer-check input[type="checkbox"]');
-      const btnPhase3 = document.querySelector("#phase-3 .btn-primary");
-      checks.forEach((cb) => cb.checked = false);
-      if (btnPhase3) btnPhase3.disabled = true;
-    };
-
-    const renderSkeleton_ = () => {
-      const container = $("resultsContainer");
-      $("resultsSubtitle").textContent = "Buscando coincidencias...";
-      let rows = "";
-      for (let i = 0; i < SKELETON_ROWS; i++) {
-        rows += '<div class="skeleton-row"><div class="skeleton-cell skeleton-cell--clave skeleton"></div><div class="skeleton-cell skeleton-cell--desc skeleton"></div><div class="skeleton-cell skeleton-cell--badge skeleton"></div><div class="skeleton-cell skeleton-cell--badge skeleton"></div></div>';
-      }
-      container.innerHTML = `<div class="skeleton-table">${rows}</div>`;
-    };
-
-    const setLoading_ = (isLoading) => {
-      $("btnSearch").disabled = isLoading || $("searchInput").value.trim().length < MIN_SEARCH_LEN;
-      $("searchInput").disabled = isLoading;
-      $("loader").style.display = isLoading ? "flex" : "none";
-      $("btnSearch").textContent = isLoading ? "Buscando..." : "Verificar";
-    };
-
-    const setLoadingForm_ = (isLoading) => {
-      const btns = document.querySelectorAll("#phase-4 .btn-primary");
-      btns.forEach((btn) => { btn.disabled = isLoading; btn.classList.toggle("btn--loading", isLoading); });
-    };
-
-    const isGASAvailable_ = () => typeof google !== "undefined" && google.script && google.script.run;
-    const escapeHTML_ = (str) => String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-    const buildEmptyStateHTML_ = () => '<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500">Catálogo Limpio</h3><p style="margin:0;font-size:13px">No existen registros idénticos vigentes. Es conforme avanzar con la inclusión de clave.</p></div>';
-    const buildErrorStateHTML_ = (message) => `<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500;color:var(--red-main)">Error</h3><p style="margin:0;font-size:13px">${escapeHTML_(message)}</p></div>`;
-
-    const buildResultRowHTML_ = (row, index) => {
-      const { id_codigo: idCodigo, descripcion, activo, similitud } = row;
-      const score = Number.parseFloat(similitud || 0);
-      const isActive = Number(activo) === 1;
-      return `<tr style="animation-delay:${index * 0.02}s"><td data-label="Clave" style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">${escapeHTML_(idCodigo || "N/A")}</td><td data-label="Descripción" style="font-weight:500">${escapeHTML_(descripcion || "")}</td><td data-label="Estado"><span class="badge ${isActive ? "green" : "gray"}">${isActive ? "Activo" : "Inactivo"}</span></td><td data-label="Similitud"><span class="badge ${score >= 60 ? "red" : score >= 35 ? "orange" : "gray"}">${score.toFixed(1)}%</span></td></tr>`;
-    };
-
-    const buildPayload_ = (umFinal) => ({
-      descripcion: $("formDesc").value.trim().toUpperCase(), unidadMedida: umFinal.toUpperCase(), partidaCOG: $("formCOG").value.trim().toUpperCase(), unidadHospitalaria: $("formUnidad").value, familia: $("formFamilia").value.trim().toUpperCase(), nombreSolicitante: $("formNombre").value.trim(), cargoSolicitante: $("formCargo").value.trim(), servicio: $("formServicio").value.trim(), precio: $("formPrecio").value, proveedor: $("formProveedor").value.trim().toUpperCase(), justificacion: $("formJustificacion").value.trim(), observacion: $("formObs").value.trim(),
-    });
-
-    const readPdfAndSubmit_ = (file, payload) => {
-      const reader = new FileReader();
-      reader.onload = () => submitPayload_(reader.result.split(",")[1], payload);
-      reader.onerror = () => showToast("Error al leer el PDF.", true);
-      reader.readAsDataURL(file);
-    };
-
-    const submitPayload_ = (pdfBase64, payload) => {
-      payload.cotizacionPDF = pdfBase64; _submitInProgress = true; setLoadingForm_(true);
-      if (isGASAvailable_()) {
-        google.script.run
-          .withSuccessHandler((res) => { _submitInProgress = false; setLoadingForm_(false); showToast("Solicitud enviada correctamente."); if (res && res.url) { $("successLink").href = res.url; irFase(5); } else { limpiarFormulario(); setTimeout(() => irFase(1, true), 1200); } })
-          .withFailureHandler((err) => { _submitInProgress = false; setLoadingForm_(false); showToast(err.message || "Error al enviar", true); })
-          .guardarSolicitud(payload);
-      } else {
-        setTimeout(() => { _submitInProgress = false; setLoadingForm_(false); showToast("Solicitud enviada (demo)."); limpiarFormulario(); setTimeout(() => irFase(1, true), 1500); }, 1500);
-      }
-    };
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const searchInput = $("searchInput"); const btnSearch = $("btnSearch");
-      btnSearch.disabled = searchInput.value.trim().length < MIN_SEARCH_LEN;
-      searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter" && !btnSearch.disabled) ejecutarBusqueda(); });
-      searchInput.addEventListener("input", () => { btnSearch.disabled = searchInput.value.trim().length < MIN_SEARCH_LEN; });
-
-      document.querySelectorAll(".input-group select, .input-group input, .input-group textarea").forEach((el) => {
-        const checkVal = () => el.classList.toggle("has-value", el.value !== "");
-        el.addEventListener("change", checkVal); el.addEventListener("input", checkVal); checkVal();
-      });
-
-      const checks = document.querySelectorAll('.disclaimer-check input[type="checkbox"]');
-      const btnContinue = document.querySelector("#phase-3 .btn-primary");
-      checks.forEach((cb) => cb.addEventListener("change", () => { btnContinue.disabled = ![...checks].every((c) => c.checked); }));
-
-      searchInput.focus();
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>

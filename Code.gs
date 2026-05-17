@@ -318,45 +318,50 @@ function guardarSolicitud(payload) {
 }
 
 /**
- * Genera el documento de inclusión clonando la plantilla maestra y
- * escribiendo los datos del formulario en batch.
- *
- * @param {Object} datos - Objeto con la información mapeada del formulario.
- * @param {string} [pdfBase64] - Datos del archivo PDF de cotización en Base64.
- * @returns {{ url: string, id: string }} URL e ID del documento generado.
+ * Genera documento de inclusión. PDF se adjunta ANTES del lock para no bloquear
+ * concurrencia durante la subida a Drive (~2-4s).
+ * @param {Object} datos
+ * @param {string} [pdfBase64]
+ * @returns {{ url: string, id: string }}
  */
 function generarDocumentoInclusion(datos, pdfBase64) {
+  if (!datos || !datos.descripcion) {
+    throw new Error("Datos insuficientes: descripción es obligatoria.");
+  }
+
+  const cfg = getConfig_();
+  const carpetaDestino = getCarpetaSolicitudes_();
+
+  // PDF fuera del lock: operación independiente de Drive, no necesita exclusión mutua
+  let urlPdf = "";
+  try {
+    urlPdf = adjuntarPDF_(carpetaDestino, pdfBase64, datos.descripcion);
+  } catch (e) {
+    logEvent(1, "PDF adjunto falló, continuando sin adjunto", { error: e.message });
+    // Graceful degradation: la solicitud continúa sin PDF
+  }
+
   const lock = LockService.getScriptLock();
   try {
-    lock.waitLock(15000);
+    lock.waitLock(15000); // Solo la zona crítica: clone + batch write
 
-    const cfg = getConfig_();
     const plantilla = DriveApp.getFileById(cfg.TEMPLATE_ID);
     const fechaStr = formatearTimestamp_();
     const nombreNuevoArchivo = `Solicitud Inclusión - ${datos.descripcion.substring(0, 30)} - ${fechaStr}`;
 
-    const carpetaDestino = getCarpetaSolicitudes_();
     const copia = plantilla.makeCopy(nombreNuevoArchivo, carpetaDestino);
-
     const ssCopia = SpreadsheetApp.open(copia);
     const hoja = ssCopia.getSheetByName(NOMBRE_HOJA);
+    if (!hoja) throw new Error(`Hoja "${NOMBRE_HOJA}" no encontrada.`);
 
-    if (!hoja) {
-      throw new Error(`No se encontró la hoja "${NOMBRE_HOJA}" en la plantilla.`);
-    }
-
-    const urlPdf = adjuntarPDF_(carpetaDestino, pdfBase64, datos.descripcion);
     const valores = construirValoresHoja_(datos, urlPdf);
-
     hoja.getRange(FILA_INICIO_DATOS, COL_INICIO_DATOS, 1, valores[0].length).setValues(valores);
     SpreadsheetApp.flush();
 
     return { url: ssCopia.getUrl(), id: ssCopia.getId() };
+
   } catch (e) {
-    logEvent(2, "Error al generar documento", {
-      error: e.message,
-      stack: e.stack,
-    });
+    logEvent(2, "Error generando documento", { error: e.message, stack: e.stack });
     throw new Error(`Error al generar documento: ${e.message}`);
   } finally {
     lock.releaseLock();

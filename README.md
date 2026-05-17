@@ -147,36 +147,76 @@
 <!-- STACK TÉCNICO                                                  -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
 
+<div align="center">
 <table>
 <tr>
-<td align="center" width="50%" valign="top">
+<td width="50%" valign="top">
 
-### 🖥️ Frontend
-| Componente | Detalle |
-|:--|:--|
-| **Motor** | HTML5 Service (SPA monolítica) |
-| **Estilos** | CSS vanilla · 35+ custom properties |
-| **Lógica** | JavaScript ES2020 · ~400 LOC |
-| **Tipografía** | Syne · DM Sans · JetBrains Mono |
-| **Patrones** | BEM · Skeleton · Floating Labels |
-| **Animaciones** | GPU-accelerated · `will-change` |
+<h4 align="center">🖥️ Frontend</h4>
+
+<table>
+  <tr>
+    <td><b>Motor</b></td>
+    <td>HTML5 Service (SPA monolítica)</td>
+  </tr>
+  <tr>
+    <td><b>Estilos</b></td>
+    <td>CSS vanilla · 35+ custom properties</td>
+  </tr>
+  <tr>
+    <td><b>Lógica</b></td>
+    <td>JavaScript ES2020 · ~400 LOC</td>
+  </tr>
+  <tr>
+    <td><b>Tipografía</b></td>
+    <td>Syne · DM Sans · JetBrains Mono</td>
+  </tr>
+  <tr>
+    <td><b>Patrones</b></td>
+    <td>BEM · Skeleton · Floating Labels</td>
+  </tr>
+  <tr>
+    <td><b>Animaciones</b></td>
+    <td>GPU-accelerated · <code>will-change</code></td>
+  </tr>
+</table>
 
 </td>
-<td align="center" width="50%" valign="top">
+<td width="50%" valign="top">
 
-### ⚙️ Backend
-| Componente | Detalle |
-|:--|:--|
-| **Runtime** | Google Apps Script V8 (ES6+) |
-| **DB** | BigQuery · Jaccard Trigramas |
-| **Storage** | Drive API v3 + Sheets API v4 |
-| **Cache** | `CacheService` · TTL 6h · MD5 key |
-| **Acceso** | `DOMAIN` · `USER_DEPLOYING` |
-| **Funciones** | 3 públicas + 2 helpers privados |
+<h4 align="center">⚙️ Backend</h4>
+
+<table>
+  <tr>
+    <td><b>Runtime</b></td>
+    <td>Google Apps Script V8 (ES6+)</td>
+  </tr>
+  <tr>
+    <td><b>DB</b></td>
+    <td>BigQuery · Jaccard Trigramas</td>
+  </tr>
+  <tr>
+    <td><b>Storage</b></td>
+    <td>Drive API v3 + Sheets API v4</td>
+  </tr>
+  <tr>
+    <td><b>Cache</b></td>
+    <td><code>CacheService</code> · TTL 6h · MD5 key</td>
+  </tr>
+  <tr>
+    <td><b>Acceso</b></td>
+    <td><code>DOMAIN</code> · <code>USER_DEPLOYING</code></td>
+  </tr>
+  <tr>
+    <td><b>Funciones</b></td>
+    <td>3 públicas + 2 helpers privados</td>
+  </tr>
+</table>
 
 </td>
 </tr>
 </table>
+</div>
 
 <br>
 
@@ -376,40 +416,56 @@ Para mantener un estándar profesional, este proyecto se gestiona localmente uti
 <tr>
 <td width="50%" valign="top">
 
-#### Fórmula Matemática
+<h4>Fórmula Matemática</h4>
 
-```
+<pre>
               |A ∩ B|
 Jaccard = ─────────────────
            |A| + |B| - |A ∩ B|
-```
+</pre>
 
-#### Equivalencia SQL
+<h4>Equivalencia SQL</h4>
 
-```sql
+<pre><code>
 ROUND(
   SAFE_DIVIDE(
     inter,
     len_cat + len_in - inter
   ) * 100, 1
 ) AS score
-```
+</code></pre>
 
-#### Umbrales
+<h4>Umbrales</h4>
 
-| Valor | Acción |
-|:------|:-------|
-| `≥ 60%` | 🔴 Alta similitud — Badge rojo |
-| `≥ 35%` | 🟠 Similitud media — Badge ámbar |
-| `≥ 15%` | ⬜ Similitud baja — Badge gris |
-| `< 15%` | ❌ Descartado — No se muestra |
+<table>
+  <tr>
+    <th>Valor</th>
+    <th>Acción</th>
+  </tr>
+  <tr>
+    <td><code>≥ 60%</code></td>
+    <td>🔴 Alta similitud — Badge rojo</td>
+  </tr>
+  <tr>
+    <td><code>≥ 35%</code></td>
+    <td>🟠 Similitud media — Badge ámbar</td>
+  </tr>
+  <tr>
+    <td><code>≥ 15%</code></td>
+    <td>⬜ Similitud baja — Badge gris</td>
+  </tr>
+  <tr>
+    <td><code>&lt; 15%</code></td>
+    <td>❌ Descartado — No se muestra</td>
+  </tr>
+</table>
 
 </td>
 <td width="50%" valign="top">
 
-#### Pipeline SQL
+<h4>Pipeline SQL</h4>
 
-```sql
+<pre><code>
 -- 1. NORMALIZACIÓN DEL INPUT
 --    input → NFD → strip accents → UPPER
 --    → SPLIT → FILTER(≥3 chars)
@@ -430,7 +486,7 @@ ROUND(
 --    WHERE inter > 0 AND score >= 15%
 --    ORDER BY score DESC
 --    LIMIT 10
-```
+</code></pre>
 
 </td>
 </tr>

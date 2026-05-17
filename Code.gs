@@ -233,7 +233,14 @@ function guardarSolicitud(payload) {
  * @returns {{ url: string, id: string }} URL e ID del documento generado.
  */
 function generarDocumentoInclusion(datos, pdfBase64) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(15000); // Espera hasta 15 segundos si otra instancia escribe
+    
+    if (!datos || !datos.descripcion) {
+      throw new Error("Datos insuficientes: descripción es obligatoria.");
+    }
+
     const plantilla = DriveApp.getFileById(ID_PLANTILLA);
     const fechaStr = formatearTimestamp_();
     const nombreNuevoArchivo = `Solicitud Inclusión - ${datos.descripcion.substring(0, 30)} - ${fechaStr}`;
@@ -264,6 +271,8 @@ function generarDocumentoInclusion(datos, pdfBase64) {
       stack: e.stack,
     });
     throw new Error(`Error al generar documento: ${e.message}`);
+  } finally {
+    lock.releaseLock(); // Libera el bloqueo para la siguiente solicitud
   }
 }
 

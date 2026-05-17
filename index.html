@@ -41,9 +41,17 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    @keyframes gradientBackground {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     body {
       font-family: var(--font-body);
-      background: var(--bg-body);
+      background: linear-gradient(-45deg, #e0f2fe, #f8fafc, #ffffff, #eff6ff);
+      background-size: 400% 400%;
+      animation: gradientBackground 15s ease infinite;
       color: var(--text-main);
       display: flex;
       justify-content: center;
@@ -90,10 +98,17 @@
       background: var(--bg-window);
       border-radius: var(--radius-win);
       border: 1px solid var(--border-color);
-      box-shadow: var(--shadow-md);
+      box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.05);
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      transform: translateY(0);
+      transition: box-shadow 0.4s var(--ease-out), transform 0.4s var(--ease-out);
+    }
+    
+    .main-card:hover {
+      box-shadow: 0 30px 60px -15px rgba(15, 23, 42, 0.2), 0 0 0 1px rgba(15, 23, 42, 0.05);
+      transform: translateY(-4px);
     }
 
     /* Stepper Minimalista de Líneas Finas */

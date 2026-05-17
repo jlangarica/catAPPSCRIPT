@@ -108,7 +108,7 @@ function buscarSimilitudesBQ(textoUsuario) {
           FROM UNNEST(trigramas) elemento 
           WHERE elemento IN UNNEST(@user_trigrams)
         ) AS inter
-      FROM \` certain-perigee-495302-h7.catalogo.catalogo_maestro_clean \`
+      FROM \`certain-perigee-495302-h7.catalogo.catalogo_maestro_clean\`
     )
     SELECT 
       id_codigo,

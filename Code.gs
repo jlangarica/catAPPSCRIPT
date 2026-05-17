@@ -272,7 +272,10 @@ function guardarSolicitud(payload) {
  * @throws {Error} Si falla la clonación, la hoja no existe o la escritura batch falla.
  */
 function generarDocumentoInclusion(datos, pdfBase64) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(15000); // Espera hasta 15 segundos si otra instancia escribe
+    
     if (!datos || !datos.descripcion) {
       throw new Error("Datos insuficientes: descripción es obligatoria.");
     }
@@ -313,6 +316,8 @@ function generarDocumentoInclusion(datos, pdfBase64) {
       stack: e.stack,
     });
     throw new Error(`Error al generar documento: ${e.message}`);
+  } finally {
+    lock.releaseLock(); // Libera el bloqueo para la siguiente solicitud
   }
 }
 

@@ -30,7 +30,7 @@ const getConfig_ = () => {
     BQ_TABLE: props.getProperty("BQ_TABLE") || "catalogo_maestro_clean",
     TEMPLATE_ID: props.getProperty("TEMPLATE_SHEET_ID") || "1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8",
     GEMINI_KEY: props.getProperty("GEMINI_API_KEY") || "",
-    GEMINI_MODEL: props.getProperty("GEMINI_MODEL") || "gemini-2.5-flash-lite",
+    GEMINI_MODEL: props.getProperty("GEMINI_MODEL") || "gemini-3.1-flash-lite",
     CONAC_ID: props.getProperty("CONAC_JSON_ID") || "",
   };
   return __configCache;

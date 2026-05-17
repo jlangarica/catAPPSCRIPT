@@ -382,8 +382,7 @@ const normalizarTexto_ = (texto) =>
     .replace(/[^A-Z0-9 ]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
-
+/**
  * Adjunta un archivo PDF de cotización a la carpeta de solicitudes.
  *
  * @param {GoogleAppsScript.Drive.Folder} carpetaDestino - Carpeta destino.

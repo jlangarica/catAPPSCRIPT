@@ -21,20 +21,7 @@ const NOMBRE_CARPETA = "Solicitudes de Inclusión HCG";
 /** @const {number} TTL de caché en segundos (6 horas) */
 const CACHE_TTL_SEG = 21600;
 
-/** @const {number} Tiempo máximo de polling a BigQuery (ms) */
-const MAX_POLL_MS = 55000;
 
-/** @const {number} Intervalo de polling a BigQuery (ms) */
-const POLL_INTERVAL_MS = 800;
-
-/** @const {number} Longitud mínima de input para búsqueda */
-const MIN_INPUT_LEN = 3;
-
-/** @const {number} Longitud mínima de palabra para tokenizar */
-const MIN_WORD_LEN = 3;
-
-/** @const {number} Máximo de palabras del input para generar regex */
-const MAX_INPUT_WORDS = 15;
 
 /** @const {number} Fila inicio para escritura batch en la plantilla */
 const FILA_INICIO_DATOS = 14;
@@ -57,93 +44,123 @@ function doGet() {
 }
 
 /**
- * Motor de búsqueda semántica basado en Jaccard de trigramas sobre BigQuery.
- *
- * Pipeline: validación → normalización → tokenización → caché → BigQuery → mapeo.
- * Los resultados se almacenan en `CacheService` con TTL de 6 h y clave MD5.
- *
- * @param {string} textoUsuario - Texto libre ingresado por el usuario.
+ * 🔍 MOTOR DE AUDITORÍA Y PREVENCIÓN DE DUPLICADOS (VERSIÓN LÉXICA OPTIMIZADA)
+ * @param {string} textoUsuario - Descripción enviada por el solicitante en la SPA.
  * @returns {Array<{id_codigo: string, descripcion: string, activo: number, similitud: number}>}
- *   Arreglo de coincidencias ordenadas por similitud descendente (máx. 10).
- * @throws {Error} Si el input no cumple la longitud mínima o faltan propiedades de script.
  */
 function buscarSimilitudesBQ(textoUsuario) {
   const input = String(textoUsuario || "").trim();
-  if (input.length < MIN_INPUT_LEN) {
-    throw new Error("Ingresa una descripción de al menos 3 caracteres.");
+  if (input.length < 3) {
+    throw new Error("La verificación requiere una descripción mínima de 3 caracteres.");
   }
 
-  const { projectId, datasetId, tableId, location } = obtenerPropiedadesBQ_();
+  // ─── NORMALIZACIÓN MÉDICA SIMÉTRICA EN MEMORIA (DICCIONARIO JS) ───
+  let txt = input.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  txt = txt.replace(/C\//g, " CON ").replace(/S\//g, " SIN ");
+  
+  // Separar números de letras
+  txt = txt.replace(/([0-9]+)([A-Z])/g, "$1 $2").replace(/([A-Z]+)([0-9])/g, "$1 $2");
 
-  const cleanInput = normalizarTexto_(input);
-  const inputWords = cleanInput
-    .split(" ")
-    .filter((word) => word.length >= MIN_WORD_LEN)
-    .slice(0, MAX_INPUT_WORDS);
-
-  if (inputWords.length === 0) {
-    throw new Error("Ingresa palabras más descriptivas (mínimo 3 letras).");
+  // Diccionario Clínico Local
+  const DICT_MEDICO = {
+    "MG": "MILIGRAMOS", "ML": "MILILITROS", "TAB": "TABLETA", 
+    "CAP": "CAPSULA", "AMP": "AMPOLLA", "JGA": "JERINGA"
+  };
+  for (const [abrev, compl] of Object.entries(DICT_MEDICO)) {
+    txt = txt.replace(new RegExp("\\b" + abrev + "\\b", "gi"), compl);
   }
 
-  const regexFilter = inputWords.map((word) => escapeRegex_(word)).join("|");
+  const cleanInput = txt.replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+
+  // ─── GENERACIÓN DE TRIGRAMAS DEL LADO DEL SERVIDOR (V8) ───
+  const paddedInput = " " + cleanInput + " ";
+  const trigrams = new Set();
+  for (let i = 0; i < paddedInput.length - 2; i++) {
+    const tri = paddedInput.substring(i, i + 3);
+    if (tri.trim().length === 3) trigrams.add(tri); // Validamos que sean exactamente 3 caracteres
+  }
+  const trigramasArray = Array.from(trigrams);
+
+  if (trigramasArray.length === 0) {
+    throw new Error("Entrada sin suficiente claridad léxica alfanumérica.");
+  }
+
+  const props = PropertiesService.getScriptProperties();
+  const bqLocation = props.getProperty("BQ_LOCATION") || "US";
+  const cacheKeyRaw = `hcg_idx_v6_${cleanInput}`;
+  const cacheKey = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, cacheKeyRaw)
+    .map(b => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2)).join("").substring(0, 24);
 
   const cache = CacheService.getScriptCache();
-  const cacheKey = generarCacheKey_(
-    projectId,
-    datasetId,
-    tableId,
-    location,
-    cleanInput,
-  );
-
   const cached = cache.get(cacheKey);
-  if (cached) {
-    console.info({ message: "Cache HIT", cacheKey });
-    return JSON.parse(cached);
-  }
+  if (cached) return JSON.parse(cached);
 
-  const sql = construirSqlJaccard_(projectId, datasetId, tableId);
+  // ─── CONSULTA SQL (INYECCIÓN PARAMETRIZADA A LA TABLA CORRECTA) ───
+  const sqlQuery = `
+    WITH candidatos_indexados AS (
+      SELECT 
+        id_codigo,
+        descripcion_articulo,
+        activo,
+        ARRAY_LENGTH(trigramas) AS len_cat,
+        (SELECT COUNT(DISTINCT elemento) FROM UNNEST(trigramas) elemento WHERE elemento IN UNNEST(@user_trigrams)) AS inter
+      -- Apuntamos a la ruta exacta de la tabla que creaste
+      FROM \`certain-perigee-495302-h7.catalogo.catalogo_maestro_clean\`
+      WHERE SEARCH(norm_desc, @search_text) 
+    )
+    SELECT 
+      id_codigo,
+      descripcion_articulo,
+      activo,
+      ROUND(SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) * 100, 1) AS score
+    FROM candidatos_indexados
+    WHERE inter > 0 
+      AND SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) >= 0.20 -- Umbral del 20%
+    ORDER BY score DESC
+    LIMIT 10;
+  `;
+
+  // El Project ID se lo pasamos directo para la facturación de la consulta
+  const billingProjectId = props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
+
   const request = {
-    query: sql,
+    query: sqlQuery,
     useLegacySql: false,
     parameterMode: "NAMED",
-    location,
+    location: bqLocation,
     queryParameters: [
       {
-        name: "q",
+        name: "search_text",
         parameterType: { type: "STRING" },
-        parameterValue: { value: input },
+        parameterValue: { value: cleanInput }
       },
       {
-        name: "regex",
-        parameterType: { type: "STRING" },
-        parameterValue: { value: regexFilter },
+        name: "user_trigrams",
+        parameterType: { type: "ARRAY", arrayType: { type: "STRING" } },
+        parameterValue: { arrayValues: trigramasArray.map(t => ({ value: t })) }
       },
-    ],
+      {
+        name: "len_in_tri",
+        parameterType: { type: "INT64" },
+        parameterValue: { value: String(trigramasArray.length) }
+      }
+    ]
   };
 
   try {
-    console.info({
-      message: "BigQuery query initiated",
-      input,
-      wordCount: inputWords.length,
-    });
-    const res = ejecutarQueryBQConPolling_(projectId, location, request);
-    const results = mapearResultadosBQ_(res.rows);
+    const res = BigQuery.Jobs.query(request, billingProjectId);
+    const results = res.rows ? res.rows.map(({ f }) => ({
+      id_codigo: f[0].v,
+      descripcion: f[1].v,
+      activo: Number(f[2].v) || 0,
+      similitud: Number(f[3].v) || 0
+    })) : [];
 
-    cache.put(cacheKey, JSON.stringify(results), CACHE_TTL_SEG);
-    console.info({
-      message: "BigQuery query completed",
-      resultCount: results.length,
-    });
+    cache.put(cacheKey, JSON.stringify(results), 21600);
     return results;
   } catch (e) {
-    console.error({
-      message: "BigQuery query failed",
-      error: e.message,
-      stack: e.stack,
-    });
-    throw new Error(`BigQuery: ${e.message}`);
+    console.error({ message: "Fallo en motor de auditoría léxica HCG", error: e.message });
+    throw new Error(`Error analítico de catálogo: ${e.message}`);
   }
 }
 
@@ -366,215 +383,7 @@ const normalizarTexto_ = (texto) =>
     .replace(/\s+/g, " ")
     .trim();
 
-/**
- * Escapa caracteres especiales para su uso dentro de una expresión regular.
- *
- * @param {string} str - Cadena a escapar.
- * @returns {string} Cadena escapada segura para `RegExp`.
- * @private
- */
-const escapeRegex_ = (str) =>
-  String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/**
- * Genera una clave de caché MD5 a partir de los componentes de la consulta.
- *
- * Formato: `bq_v10_` + primeros 24 caracteres hex del digest MD5.
- *
- * @param {string} projectId - ID del proyecto GCP.
- * @param {string} datasetId - ID del dataset BigQuery.
- * @param {string} tableId   - ID de la tabla BigQuery.
- * @param {string} location  - Ubicación/región de BigQuery.
- * @param {string} cleanInput - Texto normalizado del usuario.
- * @returns {string} Clave de caché de máximo 32 caracteres.
- * @private
- */
-const generarCacheKey_ = (
-  projectId,
-  datasetId,
-  tableId,
-  location,
-  cleanInput,
-) => {
-  const rawKey = `${projectId}|${datasetId}|${tableId}|${location}|${cleanInput}`;
-  const digestBytes = Utilities.computeDigest(
-    Utilities.DigestAlgorithm.MD5,
-    rawKey,
-  );
-  const hex = digestBytes
-    .map((b) => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2))
-    .join("");
-  return `bq_v10_${hex.substring(0, 24)}`;
-};
-
-/**
- * Obtiene y valida las propiedades de script necesarias para BigQuery.
- *
- * @returns {{ projectId: string, datasetId: string, tableId: string, location: string }}
- *   Objeto con las propiedades de configuración de BigQuery.
- * @throws {Error} Si alguna propiedad requerida no está definida.
- * @private
- */
-const obtenerPropiedadesBQ_ = () => {
-  const props = PropertiesService.getScriptProperties();
-  const projectId = props.getProperty("BQ_PROJECT_ID");
-  const datasetId = props.getProperty("BQ_DATASET");
-  const tableId = props.getProperty("BQ_TABLE");
-  const location = props.getProperty("BQ_LOCATION") || "US";
-
-  if (!projectId || !datasetId || !tableId) {
-    const missing = [
-      !projectId && "BQ_PROJECT_ID",
-      !datasetId && "BQ_DATASET",
-      !tableId && "BQ_TABLE",
-    ]
-      .filter(Boolean)
-      .join(", ");
-    throw new Error(`Faltan propiedades de script: ${missing}.`);
-  }
-
-  return { projectId, datasetId, tableId, location };
-};
-
-/**
- * Construye la consulta SQL parametrizada de Jaccard sobre trigramas.
- *
- * La query implementa el pipeline completo: normalización → tokenización →
- * pre-filtrado REGEXP → cross-join → scoring Jaccard → filtrado ≥ 15 %.
- *
- * @param {string} projectId - ID del proyecto GCP.
- * @param {string} datasetId - ID del dataset BigQuery.
- * @param {string} tableId   - ID de la tabla BigQuery.
- * @returns {string} Sentencia SQL estándar (no legacy) para BigQuery.
- * @private
- */
-const construirSqlJaccard_ = (projectId, datasetId, tableId) => `
-  DECLARE input_text STRING DEFAULT @q;
-  DECLARE regex_param STRING DEFAULT @regex;
-
-  WITH
-  input_norm AS (
-    SELECT UPPER(REGEXP_REPLACE(NORMALIZE(input_text, NFD), r'\\p{M}', '')) AS clean
-  ),
-  input_words_cte AS (
-    SELECT DISTINCT w
-    FROM input_norm, UNNEST(SPLIT(clean, ' ')) AS w
-    WHERE LENGTH(w) >= 3
-  ),
-  input_tokens AS (
-    SELECT COALESCE(ARRAY_AGG(DISTINCT SUBSTR(w, i, 3)), []) AS arr
-    FROM input_words_cte, UNNEST(GENERATE_ARRAY(1, LENGTH(w) - 2)) AS i
-  ),
-  candidates AS (
-    SELECT
-      id_codigo,
-      descripcion_articulo,
-      activo,
-      UPPER(REGEXP_REPLACE(NORMALIZE(descripcion_articulo, NFD), r'\\p{M}', '')) AS c_txt
-    FROM \`${projectId}.${datasetId}.${tableId}\`
-    WHERE REGEXP_CONTAINS(
-      UPPER(REGEXP_REPLACE(NORMALIZE(descripcion_articulo, NFD), r'\\p{M}', '')),
-      regex_param
-    )
-  ),
-  tokens_calc AS (
-    SELECT
-      id_codigo,
-      descripcion_articulo,
-      activo,
-      (
-        SELECT COALESCE(ARRAY_AGG(DISTINCT SUBSTR(w, i, 3)), [])
-        FROM UNNEST(SPLIT(c_txt, ' ')) AS w,
-             UNNEST(GENERATE_ARRAY(1, LENGTH(w) - 2)) AS i
-        WHERE LENGTH(w) >= 3
-      ) AS cat_tokens,
-      (SELECT arr FROM input_tokens) AS in_tokens
-    FROM candidates
-  ),
-  scored AS (
-    SELECT
-      id_codigo,
-      descripcion_articulo,
-      activo,
-      ARRAY_LENGTH(cat_tokens) AS len_cat,
-      ARRAY_LENGTH(in_tokens) AS len_in,
-      (
-        SELECT COUNT(1)
-        FROM UNNEST(cat_tokens) t1
-        INNER JOIN UNNEST(in_tokens) t2
-        ON t1 = t2
-      ) AS inter
-    FROM tokens_calc
-  )
-  SELECT
-    id_codigo,
-    descripcion_articulo,
-    activo,
-    ROUND(SAFE_DIVIDE(inter, len_cat + len_in - inter) * 100, 1) AS score
-  FROM scored
-  WHERE inter > 0
-    AND SAFE_DIVIDE(inter, len_cat + len_in - inter) >= 0.15
-  ORDER BY score DESC
-  LIMIT 10
-`;
-
-/**
- * Ejecuta una consulta BigQuery con polling hasta completarse o superar
- * el timeout de seguridad.
- *
- * @param {string} projectId - ID del proyecto GCP.
- * @param {string} location  - Ubicación/región de BigQuery.
- * @param {Object} request   - Objeto de solicitud BigQuery.Jobs.query.
- * @returns {Object} Respuesta de BigQuery con `rows` y `jobComplete = true`.
- * @throws {Error} Si la consulta excede el tiempo límite.
- * @private
- */
-const ejecutarQueryBQConPolling_ = (projectId, location, request) => {
-  let res = BigQuery.Jobs.query(request, projectId);
-  const { jobId } = res.jobReference;
-  const startTime = Date.now();
-
-  while (!res.jobComplete) {
-    if (Date.now() - startTime > MAX_POLL_MS) {
-      console.error({
-        message: "BigQuery polling timeout",
-        jobId,
-        elapsed: Date.now() - startTime,
-      });
-      throw new Error(
-        "La consulta excedió el tiempo límite. Intenta con un término más específico.",
-      );
-    }
-    Utilities.sleep(POLL_INTERVAL_MS);
-    res = BigQuery.Jobs.getQueryResults(projectId, jobId, { location });
-  }
-
-  return res;
-};
-
-/**
- * Mapea las filas crudas de BigQuery al contrato de retorno del DOM.
- *
- * Cada fila se transforma de `r.f[i].v` a un objeto tipado con
- * `id_codigo`, `descripcion`, `activo` y `similitud`.
- *
- * @param {Array<Object>|undefined} rows - Filas devueltas por BigQuery (`res.rows`).
- * @returns {Array<{id_codigo: string, descripcion: string, activo: number, similitud: number}>}
- *   Arreglo de resultados mapeados. Arreglo vacío si no hay filas.
- * @private
- */
-const mapearResultadosBQ_ = (rows) => {
-  if (!rows) return [];
-
-  return rows.map(({ f }) => ({
-    id_codigo: f[0].v,
-    descripcion: f[1].v,
-    activo: Number(f[2].v) || 0,
-    similitud: Number(f[3].v) || 0,
-  }));
-};
-
-/**
  * Adjunta un archivo PDF de cotización a la carpeta de solicitudes.
  *
  * @param {GoogleAppsScript.Drive.Folder} carpetaDestino - Carpeta destino.

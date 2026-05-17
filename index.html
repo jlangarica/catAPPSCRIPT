@@ -395,6 +395,41 @@
     .success-link:hover { background: var(--blue-surface); border-color: var(--blue-main); }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
 
+    .institutional-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 12px;
+    }
+
+    .institutional-header__logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .institutional-header__logo img {
+      height: 36px;
+      border-radius: 4px;
+    }
+
+    .institutional-header__title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .institutional-header__subtitle {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
     /* Adaptabilidad Móvil Pura */
     @media (max-width: 600px) {
       body { padding: 16px 12px; }
@@ -416,6 +451,17 @@
 <body>
 
   <div class="app-container">
+    
+    <div class="institutional-header">
+      <div class="institutional-header__logo">
+        <img src="https://portal.hcg.gob.mx/hcg/sites/hcgtransparencia.dd/files/styles/boletines_galeria_eventos/public/imgEventosCS/Logotipo%20HCG_17.jpg?itok=Hix5xedr" alt="Logo HCG">
+        <div>
+          <div class="institutional-header__title">OPD Hospital Civil de Guadalajara</div>
+          <div class="institutional-header__subtitle">División de Servicios Administrativos</div>
+        </div>
+      </div>
+      <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Unidad Digital</span>
+    </div>
     
     <div class="page-title-section">
       <h1>

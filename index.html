@@ -514,8 +514,8 @@
 
     .btn-primary { background: var(--blue-main); color: white; box-shadow: 0 2px 4px rgba(29, 78, 216, 0.15); }
     .btn-primary:hover:not(:disabled) { background: var(--blue-hover); box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25); }
-    .btn-secondary { background: var(--bg-window); border-color: var(--border-color); color: var(--text-main); }
-    .btn-secondary:hover:not(:disabled) { background: var(--bg-secondary); }
+    .btn-secondary { background: transparent; border-color: var(--border-color); color: var(--text-muted); }
+    .btn-secondary:hover:not(:disabled) { background: var(--bg-secondary); color: var(--text-main); border-color: #c8ccd2;}
     .btn--danger { background: var(--red-main) !important; color: white !important; }
 
     .actions { display: flex; gap: 12px; margin-top: auto; padding-top: 32px; }
@@ -557,6 +557,80 @@
 
     .loader { display: none; align-items: center; gap: 10px; color: var(--text-muted); font-size: 14px; margin-top: 20px; justify-content: center; }
     .empty-state { text-align: center; padding: 48px 24px; background: var(--bg-secondary); border-radius: var(--radius-win); margin-bottom: 24px; }
+    
+    /* Spinner de carga inline */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid var(--border-color);
+      border-top-color: var(--blue-main);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Ripple effect en botones */
+    .btn__ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      transform: scale(0);
+      animation: rippleExpand 0.5s ease-out forwards;
+      pointer-events: none;
+    }
+    .btn {
+      position: relative;
+      overflow: hidden;
+    }
+    @keyframes rippleExpand {
+      to { transform: scale(2.5); opacity: 0; }
+    }
+    
+    /* Botón en estado de carga */
+    .btn--loading {
+      color: transparent !important;
+      pointer-events: none;
+    }
+    .btn-spinner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    
+    /* Skeleton loading */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-secondary) 25%, #e8eaed 50%, var(--bg-secondary) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+      border-radius: 6px;
+    }
+    
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    .skeleton-table {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .skeleton-row {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 16px;
+      background: var(--bg-window);
+      border-radius: var(--radius-input);
+      border: 1px solid var(--border-color);
+    }
+    .skeleton-cell--clave  { width: 100px; height: 16px; }
+    .skeleton-cell--desc   { flex: 1; height: 16px; }
+    .skeleton-cell--badge  { width: 72px; height: 24px; border-radius: 6px; }
     .success-icon { width: 72px; height: 72px; background: var(--green-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; transform: scale(0); animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.15s forwards; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3); }
     .success-icon svg { stroke-dasharray: 27; stroke-dashoffset: 27; animation: drawCheck 0.4s ease 0.45s forwards; }
     .success-content { text-align: center; padding: 16px 0; opacity: 0; animation: fadeUp 0.4s ease 0.5s forwards; }

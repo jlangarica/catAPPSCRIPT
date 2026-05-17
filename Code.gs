@@ -501,15 +501,50 @@ const obtenerClasificadorContexto_ = () => {
   }
 };
 
+/** @type {string|null} Cache en memoria del ID de carpeta */
+let __cachedFolderId = null;
+
 /**
- * Obtiene o crea la carpeta dedicada para las solicitudes de inclusión en Drive.
+ * Obtiene o crea carpeta de solicitudes con caché multinivel:
+ * 1. Variable en memoria (O(1) intra-ejecución)
+ * 2. CacheService (persiste 6h entre ejecuciones)
+ * 3. Búsqueda por nombre en Drive (fallback costoso)
  * @private
+ * @returns {GoogleAppsScript.Drive.Folder}
  */
 const getCarpetaSolicitudes_ = () => {
+  // Nivel 1: Memoria
+  if (__cachedFolderId) {
+    try { return DriveApp.getFolderById(__cachedFolderId); }
+    catch (e) { __cachedFolderId = null; } // Invalidar si fue eliminada
+  }
+
+  // Nivel 2: CacheService
+  const cache = CacheService.getScriptCache();
+  const cachedId = cache.get("hcg_folder_solicitudes_id");
+  if (cachedId) {
+    try {
+      const folder = DriveApp.getFolderById(cachedId);
+      __cachedFolderId = cachedId;
+      return folder;
+    } catch (e) { cache.remove("hcg_folder_solicitudes_id"); }
+  }
+
+  // Nivel 3: Búsqueda por nombre (O(n) — costosa)
   const folders = DriveApp.getFoldersByName(NOMBRE_CARPETA);
-  if (folders.hasNext()) return folders.next();
-  logEvent(0, "Carpeta creada", { nombre: NOMBRE_CARPETA });
-  return DriveApp.createFolder(NOMBRE_CARPETA);
+  if (folders.hasNext()) {
+    const folder = folders.next();
+    __cachedFolderId = folder.getId();
+    cache.put("hcg_folder_solicitudes_id", __cachedFolderId, CACHE_TTL_SEG);
+    return folder;
+  }
+
+  // Crear si no existe
+  const nueva = DriveApp.createFolder(NOMBRE_CARPETA);
+  __cachedFolderId = nueva.getId();
+  cache.put("hcg_folder_solicitudes_id", __cachedFolderId, CACHE_TTL_SEG);
+  logEvent(0, "Carpeta creada", { nombre: NOMBRE_CARPETA, id: __cachedFolderId });
+  return nueva;
 };
 
 /**
@@ -605,20 +640,21 @@ const generarCacheKey_ = (input) => {
 };
 
 /**
- * Adjunta un archivo PDF a Drive.
+ * Adjunta PDF a Drive con sanitización de nombre de archivo.
  * @private
  */
 const adjuntarPDF_ = (carpeta, pdfBase64, descripcion) => {
   if (!pdfBase64 || typeof pdfBase64 !== "string") return "";
 
   try {
-    const cleanDesc = descripcion.replace(/[^A-Za-z0-9]/g, "_");
-    const nombreArchivo = `Cotizacion_${cleanDesc.substring(0, 20)}.pdf`;
+    // Sanitizar nombre: evita caracteres que rompen paths o permiten traversal
+    const cleanDesc = String(descripcion).replace(/[^A-Za-z0-9]/g, "_").substring(0, 20);
+    const nombreArchivo = `Cotizacion_${cleanDesc}.pdf`;
     const bytes = Utilities.base64Decode(pdfBase64);
     const blob = Utilities.newBlob(bytes, "application/pdf", nombreArchivo);
     const archivo = carpeta.createFile(blob);
 
-    logEvent(0, "PDF adjuntado", { nombre: nombreArchivo });
+    logEvent(0, "PDF adjuntado", { nombre: nombreArchivo, sizeBytes: bytes.length });
     return archivo.getUrl();
   } catch (e) {
     logEvent(2, "Fallo al adjuntar PDF", { error: e.message });

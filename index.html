@@ -670,6 +670,34 @@
         box-shadow: var(--shadow-md);
       }
 
+      /* Componente Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+        animation: fadeIn 0.2s ease-out;
+      }
+      .modal-content {
+        background: var(--bg-window);
+        padding: 32px;
+        border-radius: var(--radius-win);
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        transform: translateY(10px);
+        animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      @keyframes modalIn { to { transform: translateY(0); } }
+      .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+      .modal-body { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
+      .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+
       .success-content {
         text-align: center;
         padding: 12px 0;
@@ -1229,6 +1257,18 @@
       </main>
     </div>
 
+    <!-- Modal Dinámico -->
+    <div class="modal-overlay" id="modalOverlay">
+      <div class="modal-content">
+        <h3 class="modal-title" id="modalTitle"></h3>
+        <p class="modal-body" id="modalBody"></p>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="modalCancelBtn"></button>
+          <button class="btn btn-primary" id="modalConfirmBtn"></button>
+        </div>
+      </div>
+    </div>
+
     <div
       class="toast-container"
       id="toastContainer"
@@ -1238,46 +1278,54 @@
     ></div>
 
     <script>
+      /**
+       * @fileoverview Cliente SPA para Verificador de Catálogo HCG.
+       * Refactorizado con ES6+, JSDoc y robustez mejorada.
+       */
       "use strict";
 
+      // ─── CONSTANTES DE CONFIGURACIÓN ─────────────────────────────────────────────
+
       const SEARCH_TIMEOUT_MS = 30000;
-      const MAX_PDF_SIZE_MB = 5; // Seguro para el transporte en Base64 de GAS
+      const MAX_PDF_SIZE_MB = 5;
       const MIN_SEARCH_LEN = 3;
       const TOAST_DURATION_MS = 3000;
       const MAX_TOASTS = 3;
       const SKELETON_ROWS = 4;
-      const FOCUS_MAP_ = { 1: "searchInput", 4: "formDesc", 5: "successLink" };
 
-      const FORM_FIELD_IDS_ = [
-        "formDesc",
-        "formUM",
-        "formCOG",
-        "formPrecio",
-        "formProveedor",
-        "formJustificacion",
-        "formUnidad",
-        "formFamilia",
-        "formNombre",
-        "formCargo",
-        "formServicio",
-        "formObs",
-        "formUMOtro",
+      /** @const {Object<number, string>} Mapeo de foco por fase */
+      const FOCUS_MAP = { 1: "searchInput", 4: "formDesc", 5: "successLink" };
+
+      /** @const {string[]} IDs de los campos del formulario */
+      const FORM_FIELD_IDS = [
+        "formDesc", "formUM", "formCOG", "formPrecio", "formProveedor",
+        "formJustificacion", "formUnidad", "formFamilia", "formNombre",
+        "formCargo", "formServicio", "formObs", "formUMOtro",
       ];
-      const DIRTY_CHECK_IDS_ = [
-        "formDesc",
-        "formNombre",
-        "formCOG",
-        "formJustificacion",
-      ];
+
+      /** @const {string[]} IDs para verificación de datos antes de cancelar */
+      const DIRTY_CHECK_IDS = ["formDesc", "formNombre", "formCOG", "formJustificacion"];
+
+      // ─── ESTADO DE LA APLICACIÓN ────────────────────────────────────────────────
 
       let _searchInProgress = false;
       let _submitInProgress = false;
       let _searchTimer = null;
       let _currentPhase = 1;
 
+      /**
+       * Selector rápido por ID.
+       * @param {string} id - ID del elemento.
+       * @returns {HTMLElement|null}
+       */
       const $ = (id) => document.getElementById(id);
 
-      function ejecutarBusqueda() {
+      // ─── LÓGICA DE BÚSQUEDA (FASE 1/2) ──────────────────────────────────────────
+
+      /**
+       * Ejecuta la búsqueda de similitudes en el catálogo institucional.
+       */
+      const ejecutarBusqueda = () => {
         if (_searchInProgress) return;
         const input = $("searchInput");
         const val = input.value.trim();
@@ -1289,17 +1337,14 @@
         }
 
         _searchInProgress = true;
-        setLoading_(true);
+        setLoadingState_(true);
         irFase(2);
         renderSkeleton_();
 
         _searchTimer = setTimeout(() => {
           _searchInProgress = false;
-          setLoading_(false);
-          showToast(
-            "La consulta tardó demasiado. Intenta con un término más específico.",
-            true,
-          );
+          setLoadingState_(false);
+          showToast("La consulta tardó demasiado. Intente con un término más específico.", true);
         }, SEARCH_TIMEOUT_MS);
 
         if (isGASAvailable_()) {
@@ -1307,66 +1352,32 @@
             .withSuccessHandler((res) => {
               clearTimeout(_searchTimer);
               _searchInProgress = false;
-              setLoading_(false);
+              setLoadingState_(false);
               renderResultados(Array.isArray(res) ? res : []);
             })
             .withFailureHandler((err) => {
               clearTimeout(_searchTimer);
               _searchInProgress = false;
-              setLoading_(false);
-              $("resultsContainer").innerHTML = buildErrorStateHTML_(
-                err.message || "No se pudo conectar.",
-              );
-              $("resultsSubtitle").textContent =
-                "Ocurrió un error al consultar.";
+              setLoadingState_(false);
+              $("resultsContainer").innerHTML = buildErrorStateHTML_(err.message);
+              $("resultsSubtitle").textContent = "Error en la consulta.";
             })
             .buscarSimilitudesBQ(val);
         } else {
           setTimeout(() => {
             clearTimeout(_searchTimer);
             _searchInProgress = false;
-            setLoading_(false);
+            setLoadingState_(false);
             renderResultados([]);
           }, 1000);
         }
-      }
+      };
 
-      function irFase(num, force = false) {
-        if (!force && num === _currentPhase) return;
-        const isForward = num > _currentPhase;
-        _currentPhase = num;
-
-        document
-          .querySelectorAll(".phase")
-          .forEach((el) => el.classList.remove("active"));
-        const target = $(`phase-${num}`);
-
-        target.style.animation = "none";
-        target.offsetHeight;
-        target.style.animation = isForward
-          ? "slideInForward 0.25s var(--ease-out)"
-          : "slideInBackward 0.25s var(--ease-out)";
-        target.classList.add("active");
-
-        resetSuccessAnimations_(target, num);
-        updateStepper_(num);
-
-        if (FOCUS_MAP_[num]) setTimeout(() => $(FOCUS_MAP_[num])?.focus(), 120);
-        if (num === 2) {
-          const term = $("searchInput").value.trim();
-          if ($("chipSearchTerm")) $("chipSearchTerm").textContent = term;
-        }
-        if (num === 3) {
-          $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
-          resetDisclaimerChecks_();
-        }
-        if (num === 4 && !$("formDesc").value && $("searchInput").value) {
-          $("formDesc").value = $("searchInput").value;
-          updateCharCounter($("formDesc"));
-        }
-      }
-
-      function renderResultados(data) {
+      /**
+       * Renderiza los resultados de búsqueda.
+       * @param {Array<Object>} data - Resultados de BigQuery.
+       */
+      const renderResultados = (data) => {
         const container = $("resultsContainer");
         const subtitle = $("resultsSubtitle");
 
@@ -1377,7 +1388,7 @@
         }
 
         const count = data.length;
-        subtitle.textContent = `Se encontraron ${count} coincidencia${count !== 1 ? "s" : ""} para "${$("searchInput").value.trim()}".`;
+        subtitle.textContent = `Se encontraron ${count} coincidencia${count !== 1 ? "s" : ""} relevante${count !== 1 ? "s" : ""}.`;
         const rows = data.map((r, i) => buildResultRowHTML_(r, i)).join("");
 
         container.innerHTML = `
@@ -1387,79 +1398,73 @@
             <tbody>${rows}</tbody>
           </table>
         </div>`;
-      }
+      };
 
-      function toggleOtroUM(val) {
-        const otroWrap = $("wrapUMOtro");
-        const otroInput = $("formUMOtro");
+      // ─── GESTIÓN DE FASES Y NAVEGACIÓN ──────────────────────────────────────────
 
-        if (val === "OTRO") {
-          otroWrap.style.display = "grid";
-          setTimeout(() => otroWrap.classList.add("is-visible"), 10);
-          otroInput.required = true;
-          otroInput.focus();
-        } else {
-          otroWrap.classList.remove("is-visible");
-          otroInput.required = false;
-          setTimeout(() => {
-            if (!otroWrap.classList.contains("is-visible")) {
-              otroWrap.style.display = "none";
-              otroInput.value = "";
-              otroInput.classList.remove("has-value");
-            }
-          }, 250);
+      /**
+       * Cambia la fase activa de la aplicación.
+       * @param {number} num - Fase a cargar.
+       * @param {boolean} [force=false] - Forzar transición.
+       */
+      const irFase = (num, force = false) => {
+        if (!force && num === _currentPhase) return;
+        const isForward = num > _currentPhase;
+        _currentPhase = num;
+
+        document.querySelectorAll(".phase").forEach((el) => el.classList.remove("active"));
+        const target = $(`phase-${num}`);
+
+        target.style.animation = "none";
+        target.offsetHeight;
+        target.style.animation = isForward ? "slideInForward 0.25s var(--ease-out)" : "none";
+        target.classList.add("active");
+
+        updateStepper_(num);
+
+        if (FOCUS_MAP[num]) setTimeout(() => $(FOCUS_MAP[num])?.focus(), 120);
+        if (num === 2) $("chipSearchTerm").textContent = $("searchInput").value.trim();
+        if (num === 3) {
+          $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
+          resetDisclaimerChecks_();
         }
-      }
-
-      function handleFileChange(input) {
-        const wrapper = $("fileUploadWrapper");
-        const display = $("fileNameDisplay");
-        const file = input.files[0];
-
-        if (file) {
-          if (file.type !== "application/pdf") {
-            showToast("El archivo seleccionado no es un PDF válido.", true);
-            input.value = "";
-            wrapper.classList.remove("has-file");
-            display.textContent =
-              "Adjuntar cotización formal (Solo formato PDF)";
-            return;
-          }
-          wrapper.classList.add("has-file");
-          display.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
-        } else {
-          wrapper.classList.remove("has-file");
-          display.textContent = "Adjuntar cotización formal (Solo formato PDF)";
+        if (num === 4 && !$("formDesc").value) {
+          $("formDesc").value = $("searchInput").value;
+          updateCharCounter($("formDesc"));
         }
-      }
+      };
 
-      function enviarFormulario() {
+      const updateStepper_ = (phase) => {
+        const steps = document.querySelectorAll(".stepper__step");
+        const lines = document.querySelectorAll(".stepper__line");
+        steps.forEach((step, i) => {
+          const n = i + 1;
+          step.classList.toggle("stepper__step--active", n === phase);
+          step.classList.toggle("stepper__step--done", n < phase);
+          n < phase ? step.setAttribute("onclick", `irFase(${n})`) : step.removeAttribute("onclick");
+        });
+        lines.forEach((line, i) => line.classList.toggle("stepper__line--filled", i < phase - 1));
+      };
+
+      // ─── LÓGICA DE FORMULARIO (FASE 4) ──────────────────────────────────────────
+
+      const enviarFormulario = () => {
         if (_submitInProgress) return;
 
-        document
-          .querySelectorAll(
-            "#phase-4 input, #phase-4 select, #phase-4 textarea",
-          )
-          .forEach((el) => {
-            el.classList.remove("input-error-active");
-          });
-
+        document.querySelectorAll("#phase-4 [required]").forEach(el => el.classList.remove("input-error-active"));
         const requiredInputs = document.querySelectorAll("#phase-4 [required]");
-        let primerInvalido = null;
+        let firstInvalid = null;
 
         for (const input of requiredInputs) {
           if (!input.checkValidity()) {
             input.classList.add("input-error-active");
-            if (!primerInvalido) primerInvalido = input;
+            if (!firstInvalid) firstInvalid = input;
           }
         }
 
-        if (primerInvalido) {
-          showToast(
-            "Por favor, rellene los campos obligatorios resaltados.",
-            true,
-          );
-          primerInvalido.focus();
+        if (firstInvalid) {
+          showToast("Rellene los campos obligatorios resaltados.", true);
+          firstInvalid.focus();
           return;
         }
 
@@ -1474,205 +1479,166 @@
 
         const payload = buildPayload_(unidad);
         const file = $("formPDF").files[0];
-
         if (file) {
           if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
-            showToast(
-              `El PDF excede el límite de ${MAX_PDF_SIZE_MB} MB.`,
-              true,
-            );
+            showToast(`El PDF excede los ${MAX_PDF_SIZE_MB}MB.`, true);
             return;
           }
-          if (file.type !== "application/pdf") {
-            showToast("El archivo seleccionado no es un PDF válido.", true);
-            return;
-          }
+          readPdfAndSubmit_(file, payload);
+        } else {
+          submitPayload_(null, payload);
         }
+      };
 
-        file ? readPdfAndSubmit_(file, payload) : submitPayload_(null, payload);
-      }
-
-      function updateCharCounter(input) {
-        const max = parseInt(input.maxLength, 10);
-        const len = input.value.length;
-        const counter = $(`${input.id}Counter`);
-        if (!counter || isNaN(max)) return;
-        counter.textContent = `${len} / ${max}`;
-      }
-
-      function confirmarCancelar() {
-        const tieneDatos = DIRTY_CHECK_IDS_.some(
-          (id) => $(id) && $(id).value.trim() !== "",
-        );
-        if (!tieneDatos) {
-          limpiarFormulario();
-          irFase(1);
-          return;
+      const submitPayload_ = (pdfBase64, payload) => {
+        payload.cotizacionPDF = pdfBase64;
+        _submitInProgress = true;
+        setFormLoading_(true);
+        if (isGASAvailable_()) {
+          google.script.run
+            .withSuccessHandler((res) => {
+              _submitInProgress = false;
+              setFormLoading_(false);
+              showToast("Solicitud enviada correctamente.");
+              if (res && res.url) {
+                $("successLink").href = res.url;
+                irFase(5);
+              } else {
+                irFase(1, true);
+              }
+            })
+            .withFailureHandler((err) => {
+              _submitInProgress = false;
+              setFormLoading_(false);
+              showToast(err.message || "Error al enviar", true);
+            })
+            .guardarSolicitud(payload);
+        } else {
+          setTimeout(() => {
+            _submitInProgress = false;
+            setFormLoading_(false);
+            showToast("Solicitud simulada con éxito.");
+            irFase(5);
+          }, 1000);
         }
-        showModal(
-          "¿Descartar formulario?",
-          "Detectamos cambios en los campos. Si cancela, se perderá la información ingresada.",
-          "Descartar",
-          "Volver",
-          () => {
-            limpiarFormulario();
-            irFase(1);
-          },
-        );
-      }
+      };
 
-      function limpiarFormulario() {
-        FORM_FIELD_IDS_.forEach((id) => {
-          const el = $(id);
-          if (el) {
-            el.value = "";
-            el.classList.remove("has-value");
-          }
-        });
-        $("formPDF").value = "";
-        $("wrapUMOtro").style.display = "none";
-        $("formUMOtro").required = false;
-        $("fileUploadWrapper").classList.remove("has-file");
-        $("fileNameDisplay").textContent =
-          "Adjuntar cotización formal (Solo formato PDF)";
-        $("searchInput").value = "";
+      // ─── HELPERS DE UI Y SEGURIDAD ─────────────────────────────────────────────
 
-        counter = $("formDescCounter");
-        if (counter) counter.textContent = "0 / 200";
-        document
-          .querySelectorAll(
-            ".input-group select, .input-group input, .input-group textarea",
-          )
-          .forEach((el) => el.classList.remove("has-value"));
-      }
-
-      function showToast(msg, isError = false) {
+      const showToast = (msg, isError = false) => {
         const container = $("toastContainer");
-        while (container.children.length >= MAX_TOASTS)
-          container.firstChild.remove();
-
         const toast = document.createElement("div");
         toast.className = "toast";
-        toast.style.borderLeft = isError
-          ? "4px solid var(--red-main)"
-          : "4px solid var(--green-main)";
-        toast.innerHTML = `<span>${isError ? "&#x2716;" : "&#x2714;"}</span> <span>${msg}</span>`;
-
+        toast.style.borderLeft = `4px solid var(--${isError ? "red" : "green"}-main)`;
+        toast.innerHTML = `<span>${isError ? "✕" : "✓"}</span> <span>${msg}</span>`;
         container.appendChild(toast);
         setTimeout(() => {
           toast.style.opacity = "0";
-          setTimeout(() => toast.remove(), 300);
+          setTimeout(() => toast.remove(), 400);
         }, TOAST_DURATION_MS);
-      }
-
-      const resolverUnidadMedida_ = () => {
-        const umSelect = $("formUM").value;
-        const umOtro = $("formUMOtro").value.trim();
-        const unidad = umSelect === "OTRO" ? umOtro : umSelect;
-        if (umSelect === "OTRO" && !umOtro)
-          return {
-            unidad: "",
-            error: "Especifica la unidad de medida personalizada.",
-          };
-        if (!unidad)
-          return {
-            unidad: "",
-            error: "Selecciona una unidad de medida válida.",
-          };
-        return { unidad };
       };
 
-      const updateStepper_ = (currentPhase) => {
-        const steps = document.querySelectorAll(".stepper__step");
-        const lines = document.querySelectorAll(".stepper__line");
-        steps.forEach((step, i) => {
-          const n = i + 1;
-          step.classList.remove("stepper__step--active", "stepper__step--done");
-          step.removeAttribute("onclick");
-          if (n === currentPhase) step.classList.add("stepper__step--active");
-          else if (n < currentPhase) {
-            step.classList.add("stepper__step--done");
-            step.setAttribute("onclick", `irFase(${n})`);
-          }
-        });
-        lines.forEach((line, i) =>
-          line.classList.toggle("stepper__line--filled", i < currentPhase - 1),
+      const showModal = (title, body, confirmText, cancelText, onConfirm) => {
+        $("modalTitle").textContent = title;
+        $("modalBody").textContent = body;
+        $("modalConfirmBtn").textContent = confirmText;
+        $("modalCancelBtn").textContent = cancelText;
+        $("modalOverlay").style.display = "flex";
+
+        const close = () => {
+          $("modalOverlay").style.display = "none";
+          $("modalConfirmBtn").onclick = null;
+          $("modalCancelBtn").onclick = null;
+        };
+
+        $("modalConfirmBtn").onclick = () => { onConfirm(); close(); };
+        $("modalCancelBtn").onclick = close;
+      };
+
+      const updateCharCounter = (input) => {
+        const counter = $(`${input.id}Counter`);
+        if (counter) counter.textContent = `${input.value.length} / ${input.maxLength}`;
+      };
+
+      const toggleOtroUM = (val) => {
+        const wrap = $("wrapUMOtro");
+        const input = $("formUMOtro");
+        if (val === "OTRO") {
+          wrap.style.display = "grid";
+          setTimeout(() => wrap.classList.add("is-visible"), 10);
+          input.required = true;
+          input.focus();
+        } else {
+          wrap.classList.remove("is-visible");
+          input.required = false;
+          setTimeout(() => { if (!wrap.classList.contains("is-visible")) wrap.style.display = "none"; }, 250);
+        }
+      };
+
+      const handleFileChange = (input) => {
+        const wrapper = $("fileUploadWrapper");
+        const display = $("fileNameDisplay");
+        const file = input.files[0];
+        if (file && file.type === "application/pdf") {
+          wrapper.classList.add("has-file");
+          display.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        } else if (file) {
+          showToast("Archivo no válido. Solo PDF.", true);
+          input.value = "";
+          wrapper.classList.remove("has-file");
+          display.textContent = "Adjuntar cotización formal (Solo formato PDF)";
+        }
+      };
+
+      const confirmarCancelar = () => {
+        const isDirty = DIRTY_CHECK_IDS_.some(id => $(id)?.value.trim() !== "");
+        if (!isDirty) { irFase(1); return; }
+        showModal(
+          "¿Descartar formulario?",
+          "Se perderá la información ingresada si continúa.",
+          "Descartar", "Volver",
+          () => { limpiarFormulario_(); irFase(1); }
         );
       };
 
-      const resetSuccessAnimations_ = (target, num) => {
-        if (num !== 5) return;
-        const icon = target.querySelector(".success-icon");
-        const content = target.querySelector(".success-content");
-        [icon, content].forEach((el) => {
-          if (el) {
-            el.style.animation = "none";
-            el.offsetHeight;
-            el.style.animation = "";
-          }
-        });
+      const escapeHTML_ = (str) => String(str).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+
+      const isGASAvailable_ = () => typeof google !== "undefined" && !!google.script?.run;
+
+      const setLoadingState_ = (isLoading) => {
+        $("btnSearch").disabled = isLoading;
+        $("loader").style.display = isLoading ? "flex" : "none";
+      };
+
+      const setFormLoading_ = (isLoading) => {
+        const btns = document.querySelectorAll("#phase-4 .btn-primary");
+        btns.forEach(btn => btn.disabled = isLoading);
+      };
+
+      const limpiarFormulario_ = () => {
+        FORM_FIELD_IDS.forEach(id => { const el = $(id); if (el) { el.value = ""; el.classList.remove("has-value"); } });
+        $("formPDF").value = "";
+        $("fileUploadWrapper").classList.remove("has-file");
+        $("wrapUMOtro").style.display = "none";
       };
 
       const resetDisclaimerChecks_ = () => {
-        const checks = document.querySelectorAll(
-          '.disclaimer-check input[type="checkbox"]',
-        );
-        const btnPhase3 = document.querySelector("#phase-3 .btn-primary");
-        checks.forEach((cb) => (cb.checked = false));
-        if (btnPhase3) btnPhase3.disabled = true;
+        const checks = document.querySelectorAll(".disclaimer-check input");
+        const btn = document.querySelector("#phase-3 .btn-primary");
+        checks.forEach(c => c.checked = false);
+        if (btn) btn.disabled = true;
       };
 
-      const renderSkeleton_ = () => {
-        const container = $("resultsContainer");
-        $("resultsSubtitle").textContent = "Buscando coincidencias...";
-        let rows = "";
-        for (let i = 0; i < SKELETON_ROWS; i++) {
-          rows +=
-            '<div class="skeleton-row"><div class="skeleton-cell skeleton-cell--clave skeleton"></div><div class="skeleton-cell skeleton-cell--desc skeleton"></div><div class="skeleton-cell skeleton-cell--badge skeleton"></div><div class="skeleton-cell skeleton-cell--badge skeleton"></div></div>';
-        }
-        container.innerHTML = `<div class="skeleton-table">${rows}</div>`;
+      const resolverUnidadMedida_ = () => {
+        const sel = $("formUM").value;
+        const otro = $("formUMOtro").value.trim();
+        if (sel === "OTRO" && !otro) return { error: "Especifique la unidad de medida." };
+        return { unidad: sel === "OTRO" ? otro : sel };
       };
 
-      const setLoading_ = (isLoading) => {
-        $("btnSearch").disabled =
-          isLoading || $("searchInput").value.trim().length < MIN_SEARCH_LEN;
-        $("searchInput").disabled = isLoading;
-        $("loader").style.display = isLoading ? "flex" : "none";
-        $("btnSearch").textContent = isLoading ? "Buscando..." : "Verificar";
-      };
-
-      const setLoadingForm_ = (isLoading) => {
-        const btns = document.querySelectorAll("#phase-4 .btn-primary");
-        btns.forEach((btn) => {
-          btn.disabled = isLoading;
-          btn.classList.toggle("btn--loading", isLoading);
-        });
-      };
-
-      const isGASAvailable_ = () =>
-        typeof google !== "undefined" && google.script && google.script.run;
-      const escapeHTML_ = (str) =>
-        String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#39;");
-      const buildEmptyStateHTML_ = () =>
-        '<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500">Catálogo Limpio</h3><p style="margin:0;font-size:13px">No existen registros idénticos vigentes. Es conforme avanzar con la inclusión de clave.</p></div>';
-      const buildErrorStateHTML_ = (message) =>
-        `<div class="empty-state"><h3 style="margin:0 0 8px;font-weight:500;color:var(--red-main)">Error</h3><p style="margin:0;font-size:13px">${escapeHTML_(message)}</p></div>`;
-
-      const buildResultRowHTML_ = (row, index) => {
-        const { id_codigo: idCodigo, descripcion, activo, similitud } = row;
-        const score = Number.parseFloat(similitud || 0);
-        const isActive = Number(activo) === 1;
-        return `<tr style="animation-delay:${index * 0.02}s"><td data-label="Clave" style="font-family:var(--font-mono);font-size:12px;color:var(--text-muted)">${escapeHTML_(idCodigo || "N/A")}</td><td data-label="Descripción" style="font-weight:500">${escapeHTML_(descripcion || "")}</td><td data-label="Estado"><span class="badge ${isActive ? "green" : "gray"}">${isActive ? "Activo" : "Inactivo"}</span></td><td data-label="Similitud"><span class="badge ${score >= 60 ? "red" : score >= 35 ? "orange" : "gray"}">${score.toFixed(1)}%</span></td></tr>`;
-      };
-
-      const buildPayload_ = (umFinal) => ({
+      const buildPayload_ = (um) => ({
         descripcion: $("formDesc").value.trim().toUpperCase(),
-        unidadMedida: umFinal.toUpperCase(),
+        unidadMedida: um.toUpperCase(),
         partidaCOG: $("formCOG").value.trim().toUpperCase(),
         unidadHospitalaria: $("formUnidad").value,
         familia: $("formFamilia").value.trim().toUpperCase(),
@@ -1687,80 +1653,33 @@
 
       const readPdfAndSubmit_ = (file, payload) => {
         const reader = new FileReader();
-        reader.onload = () =>
-          submitPayload_(reader.result.split(",")[1], payload);
-        reader.onerror = () => showToast("Error al leer el PDF.", true);
+        reader.onload = () => submitPayload_(reader.result.split(",")[1], payload);
+        reader.onerror = () => showToast("Error al leer el archivo.", true);
         reader.readAsDataURL(file);
       };
 
-      const submitPayload_ = (pdfBase64, payload) => {
-        payload.cotizacionPDF = pdfBase64;
-        _submitInProgress = true;
-        setLoadingForm_(true);
-        if (isGASAvailable_()) {
-          google.script.run
-            .withSuccessHandler((res) => {
-              _submitInProgress = false;
-              setLoadingForm_(false);
-              showToast("Solicitud enviada correctamente.");
-              if (res && res.url) {
-                $("successLink").href = res.url;
-                irFase(5);
-              } else {
-                limpiarFormulario();
-                setTimeout(() => irFase(1, true), 1200);
-              }
-            })
-            .withFailureHandler((err) => {
-              _submitInProgress = false;
-              setLoadingForm_(false);
-              showToast(err.message || "Error al enviar", true);
-            })
-            .guardarSolicitud(payload);
-        } else {
-          setTimeout(() => {
-            _submitInProgress = false;
-            setLoadingForm_(false);
-            showToast("Solicitud enviada (demo).");
-            limpiarFormulario();
-            setTimeout(() => irFase(1, true), 1500);
-          }, 1500);
-        }
+      const buildResultRowHTML_ = (row, i) => {
+        const { id_codigo, descripcion, activo, similitud } = row;
+        const score = parseFloat(similitud || 0);
+        const isActive = Number(activo) === 1;
+        return `<tr style="animation-delay:${i * 0.05}s"><td data-label="Clave"><code>${escapeHTML_(id_codigo || "N/A")}</code></td><td>${escapeHTML_(descripcion || "")}</td><td><span class="badge ${isActive ? "green" : "gray"}">${isActive ? "Activo" : "Inactivo"}</span></td><td><span class="badge ${score >= 60 ? "red" : score >= 30 ? "orange" : "gray"}">${score.toFixed(1)}%</span></td></tr>`;
       };
+
+      const buildEmptyStateHTML_ = () => '<div class="empty-state">No se encontraron duplicados evidentes.</div>';
+      const buildErrorStateHTML_ = (msg) => `<div class="empty-state" style="color:var(--red-main)">${escapeHTML_(msg || "Error desconocido")}</div>`;
+      const renderSkeleton_ = () => { $("resultsContainer").innerHTML = Array(SKELETON_ROWS).fill('<div style="height:48px;background:var(--bg-secondary);margin-bottom:8px;border-radius:4px;animation:pulse 1.5s infinite"></div>').join(""); };
+      const resetSuccessAnimations_ = (target, num) => { if (num === 5) { const icon = target.querySelector(".success-icon"); icon.style.animation = "none"; icon.offsetHeight; icon.style.animation = ""; } };
 
       document.addEventListener("DOMContentLoaded", () => {
         const searchInput = $("searchInput");
-        const btnSearch = $("btnSearch");
-        btnSearch.disabled = searchInput.value.trim().length < MIN_SEARCH_LEN;
-        searchInput.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" && !btnSearch.disabled) ejecutarBusqueda();
+        searchInput.addEventListener("input", () => { $("btnSearch").disabled = searchInput.value.trim().length < MIN_SEARCH_LEN; });
+        searchInput.addEventListener("keypress", (e) => { if (e.key === "Enter" && !$("btnSearch").disabled) ejecutarBusqueda(); });
+        document.querySelectorAll(".input-group input, .input-group textarea, .input-group select").forEach(el => {
+          const upd = () => el.classList.toggle("has-value", el.value !== "");
+          el.addEventListener("input", upd); el.addEventListener("change", upd); upd();
         });
-        searchInput.addEventListener("input", () => {
-          btnSearch.disabled = searchInput.value.trim().length < MIN_SEARCH_LEN;
-        });
-
-        document
-          .querySelectorAll(
-            ".input-group select, .input-group input, .input-group textarea",
-          )
-          .forEach((el) => {
-            const checkVal = () =>
-              el.classList.toggle("has-value", el.value !== "");
-            el.addEventListener("change", checkVal);
-            el.addEventListener("input", checkVal);
-            checkVal();
-          });
-
-        const checks = document.querySelectorAll(
-          '.disclaimer-check input[type="checkbox"]',
-        );
-        const btnContinue = document.querySelector("#phase-3 .btn-primary");
-        checks.forEach((cb) =>
-          cb.addEventListener("change", () => {
-            btnContinue.disabled = ![...checks].every((c) => c.checked);
-          }),
-        );
-
+        const checks = document.querySelectorAll(".disclaimer-check input");
+        checks.forEach(c => c.addEventListener("change", () => { document.querySelector("#phase-3 .btn-primary").disabled = ![...checks].every(ch => ch.checked); }));
         searchInput.focus();
       });
     </script>

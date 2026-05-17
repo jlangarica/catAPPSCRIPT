@@ -2223,26 +2223,20 @@
           }
         }
 
-        const umSelect = $("formUM").value;
-        const umOtro = $("formUMOtro").value.trim();
-        const umFinal = umSelect === "OTRO" ? umOtro : umSelect;
-
-        if (umSelect === "OTRO" && !umOtro) {
-          showToast("Especifica la unidad de medida personalizada.", true);
+        const { unidad, error } = resolverUnidadMedida_();
+        if (error) {
+          showToast(error, true);
           $("wrapUMOtro").style.display = "flex";
           $("formUMOtro").focus();
           return;
         }
 
-        const payload = buildPayload_(umFinal);
+        const payload = buildPayload_(unidad);
         const file = $("formPDF").files[0];
 
         if (file) {
           if (file.size > MAX_PDF_SIZE_MB * 1024 * 1024) {
-            showToast(
-              `El PDF excede el límite de ${MAX_PDF_SIZE_MB} MB.`,
-              true,
-            );
+            showToast(`El PDF excede el límite de ${MAX_PDF_SIZE_MB} MB.`, true);
             return;
           }
           if (file.type !== "application/pdf") {
@@ -2251,11 +2245,7 @@
           }
         }
 
-        if (file) {
-          readPdfAndSubmit_(file, payload);
-        } else {
-          submitPayload_(null, payload);
-        }
+        file ? readPdfAndSubmit_(file, payload) : submitPayload_(null, payload);
       }
 
       /**
@@ -2468,6 +2458,26 @@
       }
 
       // ─── Funciones Privadas (suffix: _) ──────────────────────────────
+
+      /**
+       * Resuelve y valida la unidad de medida final considerando el caso "OTRO".
+       *
+       * @returns {{ unidad: string, error?: string }}
+       * @private
+       */
+      const resolverUnidadMedida_ = () => {
+        const umSelect = $("formUM").value;
+        const umOtro = $("formUMOtro").value.trim();
+        const unidad = umSelect === "OTRO" ? umOtro : umSelect;
+
+        if (umSelect === "OTRO" && !umOtro) {
+          return { unidad: "", error: "Especifica la unidad de medida personalizada." };
+        }
+        if (!unidad) {
+          return { unidad: "", error: "Selecciona una unidad de medida válida." };
+        }
+        return { unidad };
+      };
 
       /**
        * Actualiza el stepper visual según la fase actual.

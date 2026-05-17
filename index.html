@@ -540,8 +540,52 @@
       input[type="number"]:focus,
       select:focus,
       textarea:focus {
-        border-color: var(--blue-main);
-        box-shadow: 0 0 0 3px var(--blue-focus);
+        border-color: var(--blue-main) !important;
+        box-shadow: 0 0 0 4px var(--blue-focus) !important;
+      }
+
+      /* Estructuración Bento Card para segmentación cognitiva (Fase 4) */
+      .bento-section-card {
+        background: var(--bg-window);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-win);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-5) var(--space-4);
+      }
+      .bento-section-card .form-section__title {
+        margin-top: 0;
+      }
+
+      /* Animación y Transición de Despliegue Suave para Campos Condicionales */
+      .conditional-field-wrapper {
+        grid-column: span 1;
+        display: grid;
+        grid-template-rows: 0fr;
+        opacity: 0;
+        overflow: hidden;
+        transition: grid-template-rows 0.3s var(--ease-out), opacity 0.25s var(--ease-out), margin 0.3s;
+      }
+      .conditional-field-wrapper.is-visible {
+        grid-template-rows: 1fr;
+        opacity: 1;
+      }
+      .conditional-field-inner {
+        min-height: 0;
+      }
+
+      /* Micro-animación de error en validación inline */
+      @keyframes shakeError {
+        0%, 100% { transform: translateX(0); }
+        20%, 60% { transform: translateX(-4px); }
+        40%, 80% { transform: translateX(4px); }
+      }
+      .input-error-active {
+        border-color: var(--red-main) !important;
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.15) !important;
+        animation: shakeError 0.3s var(--ease-out);
       }
 
       /* Floating labels */
@@ -1688,207 +1732,106 @@
               Los campos se han habilitado tras la certificación de no
               existencia. Ingrese datos fidedignos.
             </p>
-            <div class="form-grid">
-              <div class="form-section form-full">
-                <h3 class="form-section__title">Datos Técnicos del Artículo</h3>
-              </div>
-
-              <div class="input-group required form-full">
-                <input
-                  type="text"
-                  id="formDesc"
-                  required
-                  placeholder=" "
-                  maxlength="200"
-                  oninput="updateCharCounter(this)"
-                />
-                <label for="formDesc">Descripción del Artículo</label>
-                <div
-                  style="
-                    display: flex;
-                    justify-content: space-between;
-                    margin-top: 6px;
-                  "
-                >
-                  <span
-                    style="
-                      font-size: 11px;
-                      color: var(--text-muted);
-                      display: flex;
-                      align-items: center;
-                      gap: 4px;
-                    "
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="12" y1="16" x2="12" y2="12" />
-                      <line x1="12" y1="8" x2="12.01" y2="8" />
-                    </svg>
-                    Regla 2.7: Redacción clara, composición genérica, sin
-                    abreviaturas complejas.
-                  </span>
-                  <span class="char-counter" id="formDescCounter">0 / 200</span>
-                </div>
-              </div>
-
-              <div class="input-group">
-                <input type="text" id="formFamilia" placeholder=" " />
-                <label for="formFamilia">Familia de Artículos</label>
-              </div>
-
-              <div class="input-group required">
-                <select
-                  id="formUM"
-                  required
-                  onchange="toggleOtroUM(this.value)"
-                >
-                  <option value="">Seleccionar...</option>
-                  <option value="PIEZA">PIEZA</option>
-                  <option value="CAJA C/100">CAJA C/100</option>
-                  <option value="CAJA C/50">CAJA C/50</option>
-                  <option value="FRASCO">FRASCO</option>
-                  <option value="AMPULA">ÁMPULA</option>
-                  <option value="ENVASE">ENVASE</option>
-                  <option value="EQUIPO">EQUIPO</option>
-                  <option value="OTRO">OTRO (ESPECIFICAR)</option>
-                </select>
-                <label for="formUM">Unidad de Medida</label>
-              </div>
-
-              <div
-                class="input-group required"
-                id="wrapUMOtro"
-                style="display: none"
-              >
-                <input type="text" id="formUMOtro" placeholder=" " />
-                <label for="formUMOtro">Especificar Unidad de Medida</label>
-              </div>
-
-              <div class="input-group required">
-                <input
-                  type="text"
-                  id="formCOG"
-                  required
-                  placeholder=" "
-                  maxlength="10"
-                />
-                <label for="formCOG">Partida Presupuestal (COG)</label>
-              </div>
-
-              <div class="form-section form-full">
-                <h3 class="form-section__title">
-                  Datos Identitarios del Solicitante
-                </h3>
-              </div>
-
-              <div class="input-group required">
-                <input
-                  type="text"
-                  id="formNombre"
-                  required
-                  placeholder=" "
-                  maxlength="100"
-                />
-                <label for="formNombre">Nombre del Solicitante</label>
-              </div>
-
-              <div class="input-group">
-                <input type="text" id="formCargo" placeholder=" " />
-                <label for="formCargo">Cargo Oficial</label>
-              </div>
-
-              <div class="input-group">
-                <input type="text" id="formServicio" placeholder=" " />
-                <label for="formServicio">Servicio o Departamento</label>
-              </div>
-
-              <div class="input-group required">
-                <select id="formUnidad" required>
-                  <option value="">Seleccionar...</option>
-                  <option value="HCG JIM">HCG Dr. Juan I. Menchaca</option>
-                  <option value="HCG HAA">HCG Fray Antonio Alcalde</option>
-                </select>
-                <label for="formUnidad">Unidad Hospitalaria</label>
-              </div>
-
-              <div class="form-section form-full">
-                <h3 class="form-section__title">
-                  Sustento Financiero y Justificación
-                </h3>
-              </div>
-
-              <div class="input-group">
-                <input
-                  type="number"
-                  id="formPrecio"
-                  step="0.01"
-                  min="0"
-                  placeholder=" "
-                />
-                <label for="formPrecio">Costo de Referencia ($)</label>
-              </div>
-
-              <div class="input-group">
-                <input type="text" id="formProveedor" placeholder=" " />
-                <label for="formProveedor"
-                  >Proveedor Corporativo Sugerido</label
-                >
-              </div>
-
-              <div class="input-group form-full">
-                <div class="file-upload-wrapper" id="fileUploadWrapper">
-                  <input
-                    type="file"
-                    id="formPDF"
-                    accept="application/pdf"
-                    onchange="handleFileChange(this)"
-                    aria-label="Adjuntar documento en formato PDF"
-                  />
-                  <div class="custom-file-upload">
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                      ></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="12" y1="18" x2="12" y2="12"></line>
-                      <line x1="9" y1="15" x2="15" y2="15"></line>
-                    </svg>
-                    <span class="file-name-text" id="fileNameDisplay"
-                      >Adjuntar cotización institucional formal (Solo formato
-                      PDF)</span
-                    >
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+              
+              <div class="bento-section-card">
+                <div class="form-section form-full"><h3 class="form-section__title">Datos Técnicos del Artículo</h3></div>
+                <div class="input-group required form-full">
+                  <input type="text" id="formDesc" required placeholder=" " maxlength="200" oninput="updateCharCounter(this)">
+                  <label for="formDesc">Descripción del Artículo</label>
+                  <div style="display: flex; justify-content: space-between; margin-top: 6px;">
+                    <span style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="16" x2="12" y2="12" /><line x1="12" y1="8" x2="12.01" y2="8" /></svg>
+                      Regla 2.7: Redacción clara, composición genérica, sin abreviaturas complejas.
+                    </span>
+                    <span class="char-counter" id="formDescCounter">0 / 200</span>
                   </div>
                 </div>
+                <div class="input-group">
+                  <input type="text" id="formFamilia" placeholder=" " />
+                  <label for="formFamilia">Familia de Artículos</label>
+                </div>
+                <div class="input-group required">
+                  <select id="formUM" required onchange="toggleOtroUM(this.value)">
+                    <option value="">Seleccionar...</option>
+                    <option value="PIEZA">PIEZA</option>
+                    <option value="CAJA C/100">CAJA C/100</option>
+                    <option value="CAJA C/50">CAJA C/50</option>
+                    <option value="FRASCO">FRASCO</option>
+                    <option value="AMPULA">ÁMPULA</option>
+                    <option value="ENVASE">ENVASE</option>
+                    <option value="EQUIPO">EQUIPO</option>
+                    <option value="OTRO">OTRO (ESPECIFICAR)</option>
+                  </select>
+                  <label for="formUM">Unidad de Medida</label>
+                </div>
+                <div class="conditional-field-wrapper" id="wrapUMOtro">
+                  <div class="conditional-field-inner">
+                    <div class="input-group required">
+                      <input type="text" id="formUMOtro" placeholder=" " />
+                      <label for="formUMOtro">Especificar Unidad de Medida</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="input-group required">
+                  <input type="text" id="formCOG" required placeholder=" " maxlength="10" />
+                  <label for="formCOG">Partida Presupuestal (COG)</label>
+                </div>
               </div>
 
-              <div class="input-group form-full">
-                <textarea id="formJustificacion" placeholder=" "></textarea>
-                <label for="formJustificacion"
-                  >Justificación Dictaminada de la Solicitud</label
-                >
+              <div class="bento-section-card">
+                <div class="form-section form-full"><h3 class="form-section__title">Datos Identitarios del Solicitante</h3></div>
+                <div class="input-group required">
+                  <input type="text" id="formNombre" required placeholder=" " maxlength="100" />
+                  <label for="formNombre">Nombre del Solicitante</label>
+                </div>
+                <div class="input-group">
+                  <input type="text" id="formCargo" placeholder=" " />
+                  <label for="formCargo">Cargo Oficial</label>
+                </div>
+                <div class="input-group">
+                  <input type="text" id="formServicio" placeholder=" " />
+                  <label for="formServicio">Servicio o Departamento</label>
+                </div>
+                <div class="input-group required">
+                  <select id="formUnidad" required>
+                    <option value="">Seleccionar...</option>
+                    <option value="HCG JIM">HCG Dr. Juan I. Menchaca</option>
+                    <option value="HCG HAA">HCG Fray Antonio Alcalde</option>
+                  </select>
+                  <label for="formUnidad">Unidad Hospitalaria</label>
+                </div>
               </div>
 
-              <div class="input-group form-full">
-                <textarea id="formObs" placeholder=" "></textarea>
-                <label for="formObs">Observaciones Complementarias</label>
+              <div class="bento-section-card">
+                <div class="form-section form-full"><h3 class="form-section__title">Sustento Financiero y Justificación</h3></div>
+                <div class="input-group">
+                  <input type="number" id="formPrecio" step="0.01" min="0" placeholder=" " />
+                  <label for="formPrecio">Costo de Referencia ($)</label>
+                </div>
+                <div class="input-group">
+                  <input type="text" id="formProveedor" placeholder=" " />
+                  <label for="formProveedor">Proveedor Corporativo Sugerido</label>
+                </div>
+                <div class="input-group form-full">
+                  <div class="file-upload-wrapper" id="fileUploadWrapper">
+                    <input type="file" id="formPDF" accept="application/pdf" onchange="handleFileChange(this)" aria-label="Adjuntar documento en formato PDF" />
+                    <div class="custom-file-upload">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                      <span class="file-name-text" id="fileNameDisplay">Adjuntar cotización institucional formal (Solo formato PDF)</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="input-group form-full">
+                  <textarea id="formJustificacion" placeholder=" "></textarea>
+                  <label for="formJustificacion">Justificación Dictaminada de la Solicitud</label>
+                </div>
+                <div class="input-group form-full">
+                  <textarea id="formObs" placeholder=" "></textarea>
+                  <label for="formObs">Observaciones Complementarias</label>
+                </div>
               </div>
+
             </div>
             <div class="actions right">
               <button class="btn btn-secondary" onclick="confirmarCancelar()">
@@ -2176,14 +2119,22 @@
         const otroInput = $("formUMOtro");
 
         if (val === "OTRO") {
-          otroWrap.style.display = "flex";
+          otroWrap.style.display = "grid";
+          // Pequeño retardo para asegurar la activación de la animación CSS de transición
+          setTimeout(() => otroWrap.classList.add("is-visible"), 10);
           otroInput.required = true;
           otroInput.focus();
         } else {
-          otroWrap.style.display = "none";
-          otroInput.value = "";
+          otroWrap.classList.remove("is-visible");
           otroInput.required = false;
-          otroInput.classList.remove("has-value");
+          // Espera el fin de la animación para ocultar del flujo del layout
+          setTimeout(() => {
+            if(!otroWrap.classList.contains('is-visible')) {
+              otroWrap.style.display = "none";
+              otroInput.value = "";
+              otroInput.classList.remove("has-value");
+            }
+          }, 300);
         }
       }
 
@@ -2222,19 +2173,32 @@
       function enviarFormulario() {
         if (_submitInProgress) return;
 
+        // Limpieza previa de estados de error visuales
+        document.querySelectorAll("#phase-4 input, #phase-4 select, #phase-4 textarea").forEach(el => {
+          el.classList.remove("input-error-active");
+        });
+
         const requiredInputs = document.querySelectorAll("#phase-4 [required]");
+        let primerInvalido = null;
+
         for (const input of requiredInputs) {
           if (!input.checkValidity()) {
-            input.reportValidity();
-            input.focus();
-            return;
+            input.classList.add("input-error-active");
+            if (!primerInvalido) primerInvalido = input;
           }
+        }
+
+        if (primerInvalido) {
+          showToast("Por favor, rellene los campos obligatorios resaltados.", true);
+          primerInvalido.focus();
+          return; // Detiene el envío sin invocar globos nativos del navegador
         }
 
         const { unidad, error } = resolverUnidadMedida_();
         if (error) {
           showToast(error, true);
-          $("wrapUMOtro").style.display = "flex";
+          toggleOtroUM("OTRO");
+          $("formUMOtro").classList.add("input-error-active");
           $("formUMOtro").focus();
           return;
         }

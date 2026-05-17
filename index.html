@@ -864,6 +864,52 @@
           font-size: 11px;
           text-transform: uppercase;
         }
+/* Spinner CSS (faltante en versión original) */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--blue-main);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Search Chip (faltante en versión original) */
+.search-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.search-chip__term {
+  background: var(--blue-surface);
+  color: var(--blue-main);
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* prefers-reduced-motion: WCAG 2.1 compliance */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  body {
+    animation: none !important;
+  }
+  .spinner {
+    animation: none !important;
+    border-top-color: var(--text-muted); /* Estado estático visible */
+  }
+}
       }
     </style>
   </head>
@@ -1292,7 +1338,7 @@
     </div>
 
     <!-- Modal Dinámico -->
-    <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-content">
         <h3 class="modal-title" id="modalTitle"></h3>
         <p class="modal-body" id="modalBody"></p>
@@ -1766,18 +1812,31 @@ const renderResultados = (data) => {
 
       // ─── HELPERS DE UI Y SEGURIDAD ─────────────────────────────────────────────
 
-      const showToast = (msg, isError = false) => {
-        const container = $("toastContainer");
-        const toast = document.createElement("div");
-        toast.className = "toast";
-        toast.style.borderLeft = `4px solid var(--${isError ? "red" : "green"}-main)`;
-        toast.innerHTML = `<span>${isError ? "✕" : "✓"}</span> <span>${msg}</span>`;
-        container.appendChild(toast);
-        setTimeout(() => {
-          toast.style.opacity = "0";
-          setTimeout(() => toast.remove(), 400);
-        }, TOAST_DURATION_MS);
-      };
+/**
+ * Muestra toast con límite de MAX_TOASTS activos simultáneos.
+ */
+const showToast = (msg, isError = false) => {
+  const container = $("toastContainer");
+  
+  // Eliminar toasts antiguos si se excede el límite
+  while (container.children.length >= MAX_TOASTS) {
+    container.removeChild(container.firstChild);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.style.borderLeft = `4px solid var(--${isError ? "red" : "green"}-main)`;
+  toast.innerHTML = `<span>${isError ? "✕" : "✓"}</span> <span>${msg}</span>`;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    if (toast.parentNode) {
+      toast.style.opacity = "0";
+      setTimeout(() => { if (toast.parentNode) toast.remove(); }, 400);
+    }
+  }, TOAST_DURATION_MS);
+};
 
       const showModal = (title, body, confirmText, cancelText, onConfirm) => {
         $("modalTitle").textContent = title;

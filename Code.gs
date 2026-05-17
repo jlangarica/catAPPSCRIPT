@@ -570,11 +570,15 @@ const normalizarTexto_ = (texto) => {
 
 /**
  * Genera un array de trigramas únicos a partir de un texto.
- * V3: Tokens alineados por palabra (sin padding general).
+ * V3 FIX: Tokens alineados por palabra (sin padding de espacios) para coincidir
+ * exactamente con la tokenización intra-palabra de BigQuery.
+ *
+ * @param {string} texto - Texto ya normalizado (mayúsculas, sin acentos).
+ * @returns {string[]} Arreglo de trigramas únicos.
  * @private
  */
 const generarTrigramas_ = (texto) => {
-  const words = texto.split(" ").filter(w => w.length >= 3);
+  const words = texto.split(/\s+/).filter(w => w.length >= 3);
   const trigrams = new Set();
   for (const w of words) {
     for (let i = 0; i <= w.length - 3; i++) {

@@ -4,7 +4,6 @@
  * JSDoc estricto, robustez con Cloud Logging y encapsulamiento.
  *
  * @version 2.0.0
- * @author Jules (Lead Developer)
  */
 
 "use strict";
@@ -12,8 +11,9 @@
 // ─── CONSTANTES DE CONFIGURACIÓN ─────────────────────────────────────────────
 
 /** @const {string} ID de la hoja de cálculo plantilla (HCG Formato Inclusión 2026) */
-const ID_PLANTILLA = PropertiesService.getScriptProperties().getProperty("TEMPLATE_SHEET_ID") 
-                     || "1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8";
+const ID_PLANTILLA =
+  PropertiesService.getScriptProperties().getProperty("TEMPLATE_SHEET_ID") ||
+  "1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8";
 
 /** @const {string} Nombre de la hoja dentro de la plantilla */
 const NOMBRE_HOJA = "Formato";
@@ -32,12 +32,12 @@ const COL_INICIO_DATOS = 3;
 
 /** @const {Object<string, string>} Diccionario clínico para normalización */
 const DICT_MEDICO = {
-  "MG": "MILIGRAMOS",
-  "ML": "MILILITROS",
-  "TAB": "TABLETA",
-  "CAP": "CAPSULA",
-  "AMP": "AMPOLLA",
-  "JGA": "JERINGA"
+  MG: "MILIGRAMOS",
+  ML: "MILILITROS",
+  TAB: "TABLETA",
+  CAP: "CAPSULA",
+  AMP: "AMPOLLA",
+  JGA: "JERINGA",
 };
 
 // ─── FUNCIONES PÚBLICAS (TRIGGER-SAFE) ───────────────────────────────────────
@@ -66,7 +66,9 @@ function buscarSimilitudesBQ(textoUsuario) {
   try {
     const input = String(textoUsuario || "").trim();
     if (input.length < 3) {
-      throw new Error("La verificación requiere una descripción mínima de 3 caracteres.");
+      throw new Error(
+        "La verificación requiere una descripción mínima de 3 caracteres.",
+      );
     }
 
     const cleanInput = normalizarTexto_(input);
@@ -82,8 +84,10 @@ function buscarSimilitudesBQ(textoUsuario) {
     if (cached) return JSON.parse(cached);
 
     const props = PropertiesService.getScriptProperties();
-    const bqLocation = props.getProperty("BQ_LOCATION") || "northamerica-south1";
-    const bqProject = props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
+    const bqLocation =
+      props.getProperty("BQ_LOCATION") || "northamerica-south1";
+    const bqProject =
+      props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
     const bqDataset = props.getProperty("BQ_DATASET") || "catalogo";
     const bqTable = props.getProperty("BQ_TABLE") || "catalogo_maestro_clean";
 
@@ -122,33 +126,35 @@ function buscarSimilitudesBQ(textoUsuario) {
         {
           name: "user_trigrams",
           parameterType: { type: "ARRAY", arrayType: { type: "STRING" } },
-          parameterValue: { arrayValues: trigramasArray.map(t => ({ value: t })) }
+          parameterValue: {
+            arrayValues: trigramasArray.map((t) => ({ value: t })),
+          },
         },
         {
           name: "len_in_tri",
           parameterType: { type: "INT64" },
-          parameterValue: { value: String(trigramasArray.length) }
-        }
-      ]
+          parameterValue: { value: String(trigramasArray.length) },
+        },
+      ],
     };
 
     const res = BigQuery.Jobs.query(request, bqProject);
-    const results = res.rows ?
-      res.rows.map(({ f }) => ({
-        id_codigo: f[0].v,
-        descripcion: f[1].v,
-        activo: Number(f[2].v) || 0,
-        similitud: Number(f[3].v) || 0
-      })) : [];
+    const results = res.rows
+      ? res.rows.map(({ f }) => ({
+          id_codigo: f[0].v,
+          descripcion: f[1].v,
+          activo: Number(f[2].v) || 0,
+          similitud: Number(f[3].v) || 0,
+        }))
+      : [];
 
     cache.put(cacheKey, JSON.stringify(results), CACHE_TTL_SEG);
     return results;
-
   } catch (e) {
     console.error({
       message: "Fallo en motor de auditoría léxica HCG",
       error: e.message,
-      stack: e.stack
+      stack: e.stack,
     });
     throw new Error(`Error analítico de catálogo: ${e.message}`);
   }
@@ -212,11 +218,10 @@ function guardarSolicitud(payload) {
     console.info({
       message: "Solicitud procesada con éxito",
       descripcion,
-      idDocumento: resultadoDoc.id
+      idDocumento: resultadoDoc.id,
     });
 
     return { success: true, url: resultadoDoc.url, id: resultadoDoc.id };
-
   } catch (e) {
     console.error({
       message: "Error en guardarSolicitud",
@@ -239,7 +244,7 @@ function generarDocumentoInclusion(datos, pdfBase64) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(15000); // Espera hasta 15 segundos si otra instancia escribe
-    
+
     if (!datos || !datos.descripcion) {
       throw new Error("Datos insuficientes: descripción es obligatoria.");
     }
@@ -255,18 +260,21 @@ function generarDocumentoInclusion(datos, pdfBase64) {
     const hoja = ssCopia.getSheetByName(NOMBRE_HOJA);
 
     if (!hoja) {
-      throw new Error(`No se encontró la hoja "${NOMBRE_HOJA}" en la plantilla.`);
+      throw new Error(
+        `No se encontró la hoja "${NOMBRE_HOJA}" en la plantilla.`,
+      );
     }
 
     const urlPdf = adjuntarPDF_(carpetaDestino, pdfBase64, datos.descripcion);
     const valores = construirValoresHoja_(datos, urlPdf);
 
     // Batch write: Escritura de una sola vez para optimizar rendimiento
-    hoja.getRange(FILA_INICIO_DATOS, COL_INICIO_DATOS, 1, valores[0].length).setValues(valores);
+    hoja
+      .getRange(FILA_INICIO_DATOS, COL_INICIO_DATOS, 1, valores[0].length)
+      .setValues(valores);
     SpreadsheetApp.flush();
 
     return { url: ssCopia.getUrl(), id: ssCopia.getId() };
-
   } catch (e) {
     console.error({
       message: "Error al generar documento",
@@ -306,10 +314,15 @@ const validarPayloadEntrada_ = (payload) => {
     return { valido: false, mensaje: "Payload nulo o malformado." };
   }
   const camposObligatorios = ["descripcion", "unidadMedida", "partidaCOG"];
-  const faltantes = camposObligatorios.filter(c => !payload[c] || String(payload[c]).trim() === "");
+  const faltantes = camposObligatorios.filter(
+    (c) => !payload[c] || String(payload[c]).trim() === "",
+  );
 
   if (faltantes.length) {
-    return { valido: false, mensaje: `Campos obligatorios faltantes: ${faltantes.join(", ")}.` };
+    return {
+      valido: false,
+      mensaje: `Campos obligatorios faltantes: ${faltantes.join(", ")}.`,
+    };
   }
   return { valido: true };
 };
@@ -332,21 +345,27 @@ const formatearTimestamp_ = (fecha = new Date()) =>
  * @private
  */
 const normalizarTexto_ = (texto) => {
-  let txt = texto.toUpperCase()
+  let txt = texto
+    .toUpperCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/C\//g, " CON ")
     .replace(/S\//g, " SIN ");
 
   // Separar números de letras
-  txt = txt.replace(/([0-9]+)([A-Z])/g, "$1 $2").replace(/([A-Z]+)([0-9])/g, "$1 $2");
+  txt = txt
+    .replace(/([0-9]+)([A-Z])/g, "$1 $2")
+    .replace(/([A-Z]+)([0-9])/g, "$1 $2");
 
   // Expansión de abreviaturas médicas
   for (const [abrev, compl] of Object.entries(DICT_MEDICO)) {
     txt = txt.replace(new RegExp("\\b" + abrev + "\\b", "gi"), compl);
   }
 
-  return txt.replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  return txt
+    .replace(/[^A-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 };
 
 /**
@@ -376,7 +395,7 @@ const generarTrigramas_ = (texto) => {
 const generarCacheKey_ = (input) => {
   const rawKey = `hcg_v2_${input}`;
   return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, rawKey)
-    .map(b => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2))
+    .map((b) => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2))
     .join("")
     .substring(0, 24);
 };
@@ -415,19 +434,21 @@ const adjuntarPDF_ = (carpeta, pdfBase64, descripcion) => {
  * @returns {Array<Array<*>>} Arreglo 2D de una fila.
  * @private
  */
-const construirValoresHoja_ = (datos, urlPdf) => [[
-  datos.partida,           // Col C
-  datos.familia,           // Col D
-  datos.unidad,            // Col E
-  datos.descripcion,       // Col F
-  datos.unidadMedida,      // Col G
-  datos.nombreSolicitante, // Col H
-  datos.cargoSolicitante,  // Col I
-  datos.servicio,          // Col J
-  datos.costoReferencia,   // Col K
-  datos.proveedor,         // Col L
-  new Date(),              // Col M
-  datos.justificacion,     // Col N
-  datos.observacion,       // Col O
-  urlPdf                   // Col P
-]];
+const construirValoresHoja_ = (datos, urlPdf) => [
+  [
+    datos.partida, // Col C
+    datos.familia, // Col D
+    datos.unidad, // Col E
+    datos.descripcion, // Col F
+    datos.unidadMedida, // Col G
+    datos.nombreSolicitante, // Col H
+    datos.cargoSolicitante, // Col I
+    datos.servicio, // Col J
+    datos.costoReferencia, // Col K
+    datos.proveedor, // Col L
+    new Date(), // Col M
+    datos.justificacion, // Col N
+    datos.observacion, // Col O
+    urlPdf, // Col P
+  ],
+];

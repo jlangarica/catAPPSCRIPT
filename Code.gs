@@ -83,7 +83,9 @@ function buscarSimilitudesBQ(textoUsuario) {
 
     const props = PropertiesService.getScriptProperties();
     const bqLocation = props.getProperty("BQ_LOCATION") || "northamerica-south1";
-    const billingProjectId = props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
+    const bqProject = props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
+    const bqDataset = props.getProperty("BQ_DATASET") || "catalogo";
+    const bqTable = props.getProperty("BQ_TABLE") || "catalogo_maestro_clean";
 
     const sqlQuery = `
       WITH candidatos_evaluados AS (
@@ -97,7 +99,7 @@ function buscarSimilitudesBQ(textoUsuario) {
             FROM UNNEST(trigramas) elemento
             WHERE elemento IN UNNEST(@user_trigrams)
           ) AS inter
-        FROM \`certain-perigee-495302-h7.catalogo.catalogo_maestro_clean\`
+        FROM \`${bqProject}.${bqDataset}.${bqTable}\`
       )
       SELECT 
         id_codigo,
@@ -130,7 +132,7 @@ function buscarSimilitudesBQ(textoUsuario) {
       ]
     };
 
-    const res = BigQuery.Jobs.query(request, billingProjectId);
+    const res = BigQuery.Jobs.query(request, bqProject);
     const results = res.rows ?
       res.rows.map(({ f }) => ({
         id_codigo: f[0].v,

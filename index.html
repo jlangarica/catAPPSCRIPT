@@ -116,21 +116,7 @@
       color: var(--text-main);
     }
 
-    .window-controls {
-      position: absolute;
-      left: 16px;
-      display: flex;
-      gap: 8px;
-    }
 
-    .mac-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-    .dot-close { background: #ff5f56; border: 1px solid #e0443e; }
-    .dot-min { background: #ffbd2e; border: 1px solid #dea123; }
-    .dot-max { background: #27c93f; border: 1px solid #1aab29; }
 
     .content-area {
       flex: 1;
@@ -385,10 +371,20 @@
     }
     .search-input-wrap {
       flex: 1;
+      position: relative;
+    }
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 14px;
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      pointer-events: none;
     }
     .search-input-wrap input {
       font-size: 16px;
-      padding: 12px 16px;
+      padding: 12px 16px 12px 42px;
       width: 100%;
       border: 1px solid var(--border-color);
       border-radius: var(--radius-input);
@@ -696,11 +692,7 @@
 
   <div class="app-window">
     <div class="titlebar">
-      <div class="window-controls">
-        <div class="mac-dot dot-close"></div>
-        <div class="mac-dot dot-min"></div>
-        <div class="mac-dot dot-max"></div>
-      </div>
+
       <div class="titlebar-content">
         <img src="https://drive.google.com/uc?export=view&id=1DgdE3nJmkNA9fMq4OQHpYYExy7E_jsjF" alt="Logo HCG" class="titlebar-logo" onerror="this.style.display='none'">
         <h1>Catálogo Institucional de Bienes, Servicios y Activos</h1>
@@ -728,6 +720,7 @@
         <p>Busca en el catálogo antes de solicitar una nueva clave para evitar duplicados.</p>
         <div class="search-container">
           <div class="search-input-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input type="text" id="searchInput" placeholder="Ej: guantes de látex caja 100" autocomplete="off" aria-label="Descripción">
             <span class="input-hint">Presiona Enter o haz clic en Verificar</span>
           </div>

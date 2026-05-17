@@ -864,7 +864,9 @@
           font-size: 11px;
           text-transform: uppercase;
         }
-/* Spinner CSS (faltante en versión original) */
+      }
+
+/* Spinner CSS — DEBE estar FUERA del media query móvil */
 .spinner {
   width: 20px;
   height: 20px;
@@ -877,7 +879,7 @@
   to { transform: rotate(360deg); }
 }
 
-/* Search Chip (faltante en versión original) */
+/* Search Chip */
 .search-chip {
   display: inline-flex;
   align-items: center;
@@ -907,10 +909,9 @@
   }
   .spinner {
     animation: none !important;
-    border-top-color: var(--text-muted); /* Estado estático visible */
+    border-top-color: var(--text-muted);
   }
 }
-      }
     </style>
   </head>
   <body>
@@ -1733,7 +1734,7 @@ const renderResultados = (data) => {
 
       // ─── LÓGICA DE FORMULARIO (FASE 4) ──────────────────────────────────────────
 
-      let enviarFormulario = () => {
+      var enviarFormulario = function() {
         if (_submitInProgress) return;
 
         document
@@ -1897,7 +1898,7 @@ const showToast = (msg, isError = false) => {
         }
       };
 
-      let confirmarCancelar = () => {
+      var confirmarCancelar = function() {
         const isDirty = DIRTY_CHECK_IDS.some(
           (id) => $(id)?.value.trim() !== "",
         );
@@ -2072,11 +2073,18 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Reset dirty al enviar o cancelar
-  const originalEnviar = enviarFormulario;
-  enviarFormulario = () => { _formIsDirty = false; originalEnviar(); };
-  const originalCancel = confirmarCancelar;
-  confirmarCancelar = () => { _formIsDirty = false; originalCancel(); };
+  // SOBREESCRITURA SEGURA: preservar referencia original para beforeunload
+  const _originalEnviar = enviarFormulario;
+  enviarFormulario = function() {
+    _formIsDirty = false;
+    return _originalEnviar.apply(this, arguments);
+  };
+
+  const _originalCancel = confirmarCancelar;
+  confirmarCancelar = function() {
+    _formIsDirty = false;
+    return _originalCancel.apply(this, arguments);
+  };
 
   // Cerrar modal con Escape
   document.addEventListener("keydown", (e) => {

@@ -1411,9 +1411,13 @@
               clearTimeout(_searchTimer);
               _searchInProgress = false;
               setLoadingState_(false);
-              $("resultsContainer").innerHTML = buildErrorStateHTML_(
-                err.message,
-              );
+              const container = $("resultsContainer");
+              container.innerHTML = "";
+              const errDiv = document.createElement("div");
+              errDiv.className = "empty-state";
+              errDiv.style.color = "var(--red-main)";
+              errDiv.textContent = err.message || "Error desconocido";
+              container.appendChild(errDiv);
               $("resultsSubtitle").textContent = "Error en la consulta.";
             })
             .buscarSimilitudesBQ(val);
@@ -1431,28 +1435,93 @@
        * Renderiza los resultados de búsqueda.
        * @param {Array<Object>} data - Resultados de BigQuery.
        */
-      const renderResultados = (data) => {
-        const container = $("resultsContainer");
-        const subtitle = $("resultsSubtitle");
+      /**
+ * Renderiza resultados usando DOM API nativa (anti-XSS).
+ * Reemplaza innerHTML con createElement/textContent para eliminar vectores de inyección.
+ * @param {Array<Object>} data
+ */
+const renderResultados = (data) => {
+  const container = $("resultsContainer");
+  const subtitle = $("resultsSubtitle");
+  container.innerHTML = ""; // Limpia skeleton o contenido previo
 
-        if (!Array.isArray(data) || data.length === 0) {
-          subtitle.textContent = "No se encontraron duplicados evidentes.";
-          container.innerHTML = buildEmptyStateHTML_();
-          return;
-        }
+  if (!Array.isArray(data) || data.length === 0) {
+    subtitle.textContent = "No se encontraron duplicados evidentes.";
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No se encontraron duplicados evidentes.";
+    container.appendChild(empty);
+    return;
+  }
 
-        const count = data.length;
-        subtitle.textContent = `Se encontraron ${count} coincidencia${count !== 1 ? "s" : ""} relevante${count !== 1 ? "s" : ""}.`;
-        const rows = data.map((r, i) => buildResultRowHTML_(r, i)).join("");
+  const count = data.length;
+  subtitle.textContent = `Se encontraron ${count} coincidencia${count !== 1 ? "s" : ""} relevante${count !== 1 ? "s" : ""}.`;
 
-        container.innerHTML = `
-        <div class="table-container">
-          <table aria-label="Resultados">
-            <thead><tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`;
-      };
+  const tableContainer = document.createElement("div");
+  tableContainer.className = "table-container";
+
+  const table = document.createElement("table");
+  table.setAttribute("aria-label", "Resultados");
+
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  ["Clave", "Descripción", "Estado", "Similitud"].forEach(text => {
+    const th = document.createElement("th");
+    th.textContent = text;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  const fragment = document.createDocumentFragment();
+
+  data.forEach((row, i) => {
+    const tr = document.createElement("tr");
+    tr.style.animationDelay = `${i * 0.05}s`;
+
+    // Celda: Clave
+    const tdClave = document.createElement("td");
+    tdClave.setAttribute("data-label", "Clave");
+    const code = document.createElement("code");
+    code.textContent = row.id_codigo || "N/A";
+    tdClave.appendChild(code);
+    tr.appendChild(tdClave);
+
+    // Celda: Descripción
+    const tdDesc = document.createElement("td");
+    tdDesc.setAttribute("data-label", "Descripción");
+    tdDesc.textContent = row.descripcion || "";
+    tr.appendChild(tdDesc);
+
+    // Celda: Estado
+    const tdEstado = document.createElement("td");
+    tdEstado.setAttribute("data-label", "Estado");
+    const isActive = Number(row.activo) === 1;
+    const badgeEstado = document.createElement("span");
+    badgeEstado.className = `badge ${isActive ? "green" : "gray"}`;
+    badgeEstado.textContent = isActive ? "Activo" : "Inactivo";
+    tdEstado.appendChild(badgeEstado);
+    tr.appendChild(tdEstado);
+
+    // Celda: Similitud
+    const tdSim = document.createElement("td");
+    tdSim.setAttribute("data-label", "Similitud");
+    const score = parseFloat(row.similitud || 0);
+    const badgeSim = document.createElement("span");
+    badgeSim.className = `badge ${score >= 60 ? "red" : score >= 30 ? "orange" : "gray"}`;
+    badgeSim.textContent = `${score.toFixed(1)}%`;
+    tdSim.appendChild(badgeSim);
+    tr.appendChild(tdSim);
+
+    fragment.appendChild(tr);
+  });
+
+  tbody.appendChild(fragment);
+  table.appendChild(tbody);
+  tableContainer.appendChild(table);
+  container.appendChild(tableContainer);
+};
 
       // ─── GESTIÓN DE FASES Y NAVEGACIÓN ──────────────────────────────────────────
 
@@ -1866,17 +1935,7 @@
         reader.readAsDataURL(file);
       };
 
-      const buildResultRowHTML_ = (row, i) => {
-        const { id_codigo, descripcion, activo, similitud } = row;
-        const score = parseFloat(similitud || 0);
-        const isActive = Number(activo) === 1;
-        return `<tr style="animation-delay:${i * 0.05}s"><td data-label="Clave"><code>${escapeHTML_(id_codigo || "N/A")}</code></td><td>${escapeHTML_(descripcion || "")}</td><td><span class="badge ${isActive ? "green" : "gray"}">${isActive ? "Activo" : "Inactivo"}</span></td><td><span class="badge ${score >= 60 ? "red" : score >= 30 ? "orange" : "gray"}">${score.toFixed(1)}%</span></td></tr>`;
-      };
 
-      const buildEmptyStateHTML_ = () =>
-        '<div class="empty-state">No se encontraron duplicados evidentes.</div>';
-      const buildErrorStateHTML_ = (msg) =>
-        `<div class="empty-state" style="color:var(--red-main)">${escapeHTML_(msg || "Error desconocido")}</div>`;
       const renderSkeleton_ = () => {
         $("resultsContainer").innerHTML = Array(SKELETON_ROWS)
           .fill(
@@ -1885,35 +1944,90 @@
           .join("");
       };
 
-      document.addEventListener("DOMContentLoaded", () => {
-        const searchInput = $("searchInput");
-        searchInput.addEventListener("input", () => {
-          $("btnSearch").disabled =
-            searchInput.value.trim().length < MIN_SEARCH_LEN;
-        });
-        searchInput.addEventListener("keypress", (e) => {
-          if (e.key === "Enter" && !$("btnSearch").disabled) ejecutarBusqueda();
-        });
-        document
-          .querySelectorAll(
-            ".input-group input, .input-group textarea, .input-group select",
-          )
-          .forEach((el) => {
-            const upd = () => el.classList.toggle("has-value", el.value !== "");
-            el.addEventListener("input", upd);
-            el.addEventListener("change", upd);
-            upd();
-          });
-        const checks = document.querySelectorAll(".disclaimer-check input");
-        checks.forEach((c) =>
-          c.addEventListener("change", () => {
-            document.querySelector("#phase-3 .btn-primary").disabled = ![
-              ...checks,
-            ].every((ch) => ch.checked);
-          }),
-        );
-        searchInput.focus();
-      });
+      // ─── UTILIDADES ──────────────────────────────────────────────────────────────
+
+/** Debounce para inputs y botones */
+const debounce = (fn, delay) => {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(null, args), delay);
+  };
+};
+
+// ─── EVENT LISTENERS (DOMContentLoaded) ──────────────────────────────────────
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Delegación de eventos en el stepper (evita onclick inline, CSP-friendly)
+  $("stepper").addEventListener("click", (e) => {
+    const step = e.target.closest(".stepper__step");
+    if (step?.dataset.step && step.classList.contains("stepper__step--done")) {
+      irFase(parseInt(step.dataset.step));
+    }
+  });
+
+  // Búsqueda con debounce en input + Enter
+  const searchInput = $("searchInput");
+  const debouncedInput = debounce(() => {
+    $("btnSearch").disabled = searchInput.value.trim().length < MIN_SEARCH_LEN;
+  }, 150);
+  
+  searchInput.addEventListener("input", debouncedInput);
+  searchInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter" && !$("btnSearch").disabled) ejecutarBusqueda();
+  });
+
+  // Botón de búsqueda con debounce (evita doble-click accidental)
+  $("btnSearch").addEventListener("click", debounce(ejecutarBusqueda, 300));
+
+  // Floating labels para todos los inputs
+  document.querySelectorAll(".input-group input, .input-group textarea, .input-group select")
+    .forEach((el) => {
+      const upd = () => el.classList.toggle("has-value", el.value !== "");
+      el.addEventListener("input", upd);
+      el.addEventListener("change", upd);
+      upd();
+    });
+
+  // Disclaimer checks
+  const checks = document.querySelectorAll(".disclaimer-check input");
+  checks.forEach((c) =>
+    c.addEventListener("change", () => {
+      const btn = document.querySelector("#phase-3 .btn-primary");
+      if (btn) btn.disabled = ![...checks].every((ch) => ch.checked);
+    })
+  );
+
+  // beforeunload: protección contra pérdida de datos en Fase 4
+  let _formIsDirty = false;
+  const trackDirty = () => { _formIsDirty = true; };
+  FORM_FIELD_IDS.forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener("input", trackDirty);
+  });
+
+  window.addEventListener("beforeunload", (e) => {
+    if (_currentPhase === 4 && _formIsDirty) {
+      e.preventDefault();
+      e.returnValue = "¿Descartar los cambios del formulario?";
+    }
+  });
+
+  // Reset dirty al enviar o cancelar
+  const originalEnviar = enviarFormulario;
+  enviarFormulario = () => { _formIsDirty = false; originalEnviar(); };
+  const originalCancel = confirmarCancelar;
+  confirmarCancelar = () => { _formIsDirty = false; originalCancel(); };
+
+  // Cerrar modal con Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && $("modalOverlay").style.display === "flex") {
+      $("modalOverlay").style.display = "none";
+    }
+  });
+
+  searchInput.focus();
+});
     </script>
   </body>
 </html>

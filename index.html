@@ -682,15 +682,45 @@
 
     <main class="main-card">
       <nav class="stepper" aria-label="Progreso del flujo institucional" id="stepper">
-        <div class="stepper__step stepper__step--active" data-step="1"><div class="stepper__dot">1</div><span class="stepper__label">Buscar</span></div>
+        <div class="stepper__step stepper__step--active" data-step="1" aria-current="step">
+            <div class="stepper__dot">
+                <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span class="stepper__number" aria-hidden="true">1</span>
+            </div>
+            <span class="stepper__label">Buscar</span>
+        </div>
         <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="2"><div class="stepper__dot">2</div><span class="stepper__label">Resultados</span></div>
+        <div class="stepper__step" data-step="2">
+            <div class="stepper__dot">
+                 <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                 <span class="stepper__number" aria-hidden="true">2</span>
+            </div>
+            <span class="stepper__label">Resultados</span>
+        </div>
         <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="3"><div class="stepper__dot">3</div><span class="stepper__label">Confirmar</span></div>
+        <div class="stepper__step" data-step="3">
+            <div class="stepper__dot">
+                <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span class="stepper__number" aria-hidden="true">3</span>
+            </div>
+            <span class="stepper__label">Confirmar</span>
+        </div>
         <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="4"><div class="stepper__dot">4</div><span class="stepper__label">Formulario</span></div>
+        <div class="stepper__step" data-step="4">
+            <div class="stepper__dot">
+                 <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                 <span class="stepper__number" aria-hidden="true">4</span>
+            </div>
+            <span class="stepper__label">Formulario</span>
+        </div>
         <div class="stepper__line"></div>
-        <div class="stepper__step" data-step="5"><div class="stepper__dot">5</div><span class="stepper__label">Completado</span></div>
+        <div class="stepper__step" data-step="5">
+            <div class="stepper__dot">
+                 <svg class="stepper__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                 <span class="stepper__number" aria-hidden="true">5</span>
+            </div>
+            <span class="stepper__label">Completado</span>
+        </div>
       </nav>
 
       <div class="content-area">
@@ -743,13 +773,20 @@
             <div class="disclaimer-context">
               Criterio verificado e inexistente: <strong id="disclaimerSearchTerm"></strong>
             </div>
-            <p>
-              De conformidad con el <strong>Artículo 10, Fracción VIII del Reglamento Interno</strong>, manifiesto bajo protesta de decir verdad que he examinado el catálogo y que <strong>ninguno de los elementos vigentes</strong> satisface la necesidad médica o técnica. Asumo la responsabilidad de la creación de una nueva clave, declarando la persistencia de la necesidad bajo los términos de la <strong>Regla 2.6</strong>.
-            </p>
+            <div class="disclaimer-checklist">
+              <label class="disclaimer-check">
+                <input type="checkbox" required>
+                <span>He revisado exhaustivamente el catálogo y declaro bajo protesta de decir verdad que <strong>ninguno de los elementos vigentes</strong> satisface la necesidad médica o técnica.</span>
+              </label>
+              <label class="disclaimer-check">
+                <input type="checkbox" required>
+                <span>Asumo la responsabilidad de la creación de una nueva clave conforme al <strong>Artículo 10, Fracción VIII</strong> y la persistencia de la necesidad bajo los términos de la <strong>Regla 2.6</strong>.</span>
+              </label>
+            </div>
           </div>
-          <div class="actions right">
+          <div class="actions right disclaimer-actions">
             <button class="btn btn-secondary" onclick="irFase(2)">Volver a Coincidencias</button>
-            <button class="btn btn-primary" onclick="irFase(4)">Entiendo y Ratifico Ausencia</button>
+            <button class="btn btn-primary" onclick="irFase(4)" disabled>Entiendo y Ratifico Ausencia</button>
           </div>
         </div>
 

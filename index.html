@@ -2144,19 +2144,27 @@
         const container = $("resultsContainer");
         const subtitle = $("resultsSubtitle");
 
-        if (!data || data.length === 0) {
+        if (!Array.isArray(data) || data.length === 0) {
           subtitle.textContent = "No se encontraron duplicados evidentes.";
           container.innerHTML = buildEmptyStateHTML_();
           return;
         }
 
         const searchTerm = $("searchInput").value.trim();
-        subtitle.textContent = `Se encontraron ${data.length} coincidencia${data.length !== 1 ? "s" : ""} para "${searchTerm}".`;
+        const count = data.length;
+        subtitle.textContent = `Se encontraron ${count} coincidencia${count !== 1 ? "s" : ""} para "${searchTerm}".`;
 
-        const rows = data
-          .map((r, index) => buildResultRowHTML_(r, index))
-          .join("");
-        container.innerHTML = `<div class="table-container"><table aria-label="Resultados"><caption class="sr-only">Resultados del catálogo</caption><thead><tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+        const rows = data.map((r, i) => buildResultRowHTML_(r, i)).join("");
+        container.innerHTML = `
+          <div class="table-container">
+            <table aria-label="Resultados">
+              <caption class="sr-only">Resultados del catálogo</caption>
+              <thead>
+                <tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
       }
 
       /**
@@ -2666,19 +2674,26 @@
        * @returns {string} Markup HTML del <tr>.
        * @private
        */
-      const buildResultRowHTML_ = (r, index) => {
-        const score = Number.parseFloat(r.similitud || 0);
-        const active = Number(r.activo) === 1;
-        const scoreClass =
-          score >= 60 ? "red" : score >= 35 ? "orange" : "gray";
-        const activeClass = active ? "green" : "gray";
+      const buildResultRowHTML_ = (row, index) => {
+        const { id_codigo: idCodigo, descripcion, activo, similitud } = row;
+        const score = Number.parseFloat(similitud || 0);
+        const isActive = Number(activo) === 1;
 
-        return `<tr style="animation-delay:${index * 0.04}s">
-        <td data-label="Clave" style="font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.02em;color:var(--text-muted)">${escapeHTML_(r.id_codigo || "N/A")}</td>
-        <td data-label="Descripción" style="font-weight:500">${escapeHTML_(r.descripcion || "")}</td>
-        <td data-label="Estado"><span class="badge ${activeClass}">${active ? "Activo" : "Inactivo"}</span></td>
-        <td data-label="Similitud"><span class="badge ${scoreClass}">${score.toFixed(1)}%</span></td>
-      </tr>`;
+        const scoreClass = score >= 60 ? "red" : score >= 35 ? "orange" : "gray";
+        const activeClass = isActive ? "green" : "gray";
+        const activeLabel = isActive ? "Activo" : "Inactivo";
+
+        const delayStyle = `animation-delay:${index * 0.04}s`;
+        const fontMono = "font-family:var(--font-mono);font-size:12.5px;letter-spacing:0.02em;color:var(--text-muted)";
+        const fontBold = "font-weight:500";
+
+        return `
+          <tr style="${delayStyle}">
+            <td data-label="Clave" style="${fontMono}">${escapeHTML_(idCodigo || "N/A")}</td>
+            <td data-label="Descripción" style="${fontBold}">${escapeHTML_(descripcion || "")}</td>
+            <td data-label="Estado"><span class="badge ${activeClass}">${activeLabel}</span></td>
+            <td data-label="Similitud"><span class="badge ${scoreClass}">${score.toFixed(1)}%</span></td>
+          </tr>`;
       };
 
       /**

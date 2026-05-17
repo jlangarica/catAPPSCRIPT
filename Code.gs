@@ -256,16 +256,16 @@ function guardarSolicitud(payload) {
  * @param {string} datos.observacion       - Observaciones.
  * @param {string} [pdfBase64]  - Datos del archivo PDF de cotización en Base64.
  * @returns {{ url: string, id: string }} URL e ID del documento generado.
- * @throws {Error} Si la plantilla, la hoja o la escritura fallan.
+ * @throws {Error} Si falla la clonación, la hoja no existe o la escritura batch falla.
  */
 function generarDocumentoInclusion(datos, pdfBase64) {
   try {
+    if (!datos || !datos.descripcion) {
+      throw new Error("Datos insuficientes: descripción es obligatoria.");
+    }
+
     const plantilla = DriveApp.getFileById(ID_PLANTILLA);
-    const fechaStr = Utilities.formatDate(
-      new Date(),
-      Session.getScriptTimeZone(),
-      "yyyyMMdd-HHmm",
-    );
+    const fechaStr = formatearTimestamp_();
     const nombreNuevoArchivo = `Solicitud Inclusión - ${datos.descripcion.substring(0, 30)} - ${fechaStr}`;
 
     const carpetaDestino = getCarpetaSolicitudes();
@@ -275,37 +275,31 @@ function generarDocumentoInclusion(datos, pdfBase64) {
     const hoja = ssCopia.getSheetByName(NOMBRE_HOJA);
 
     if (!hoja) {
-      throw new Error(
-        `No se encontró la hoja "${NOMBRE_HOJA}" en la plantilla.`,
-      );
+      throw new Error(`No se encontró la hoja "${NOMBRE_HOJA}" en la plantilla.`);
     }
 
     const urlPdf = adjuntarPDF_(carpetaDestino, pdfBase64, datos.descripcion);
     const valores = construirValoresHoja_(datos, urlPdf);
 
-    // Batch write: una sola llamada setValues para 14 columnas
-    hoja
-      .getRange(FILA_INICIO_DATOS, COL_INICIO_DATOS, 1, valores[0].length)
-      .setValues(valores);
-
+    // Batch write: O(1) llamada API para 14 columnas
+    hoja.getRange(FILA_INICIO_DATOS, COL_INICIO_DATOS, 1, valores[0].length).setValues(valores);
     SpreadsheetApp.flush();
 
     console.info({
       message: "Documento de inclusión generado",
       nombre: nombreNuevoArchivo,
+      filas: valores.length,
+      columnas: valores[0].length,
     });
 
-    return {
-      url: ssCopia.getUrl(),
-      id: ssCopia.getId(),
-    };
+    return { url: ssCopia.getUrl(), id: ssCopia.getId() };
   } catch (e) {
     console.error({
       message: "Error al generar documento",
       error: e.message,
       stack: e.stack,
     });
-    throw new Error("Error al generar documento: " + e.message);
+    throw new Error(`Error al generar documento: ${e.message}`);
   }
 }
 
@@ -343,6 +337,17 @@ const validarPayloadEntrada_ = (payload) => {
   }
   return { valido: true };
 };
+
+/**
+ * Genera un timestamp formateado para nomenclatura de archivos institucionales.
+ *
+ * @param {Date} [fecha=new Date()] - Fecha base.
+ * @param {string} [formato="yyyyMMdd-HHmm"] - Patrón de fecha.
+ * @returns {string} Cadena formateada.
+ * @private
+ */
+const formatearTimestamp_ = (fecha = new Date(), formato = "yyyyMMdd-HHmm") =>
+  Utilities.formatDate(fecha, Session.getScriptTimeZone(), formato);
 
 /**
  * Normaliza un texto para búsqueda: NFD → elimina diacríticos → mayúsculas →

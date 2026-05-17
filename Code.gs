@@ -463,12 +463,29 @@ Responde única y obligatoriamente con la estructura JSON definida en el respons
  * @private
  * @returns {string} Estructura comprimida de partidas en formato JSON string.
  */
+/**
+ * Recupera el catálogo de partidas con caché fragmentado (>100KB safe).
+ * @private
+ * @returns {string}
+ */
 const obtenerClasificadorContexto_ = () => {
   const cache = CacheService.getScriptCache();
-  const cacheKey = "hcg_conac_comprimido_cache";
-  const cached = cache.get(cacheKey);
-
-  if (cached) return cached;
+  const metaKey = "hcg_conac_meta";
+  const meta = cache.get(metaKey);
+  
+  // Reensamblaje desde fragmentos
+  if (meta) {
+    try {
+      const { chunks } = JSON.parse(meta);
+      let result = "";
+      for (let i = 0; i < chunks; i++) {
+        const fragment = cache.get(`hcg_conac_frag_${i}`);
+        if (!fragment) break; // Cache incompleto, regenerar
+        result += fragment;
+      }
+      if (result) return result;
+    } catch (e) { /* Cache corrupto, regenerar */ }
+  }
 
   try {
     const cfg = getConfig_();
@@ -488,11 +505,19 @@ const obtenerClasificadorContexto_ = () => {
     }));
 
     const resultadoTexto = JSON.stringify(catalogoOptimizado);
-    try {
-      cache.put(cacheKey, resultadoTexto, CACHE_TTL_SEG);
-    } catch (cacheError) {
-      logEvent(1, "No se pudo cachear el catálogo (excede límite de Apps Script)", { error: cacheError.message });
+    
+    // Fragmentación: 90KB por chunk (límite seguro <100KB)
+    const CHUNK_SIZE = 90000;
+    const chunks = Math.ceil(resultadoTexto.length / CHUNK_SIZE);
+    
+    for (let i = 0; i < chunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const fragment = resultadoTexto.substring(start, start + CHUNK_SIZE);
+      cache.put(`hcg_conac_frag_${i}`, fragment, CACHE_TTL_SEG);
     }
+    cache.put(metaKey, JSON.stringify({ chunks }), CACHE_TTL_SEG);
+    
+    logEvent(0, "Catálogo CONAC cacheado", { chunks, totalBytes: resultadoTexto.length });
     return resultadoTexto;
 
   } catch (e) {

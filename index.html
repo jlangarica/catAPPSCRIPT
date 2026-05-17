@@ -694,6 +694,11 @@
         animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       @keyframes modalIn { to { transform: translateY(0); } }
+      @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+      }
       .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
       .modal-body { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
       .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
@@ -1668,7 +1673,7 @@
       const buildEmptyStateHTML_ = () => '<div class="empty-state">No se encontraron duplicados evidentes.</div>';
       const buildErrorStateHTML_ = (msg) => `<div class="empty-state" style="color:var(--red-main)">${escapeHTML_(msg || "Error desconocido")}</div>`;
       const renderSkeleton_ = () => { $("resultsContainer").innerHTML = Array(SKELETON_ROWS).fill('<div style="height:48px;background:var(--bg-secondary);margin-bottom:8px;border-radius:4px;animation:pulse 1.5s infinite"></div>').join(""); };
-      const resetSuccessAnimations_ = (target, num) => { if (num === 5) { const icon = target.querySelector(".success-icon"); icon.style.animation = "none"; icon.offsetHeight; icon.style.animation = ""; } };
+
 
       document.addEventListener("DOMContentLoaded", () => {
         const searchInput = $("searchInput");

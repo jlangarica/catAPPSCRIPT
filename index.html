@@ -912,6 +912,9 @@
     border-top-color: var(--text-muted);
   }
 }
+.skeleton-row {
+  animation: pulse 1.5s ease-in-out infinite;
+}
     </style>
   </head>
   <body>
@@ -1716,21 +1719,23 @@ const renderResultados = (data) => {
         $("iaSuggestionBox").style.display = "none";
       };
 
-      const updateStepper_ = (phase) => {
-        const steps = document.querySelectorAll(".stepper__step");
-        const lines = document.querySelectorAll(".stepper__line");
-        steps.forEach((step, i) => {
-          const n = i + 1;
-          step.classList.toggle("stepper__step--active", n === phase);
-          step.classList.toggle("stepper__step--done", n < phase);
-          n < phase
-            ? step.setAttribute("onclick", `irFase(${n})`)
-            : step.removeAttribute("onclick");
-        });
-        lines.forEach((line, i) =>
-          line.classList.toggle("stepper__line--filled", i < phase - 1),
-        );
-      };
+const updateStepper_ = (phase) => {
+  const steps = document.querySelectorAll(".stepper__step");
+  const lines = document.querySelectorAll(".stepper__line");
+  
+  steps.forEach((step, i) => {
+    const n = i + 1;
+    step.classList.toggle("stepper__step--active", n === phase);
+    step.classList.toggle("stepper__step--done", n < phase);
+    
+    // ELIMINAR: step.setAttribute("onclick", `irFase(${n})`);
+    // La delegación en DOMContentLoaded ya maneja esto via dataset.step
+  });
+  
+  lines.forEach((line, i) =>
+    line.classList.toggle("stepper__line--filled", i < phase - 1),
+  );
+};
 
       // ─── LÓGICA DE FORMULARIO (FASE 4) ──────────────────────────────────────────
 
@@ -1918,18 +1923,20 @@ const showToast = (msg, isError = false) => {
         );
       };
 
-      const escapeHTML_ = (str) =>
-        String(str).replace(
-          /[&<>"']/g,
-          (m) =>
-            ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            })[m],
-        );
+// DEPRECATED: renderResultados ahora usa DOM API nativa (createElement/textContent)
+// que es inherentemente anti-XSS. Mantenido como referencia:
+// const escapeHTML_ = (str) =>
+//   String(str).replace(
+//     /[&<>"']/g,
+//     (m) =>
+//       ({
+//         "&": "&amp;",
+//         "<": "&lt;",
+//         ">": "&gt;",
+//         '"': "&quot;",
+//         "'": "&#39;",
+//       })[m],
+//   );
 
       const isGASAvailable_ = () =>
         typeof google !== "undefined" && !!google.script?.run;
@@ -1996,13 +2003,19 @@ const showToast = (msg, isError = false) => {
       };
 
 
-      const renderSkeleton_ = () => {
-        $("resultsContainer").innerHTML = Array(SKELETON_ROWS)
-          .fill(
-            '<div style="height:48px;background:var(--bg-secondary);margin-bottom:8px;border-radius:4px;animation:pulse 1.5s infinite"></div>',
-          )
-          .join("");
-      };
+const renderSkeleton_ = () => {
+  const container = $("resultsContainer");
+  container.innerHTML = ""; // Limpia previo
+  
+  const fragment = document.createDocumentFragment();
+  for (let i = 0; i < SKELETON_ROWS; i++) {
+    const div = document.createElement("div");
+    div.style.cssText = "height:48px;background:var(--bg-secondary);margin-bottom:8px;border-radius:4px;";
+    div.className = "skeleton-row"; // Clase para animación CSS
+    fragment.appendChild(div);
+  }
+  container.appendChild(fragment);
+};
 
       // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 

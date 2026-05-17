@@ -794,6 +794,108 @@ select:not(:focus):valid ~ label {
   }
 }
 
+/* ==========================================================================
+   PROPUESTA A: Ajuste de Grid para Campo Condicional Independiente
+   ========================================================================== */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 16px; /* Ajuste armónico del flujo espacial */
+}
+
+/* ==========================================================================
+   PROPUESTA B: Estilización Premium de la Zona de Carga de Archivos
+   ========================================================================== */
+.file-upload-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Ocultamos el input nativo pero lo dejamos accesible para el teclado */
+.file-upload-wrapper input[type="file"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+
+/* El nuevo contenedor visual estilizado */
+.custom-file-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-input);
+  background: var(--bg-window);
+  transition: border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+  min-height: 54px;
+}
+
+.file-upload-wrapper input[type="file"]:focus ~ .custom-file-upload {
+  border-color: var(--blue-main);
+  border-style: solid;
+  box-shadow: 0 0 0 3px var(--blue-focus);
+}
+
+.custom-file-upload svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color 0.25s;
+}
+
+.file-upload-wrapper input[type="file"]:focus ~ .custom-file-upload svg,
+.file-upload-wrapper.has-file .custom-file-upload svg {
+  color: var(--blue-main);
+}
+
+.file-name-text {
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+
+/* Estado cuando ya se cargó un archivo válido */
+.file-upload-wrapper.has-file .custom-file-upload {
+  border-color: var(--green-main);
+  border-style: solid;
+  background: rgba(52, 199, 89, 0.03);
+}
+.file-upload-wrapper.has-file .file-name-text {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   PROPUESTA C: Estilos para el Stepper Interactivo
+   ========================================================================== */
+.stepper__step--done {
+  cursor: pointer;
+}
+
+.stepper__step--done:hover .stepper__dot {
+  background: var(--blue-hover);
+  border-color: var(--blue-hover);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
+}
+
+.stepper__step--done:hover .stepper__label {
+  color: var(--blue-main);
+}
+
+.stepper__dot {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
   </style>
 </head>
 <body>
@@ -879,21 +981,23 @@ select:not(:focus):valid ~ label {
         </div>
       </div>
 
-      <!-- FASE 4: FORMULARIO -->
-      <div id="phase-4" class="phase">
+       <div id="phase-4" class="phase">
         <h2>Solicitud de Alta</h2>
         <p>Completa la información con claridad para la nueva clave.</p>
         <div class="form-grid">
           <div class="form-section form-full"><h3 class="form-section__title">Datos del Artículo</h3></div>
+          
           <div class="input-group required form-full">
             <input type="text" id="formDesc" required placeholder=" " maxlength="200" oninput="updateCharCounter(this)">
             <label for="formDesc">Descripción del Artículo</label>
             <span class="char-counter" id="formDescCounter">0 / 200</span>
           </div>
+          
           <div class="input-group">
             <input type="text" id="formFamilia" placeholder=" ">
             <label for="formFamilia">Familia de Artículos</label>
           </div>
+          
           <div class="input-group required">
             <select id="formUM" required onchange="toggleOtroUM(this.value)">
               <option value="">Seleccionar...</option>
@@ -907,25 +1011,35 @@ select:not(:focus):valid ~ label {
               <option value="OTRO">OTRO (ESPECIFICAR)</option>
             </select>
             <label for="formUM">Unidad de Medida</label>
-            <input type="text" id="formUMOtro" placeholder=" " style="display:none; margin-top: 16px;">
           </div>
+
+          <div class="input-group required" id="wrapUMOtro" style="display:none;">
+            <input type="text" id="formUMOtro" placeholder=" ">
+            <label for="formUMOtro">Especificar Unidad</label>
+          </div>
+          
           <div class="input-group required">
             <input type="text" id="formCOG" required placeholder=" " maxlength="10">
             <label for="formCOG">Partida Presupuestal (COG)</label>
           </div>
+          
           <div class="form-section form-full"><h3 class="form-section__title">Datos del Solicitante</h3></div>
+          
           <div class="input-group required">
             <input type="text" id="formNombre" required placeholder=" " maxlength="100">
             <label for="formNombre">Nombre del Solicitante</label>
           </div>
+          
           <div class="input-group">
             <input type="text" id="formCargo" placeholder=" ">
             <label for="formCargo">Cargo</label>
           </div>
+          
           <div class="input-group">
             <input type="text" id="formServicio" placeholder=" ">
             <label for="formServicio">Servicio</label>
           </div>
+          
           <div class="input-group required">
             <select id="formUnidad" required>
               <option value="">Seleccionar...</option>
@@ -934,23 +1048,39 @@ select:not(:focus):valid ~ label {
             </select>
             <label for="formUnidad">Unidad Hospitalaria</label>
           </div>
+          
           <div class="form-section form-full"><h3 class="form-section__title">Información Complementaria</h3></div>
+          
           <div class="input-group">
             <input type="number" id="formPrecio" step="0.01" min="0" placeholder=" ">
             <label for="formPrecio">Costo de Referencia</label>
           </div>
+          
           <div class="input-group">
             <input type="text" id="formProveedor" placeholder=" ">
             <label for="formProveedor">Proveedor de Referencia</label>
           </div>
+          
           <div class="input-group form-full">
-            <input type="file" id="formPDF" accept="application/pdf">
-            <label for="formPDF">Cotización (PDF opcional)</label>
+            <div class="file-upload-wrapper" id="fileUploadWrapper">
+              <input type="file" id="formPDF" accept="application/pdf" onchange="handleFileChange(this)">
+              <div class="custom-file-upload">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="12" y1="18" x2="12" y2="12"></line>
+                  <line x1="9" y1="15" x2="15" y2="15"></line>
+                </svg>
+                <span class="file-name-text" id="fileNameDisplay">Adjuntar cotización institucional (Solo formato PDF)</span>
+              </div>
+            </div>
           </div>
+          
           <div class="input-group form-full">
             <textarea id="formJustificacion" placeholder=" "></textarea>
             <label for="formJustificacion">Justificación de la Solicitud</label>
           </div>
+          
           <div class="input-group form-full">
             <textarea id="formObs" placeholder=" "></textarea>
             <label for="formObs">Observaciones Adicionales</label>
@@ -959,6 +1089,8 @@ select:not(:focus):valid ~ label {
         <div class="actions right">
           <button class="btn btn-secondary" onclick="confirmarCancelar()">Cancelar</button>
           <button class="btn btn-primary" onclick="enviarFormulario()">Enviar Solicitud</button>
+        </div>
+      </div>citud</button>
         </div>
       </div>
 
@@ -1034,13 +1166,17 @@ select:not(:focus):valid ~ label {
       steps.forEach((step, i) => {
         const n = i + 1;
         step.classList.remove('stepper__step--active', 'stepper__step--done');
+        step.removeAttribute('onclick'); // Limpieza de eventos anteriores
         const dot = step.querySelector('.stepper__dot');
+        
         if (n === currentPhase) {
           step.classList.add('stepper__step--active');
           dot.innerHTML = STEP_ICONS[i];
         } else if (n < currentPhase) {
           step.classList.add('stepper__step--done');
           dot.innerHTML = DONE_ICON;
+          // Permitimos la interacción exclusiva con las etapas ya completadas de forma segura
+          step.setAttribute('onclick', `irFase(${n})`);
         } else {
           dot.innerHTML = STEP_ICONS[i];
         }
@@ -1168,18 +1304,43 @@ function renderResultados(data) {
   container.innerHTML = `<div class="table-container"><table aria-label="Coincidencias encontradas en el catálogo"><caption class="sr-only">Resultados de búsqueda del catálogo</caption><thead><tr><th>Clave</th><th>Descripción</th><th>Estado</th><th>Similitud</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-    function toggleOtroUM(val) {
-      const otroInput = $('formUMOtro');
-      if (val === 'OTRO') {
-        otroInput.style.display = 'block';
-        otroInput.required = true;
-        otroInput.focus();
-      } else {
-        otroInput.style.display = 'none';
-        otroInput.value = '';
-        otroInput.required = false;
-      }
+// PROPUESTA A: Manejo del campo condicional como elemento independiente en el Grid
+function toggleOtroUM(val) {
+  const otroWrap = $('wrapUMOtro');
+  const otroInput = $('formUMOtro');
+  if (val === 'OTRO') {
+    otroWrap.style.display = 'flex';
+    otroInput.required = true;
+    otroInput.focus();
+  } else {
+    otroWrap.style.display = 'none';
+    otroInput.value = '';
+    otroInput.required = false;
+    otroInput.classList.remove('has-value');
+  }
+}
+
+// PROPUESTA B: Manejador dinámico para el contenedor de archivos personalizado
+function handleFileChange(input) {
+  const wrapper = $('fileUploadWrapper');
+  const display = $('fileNameDisplay');
+  const file = input.files[0];
+  
+  if (file) {
+    if (file.type !== 'application/pdf') {
+      showToast('El archivo seleccionado no es un PDF válido.', true);
+      input.value = '';
+      wrapper.classList.remove('has-file');
+      display.textContent = 'Adjuntar cotización institucional (Solo formato PDF)';
+      return;
     }
+    wrapper.classList.add('has-file');
+    display.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+  } else {
+    wrapper.classList.remove('has-file');
+    display.textContent = 'Adjuntar cotización institucional (Solo formato PDF)';
+  }
+}
 
     // [3] enviarFormulario con flag de concurrencia y [2] validación PDF
     function enviarFormulario() {
@@ -1309,20 +1470,28 @@ function renderResultados(data) {
       });
     }
 
-    function limpiarFormulario() {
-      const ids = ['formDesc','formUM','formCOG','formPrecio','formProveedor','formJustificacion',
-        'formUnidad','formFamilia','formNombre','formCargo','formServicio','formObs','formUMOtro'];
-      ids.forEach(id => { if($(id)) $(id).value = ''; });
-      $('formPDF').value = '';
-      $('formUMOtro').style.display = 'none';
-      $('formUMOtro').required = false;
-      $('searchInput').value = '';
-      const counter = $('formDescCounter');
-      if (counter) {
-        counter.textContent = '0 / 200';
-        counter.classList.remove('char-counter--warning', 'char-counter--limit');
-      }
+// Limpieza extendida para la nueva interfaz
+function limpiarFormulario() {
+  const ids = ['formDesc','formUM','formCOG','formPrecio','formProveedor','formJustificacion',
+    'formUnidad','formFamilia','formNombre','formCargo','formServicio','formObs','formUMOtro'];
+  ids.forEach(id => { 
+    if($(id)) {
+      $(id).value = ''; 
+      $(id).classList.remove('has-value');
     }
+  });
+  $('formPDF').value = '';
+  $('wrapUMOtro').style.display = 'none';
+  $('formUMOtro').required = false;
+  $('fileUploadWrapper').classList.remove('has-file');
+  $('fileNameDisplay').textContent = 'Adjuntar cotización institucional (Solo formato PDF)';
+  $('searchInput').value = '';
+  const counter = $('formDescCounter');
+  if (counter) {
+    counter.textContent = '0 / 200';
+    counter.classList.remove('char-counter--warning', 'char-counter--limit');
+  }
+}
 
     function updateCharCounter(input) {
       const max = parseInt(input.maxLength, 10);
@@ -1474,6 +1643,14 @@ function renderResultados(data) {
   
   // Ejecutamos la validación de los selectores
   interceptarSelects();
+
+  // Dentro de tu funcion DOMContentLoaded, agrega al final:
+  const inputOtro = $('formUMOtro');
+  if (inputOtro) {
+    inputOtro.addEventListener('input', () => {
+      inputOtro.classList.toggle('has-value', inputOtro.value.trim() !== "");
+    });
+  }
 
       $('searchInput').focus();
     });

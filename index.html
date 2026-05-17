@@ -542,6 +542,13 @@
       .btn-primary:hover:not(:disabled) {
         background: var(--blue-hover);
       }
+      .btn-success {
+        background: var(--green-main);
+        color: white;
+      }
+      .btn-success:hover:not(:disabled) {
+        background: #059669;
+      }
       .btn-secondary {
         background: transparent;
         border-color: var(--border-color);
@@ -906,7 +913,7 @@
                 aria-label="Artículo a verificar"
               />
               <button
-                class="btn btn-primary"
+                class="btn btn-success"
                 id="btnSearch"
                 onclick="ejecutarBusqueda()"
                 disabled

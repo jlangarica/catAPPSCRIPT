@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 <br>
@@ -132,7 +132,7 @@
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -272,7 +272,7 @@ Timeout de servidor
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -329,7 +329,7 @@ Como solución de nivel empresarial en Google Apps Script, este proyecto impleme
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -375,7 +375,7 @@ hcg-catalogo-verifier/
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -399,7 +399,7 @@ Para mantener un estándar profesional, este proyecto se gestiona localmente uti
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -538,7 +538,7 @@ ROUND(
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -573,7 +573,7 @@ Code.gs
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -615,7 +615,7 @@ Code.gs
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -631,7 +631,7 @@ Code.gs
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -647,7 +647,7 @@ Code.gs
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -665,7 +665,7 @@ Code.gs
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -695,7 +695,7 @@ Code.gs
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -710,7 +710,7 @@ Code.gs
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 ---
@@ -725,7 +725,7 @@ Code.gs
 <br>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/docs/lines/colored.png" width="100%">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 4" width="100%"><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#2563eb" /><stop offset="50%" stop-color="#7c3aed" /><stop offset="100%" stop-color="#be185d" /></linearGradient><rect width="1000" height="4" fill="url(#g)" /></svg>
 </p>
 
 <div align="center">

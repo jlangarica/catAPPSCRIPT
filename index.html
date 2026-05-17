@@ -532,6 +532,47 @@
     .disclaimer-box--warning { background: #fffbeb; border-color: #fde047; border-left: 4px solid #eab308; }
     .disclaimer-icon { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
     .disclaimer-icon span { font-weight: 700; font-size: 14px; color: var(--text-main); }
+    
+    .disclaimer-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      margin: var(--space-6) 0;
+    }
+
+    .disclaimer-check {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-4) var(--space-5);
+      background: var(--bg-window);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-input);
+      cursor: pointer;
+      transition: border-color var(--duration-normal) var(--ease-out),
+                  background var(--duration-normal) var(--ease-out);
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--text-main);
+    }
+
+    .disclaimer-check:has(input:checked) {
+      border-color: var(--blue-main);
+      background: var(--blue-surface);
+    }
+
+    .disclaimer-check input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      accent-color: var(--blue-main);
+    }
+
+    .disclaimer-actions .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
 
     .input-hint { display: block; font-size: 12px; color: var(--text-muted); margin-top: 8px; padding-left: 4px; }
     .char-counter { font-size: 11px; color: var(--text-muted); transition: color 0.2s; }
@@ -947,18 +988,31 @@
       const toast = document.createElement("div");
       toast.className = "toast";
       toast.style.borderLeft = isError ? "4px solid var(--red-main)" : "4px solid var(--green-main)";
+      toast.setAttribute("role", isError ? "alert" : "status");
+      
+      const icon = document.createElement("span");
+      icon.setAttribute("aria-hidden", "true");
+      icon.innerHTML = isError ? "&#x2716;" : "&#x2714;";
+      
       const span = document.createElement("span");
       span.textContent = msg;
-      toast.appendChild(span);
+      
+      toast.append(icon, span);
+      
       const progress = document.createElement("div");
       progress.className = `toast__progress ${isError ? 'toast__progress--error' : 'toast__progress--success'}`;
       toast.appendChild(progress);
       container.appendChild(toast);
-      setTimeout(() => {
+      
+      let timeout = setTimeout(dismiss, 3000);
+      toast.addEventListener("mouseenter", () => clearTimeout(timeout));
+      toast.addEventListener("mouseleave", () => { timeout = setTimeout(dismiss, 3000); });
+      
+      function dismiss() {
         toast.style.opacity = "0";
         toast.style.transform = "translateY(10px)";
         setTimeout(() => toast.remove(), 300);
-      }, 3000);
+      }
     }
 
     const STEP_ICONS = [
@@ -1120,11 +1174,11 @@
       const otroWrap = $("wrapUMOtro");
       const otroInput = $("formUMOtro");
       if (val === "OTRO") {
-        outroWrap.style.display = "flex";
+        otroWrap.style.display = "flex";
         otroInput.required = true;
         otroInput.focus();
       } else {
-        outroWrap.style.display = "none";
+        otroWrap.style.display = "none";
         otroInput.value = "";
         otroInput.required = false;
         otroInput.classList.remove("has-value");
@@ -1286,19 +1340,58 @@
     function showModal(title, message, confirmText, cancelText, onConfirm) {
       const prev = document.querySelector(".modal-overlay"); if (prev) prev.remove();
       const prevFocus = document.activeElement;
-      const overlay = document.createElement("div"); overlay.className = "modal-overlay"; overlay.setAttribute("role", "dialog"); overlay.setAttribute("aria-modal", "true");
-      const box = document.createElement("div"); box.className = "modal-box";
-      const h3 = document.createElement("h3"); h3.textContent = title;
-      const p = document.createElement("p"); p.textContent = message;
-      const actions = document.createElement("div"); actions.className = "modal-actions";
-      const btnCancel = document.createElement("button"); btnCancel.className = "btn btn-secondary"; btnCancel.textContent = cancelText;
-      const btnConfirm = document.createElement("button"); btnConfirm.className = "btn btn-primary btn--danger"; btnConfirm.textContent = confirmText;
+      
+      const overlay = document.createElement("div"); 
+      overlay.className = "modal-overlay"; 
+      overlay.setAttribute("role", "dialog"); 
+      overlay.setAttribute("aria-modal", "true");
+      
+      const box = document.createElement("div"); 
+      box.className = "modal-box";
+      
+      const h3 = document.createElement("h3"); 
+      h3.textContent = title;
+      
+      const p = document.createElement("p"); 
+      p.textContent = message;
+      
+      const actions = document.createElement("div"); 
+      actions.className = "modal-actions";
+      
+      const btnCancel = document.createElement("button"); 
+      btnCancel.className = "btn btn-secondary"; 
+      btnCancel.textContent = cancelText;
+      
+      const btnConfirm = document.createElement("button"); 
+      btnConfirm.className = "btn btn-primary btn--danger"; 
+      btnConfirm.textContent = confirmText;
 
-      actions.append(btnCancel, btnConfirm); box.append(h3, p, actions); overlay.appendChild(box); document.body.appendChild(overlay);
+      actions.append(btnCancel, btnConfirm); 
+      box.append(h3, p, actions); 
+      overlay.appendChild(box); 
+      document.body.appendChild(overlay);
+      
+      const focusables = [btnCancel, btnConfirm];
+      let focusIndex = 0;
+      focusables[0].focus();
+
+      overlay.addEventListener("keydown", (e) => {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          focusIndex = e.shiftKey
+            ? (focusIndex - 1 + focusables.length) % focusables.length
+            : (focusIndex + 1) % focusables.length;
+          focusables[focusIndex].focus();
+        }
+        if (e.key === "Escape") {
+          close();
+        }
+      });
+      
       const close = () => { overlay.style.animation = "modalOut 0.15s ease forwards"; overlay.addEventListener("animationend", () => { overlay.remove(); prevFocus?.focus(); }, { once: true }); };
+      
       btnCancel.addEventListener("click", close);
       btnConfirm.addEventListener("click", () => { close(); if (onConfirm) onConfirm(); });
-      btnCancel.focus();
     }
 
     function escapeHTML(str) { return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
@@ -1331,6 +1424,17 @@
 
       const inputOtro = $("formUMOtro");
       if (inputOtro) { inputOtro.addEventListener("input", () => { inputOtro.classList.toggle("has-value", inputOtro.value.trim() !== ""); }); }
+      
+      // Inicializar checks del disclaimer
+      const checks = document.querySelectorAll('.disclaimer-check input[type="checkbox"]');
+      const btnContinuePhase3 = document.querySelector('#phase-3 .btn-primary');
+
+      checks.forEach((cb) => {
+        cb.addEventListener("change", () => {
+          btnContinuePhase3.disabled = ![...checks].every((c) => c.checked);
+        });
+      });
+      
       searchInput.focus();
     });
   </script>

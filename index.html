@@ -689,19 +689,44 @@
         border-radius: var(--radius-win);
         max-width: 440px;
         width: 100%;
-        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
         transform: translateY(10px);
         animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
-      @keyframes modalIn { to { transform: translateY(0); } }
-      @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
+      @keyframes modalIn {
+        to {
+          transform: translateY(0);
+        }
       }
-      .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
-      .modal-body { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 24px; }
-      .modal-actions { display: flex; justify-content: flex-end; gap: 12px; }
+      @keyframes pulse {
+        0% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.6;
+        }
+      }
+      .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 12px;
+      }
+      .modal-body {
+        font-size: 14px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 24px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
 
       .success-content {
         text-align: center;
@@ -867,7 +892,7 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
           "
-          >Unidad Digital</span
+          >CISIE</span
         >
       </div>
 
@@ -1303,13 +1328,28 @@
 
       /** @const {string[]} IDs de los campos del formulario */
       const FORM_FIELD_IDS = [
-        "formDesc", "formUM", "formCOG", "formPrecio", "formProveedor",
-        "formJustificacion", "formUnidad", "formFamilia", "formNombre",
-        "formCargo", "formServicio", "formObs", "formUMOtro",
+        "formDesc",
+        "formUM",
+        "formCOG",
+        "formPrecio",
+        "formProveedor",
+        "formJustificacion",
+        "formUnidad",
+        "formFamilia",
+        "formNombre",
+        "formCargo",
+        "formServicio",
+        "formObs",
+        "formUMOtro",
       ];
 
       /** @const {string[]} IDs para verificación de datos antes de cancelar */
-      const DIRTY_CHECK_IDS = ["formDesc", "formNombre", "formCOG", "formJustificacion"];
+      const DIRTY_CHECK_IDS = [
+        "formDesc",
+        "formNombre",
+        "formCOG",
+        "formJustificacion",
+      ];
 
       // ─── ESTADO DE LA APLICACIÓN ────────────────────────────────────────────────
 
@@ -1349,7 +1389,10 @@
         _searchTimer = setTimeout(() => {
           _searchInProgress = false;
           setLoadingState_(false);
-          showToast("La consulta tardó demasiado. Intente con un término más específico.", true);
+          showToast(
+            "La consulta tardó demasiado. Intente con un término más específico.",
+            true,
+          );
         }, SEARCH_TIMEOUT_MS);
 
         if (isGASAvailable_()) {
@@ -1364,7 +1407,9 @@
               clearTimeout(_searchTimer);
               _searchInProgress = false;
               setLoadingState_(false);
-              $("resultsContainer").innerHTML = buildErrorStateHTML_(err.message);
+              $("resultsContainer").innerHTML = buildErrorStateHTML_(
+                err.message,
+              );
               $("resultsSubtitle").textContent = "Error en la consulta.";
             })
             .buscarSimilitudesBQ(val);
@@ -1417,18 +1462,23 @@
         const isForward = num > _currentPhase;
         _currentPhase = num;
 
-        document.querySelectorAll(".phase").forEach((el) => el.classList.remove("active"));
+        document
+          .querySelectorAll(".phase")
+          .forEach((el) => el.classList.remove("active"));
         const target = $(`phase-${num}`);
 
         target.style.animation = "none";
         target.offsetHeight;
-        target.style.animation = isForward ? "slideInForward 0.25s var(--ease-out)" : "none";
+        target.style.animation = isForward
+          ? "slideInForward 0.25s var(--ease-out)"
+          : "none";
         target.classList.add("active");
 
         updateStepper_(num);
 
         if (FOCUS_MAP[num]) setTimeout(() => $(FOCUS_MAP[num])?.focus(), 120);
-        if (num === 2) $("chipSearchTerm").textContent = $("searchInput").value.trim();
+        if (num === 2)
+          $("chipSearchTerm").textContent = $("searchInput").value.trim();
         if (num === 3) {
           $("disclaimerSearchTerm").textContent = $("searchInput").value.trim();
           resetDisclaimerChecks_();
@@ -1446,9 +1496,13 @@
           const n = i + 1;
           step.classList.toggle("stepper__step--active", n === phase);
           step.classList.toggle("stepper__step--done", n < phase);
-          n < phase ? step.setAttribute("onclick", `irFase(${n})`) : step.removeAttribute("onclick");
+          n < phase
+            ? step.setAttribute("onclick", `irFase(${n})`)
+            : step.removeAttribute("onclick");
         });
-        lines.forEach((line, i) => line.classList.toggle("stepper__line--filled", i < phase - 1));
+        lines.forEach((line, i) =>
+          line.classList.toggle("stepper__line--filled", i < phase - 1),
+        );
       };
 
       // ─── LÓGICA DE FORMULARIO (FASE 4) ──────────────────────────────────────────
@@ -1456,7 +1510,9 @@
       const enviarFormulario = () => {
         if (_submitInProgress) return;
 
-        document.querySelectorAll("#phase-4 [required]").forEach(el => el.classList.remove("input-error-active"));
+        document
+          .querySelectorAll("#phase-4 [required]")
+          .forEach((el) => el.classList.remove("input-error-active"));
         const requiredInputs = document.querySelectorAll("#phase-4 [required]");
         let firstInvalid = null;
 
@@ -1556,13 +1612,17 @@
           $("modalCancelBtn").onclick = null;
         };
 
-        $("modalConfirmBtn").onclick = () => { onConfirm(); close(); };
+        $("modalConfirmBtn").onclick = () => {
+          onConfirm();
+          close();
+        };
         $("modalCancelBtn").onclick = close;
       };
 
       const updateCharCounter = (input) => {
         const counter = $(`${input.id}Counter`);
-        if (counter) counter.textContent = `${input.value.length} / ${input.maxLength}`;
+        if (counter)
+          counter.textContent = `${input.value.length} / ${input.maxLength}`;
       };
 
       const toggleOtroUM = (val) => {
@@ -1576,7 +1636,10 @@
         } else {
           wrap.classList.remove("is-visible");
           input.required = false;
-          setTimeout(() => { if (!wrap.classList.contains("is-visible")) wrap.style.display = "none"; }, 250);
+          setTimeout(() => {
+            if (!wrap.classList.contains("is-visible"))
+              wrap.style.display = "none";
+          }, 250);
         }
       };
 
@@ -1596,19 +1659,40 @@
       };
 
       const confirmarCancelar = () => {
-        const isDirty = DIRTY_CHECK_IDS.some(id => $(id)?.value.trim() !== "");
-        if (!isDirty) { irFase(1); return; }
+        const isDirty = DIRTY_CHECK_IDS.some(
+          (id) => $(id)?.value.trim() !== "",
+        );
+        if (!isDirty) {
+          irFase(1);
+          return;
+        }
         showModal(
           "¿Descartar formulario?",
           "Se perderá la información ingresada si continúa.",
-          "Descartar", "Volver",
-          () => { limpiarFormulario_(); irFase(1); }
+          "Descartar",
+          "Volver",
+          () => {
+            limpiarFormulario_();
+            irFase(1);
+          },
         );
       };
 
-      const escapeHTML_ = (str) => String(str).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+      const escapeHTML_ = (str) =>
+        String(str).replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[m],
+        );
 
-      const isGASAvailable_ = () => typeof google !== "undefined" && !!google.script?.run;
+      const isGASAvailable_ = () =>
+        typeof google !== "undefined" && !!google.script?.run;
 
       const setLoadingState_ = (isLoading) => {
         $("btnSearch").disabled = isLoading;
@@ -1617,11 +1701,17 @@
 
       const setFormLoading_ = (isLoading) => {
         const btns = document.querySelectorAll("#phase-4 .btn-primary");
-        btns.forEach(btn => btn.disabled = isLoading);
+        btns.forEach((btn) => (btn.disabled = isLoading));
       };
 
       const limpiarFormulario_ = () => {
-        FORM_FIELD_IDS.forEach(id => { const el = $(id); if (el) { el.value = ""; el.classList.remove("has-value"); } });
+        FORM_FIELD_IDS.forEach((id) => {
+          const el = $(id);
+          if (el) {
+            el.value = "";
+            el.classList.remove("has-value");
+          }
+        });
         $("formPDF").value = "";
         $("fileUploadWrapper").classList.remove("has-file");
         $("wrapUMOtro").style.display = "none";
@@ -1630,14 +1720,15 @@
       const resetDisclaimerChecks_ = () => {
         const checks = document.querySelectorAll(".disclaimer-check input");
         const btn = document.querySelector("#phase-3 .btn-primary");
-        checks.forEach(c => c.checked = false);
+        checks.forEach((c) => (c.checked = false));
         if (btn) btn.disabled = true;
       };
 
       const resolverUnidadMedida_ = () => {
         const sel = $("formUM").value;
         const otro = $("formUMOtro").value.trim();
-        if (sel === "OTRO" && !otro) return { error: "Especifique la unidad de medida." };
+        if (sel === "OTRO" && !otro)
+          return { error: "Especifique la unidad de medida." };
         return { unidad: sel === "OTRO" ? otro : sel };
       };
 
@@ -1658,7 +1749,8 @@
 
       const readPdfAndSubmit_ = (file, payload) => {
         const reader = new FileReader();
-        reader.onload = () => submitPayload_(reader.result.split(",")[1], payload);
+        reader.onload = () =>
+          submitPayload_(reader.result.split(",")[1], payload);
         reader.onerror = () => showToast("Error al leer el archivo.", true);
         reader.readAsDataURL(file);
       };
@@ -1670,21 +1762,45 @@
         return `<tr style="animation-delay:${i * 0.05}s"><td data-label="Clave"><code>${escapeHTML_(id_codigo || "N/A")}</code></td><td>${escapeHTML_(descripcion || "")}</td><td><span class="badge ${isActive ? "green" : "gray"}">${isActive ? "Activo" : "Inactivo"}</span></td><td><span class="badge ${score >= 60 ? "red" : score >= 30 ? "orange" : "gray"}">${score.toFixed(1)}%</span></td></tr>`;
       };
 
-      const buildEmptyStateHTML_ = () => '<div class="empty-state">No se encontraron duplicados evidentes.</div>';
-      const buildErrorStateHTML_ = (msg) => `<div class="empty-state" style="color:var(--red-main)">${escapeHTML_(msg || "Error desconocido")}</div>`;
-      const renderSkeleton_ = () => { $("resultsContainer").innerHTML = Array(SKELETON_ROWS).fill('<div style="height:48px;background:var(--bg-secondary);margin-bottom:8px;border-radius:4px;animation:pulse 1.5s infinite"></div>').join(""); };
-
+      const buildEmptyStateHTML_ = () =>
+        '<div class="empty-state">No se encontraron duplicados evidentes.</div>';
+      const buildErrorStateHTML_ = (msg) =>
+        `<div class="empty-state" style="color:var(--red-main)">${escapeHTML_(msg || "Error desconocido")}</div>`;
+      const renderSkeleton_ = () => {
+        $("resultsContainer").innerHTML = Array(SKELETON_ROWS)
+          .fill(
+            '<div style="height:48px;background:var(--bg-secondary);margin-bottom:8px;border-radius:4px;animation:pulse 1.5s infinite"></div>',
+          )
+          .join("");
+      };
 
       document.addEventListener("DOMContentLoaded", () => {
         const searchInput = $("searchInput");
-        searchInput.addEventListener("input", () => { $("btnSearch").disabled = searchInput.value.trim().length < MIN_SEARCH_LEN; });
-        searchInput.addEventListener("keypress", (e) => { if (e.key === "Enter" && !$("btnSearch").disabled) ejecutarBusqueda(); });
-        document.querySelectorAll(".input-group input, .input-group textarea, .input-group select").forEach(el => {
-          const upd = () => el.classList.toggle("has-value", el.value !== "");
-          el.addEventListener("input", upd); el.addEventListener("change", upd); upd();
+        searchInput.addEventListener("input", () => {
+          $("btnSearch").disabled =
+            searchInput.value.trim().length < MIN_SEARCH_LEN;
         });
+        searchInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter" && !$("btnSearch").disabled) ejecutarBusqueda();
+        });
+        document
+          .querySelectorAll(
+            ".input-group input, .input-group textarea, .input-group select",
+          )
+          .forEach((el) => {
+            const upd = () => el.classList.toggle("has-value", el.value !== "");
+            el.addEventListener("input", upd);
+            el.addEventListener("change", upd);
+            upd();
+          });
         const checks = document.querySelectorAll(".disclaimer-check input");
-        checks.forEach(c => c.addEventListener("change", () => { document.querySelector("#phase-3 .btn-primary").disabled = ![...checks].every(ch => ch.checked); }));
+        checks.forEach((c) =>
+          c.addEventListener("change", () => {
+            document.querySelector("#phase-3 .btn-primary").disabled = ![
+              ...checks,
+            ].every((ch) => ch.checked);
+          }),
+        );
         searchInput.focus();
       });
     </script>

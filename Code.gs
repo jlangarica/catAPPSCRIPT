@@ -44,7 +44,7 @@ function doGet() {
 }
 
 /**
- * 🔍 MOTOR DE AUDITORÍA Y PREVENCIÓN DE DUPLICADOS (VERSIÓN LÉXICA OPTIMIZADA)
+ * 🔍 MOTOR DE AUDITORÍA Y PREVENCIÓN DE DUPLICADOS (VERSIÓN FUZZY OPTIMIZADA)
  * @param {string} textoUsuario - Descripción enviada por el solicitante en la SPA.
  * @returns {Array<{id_codigo: string, descripcion: string, activo: number, similitud: number}>}
  */
@@ -60,7 +60,6 @@ function buscarSimilitudesBQ(textoUsuario) {
   
   // Separar números de letras
   txt = txt.replace(/([0-9]+)([A-Z])/g, "$1 $2").replace(/([A-Z]+)([0-9])/g, "$1 $2");
-
   // Diccionario Clínico Local
   const DICT_MEDICO = {
     "MG": "MILIGRAMOS", "ML": "MILILITROS", "TAB": "TABLETA", 
@@ -71,56 +70,58 @@ function buscarSimilitudesBQ(textoUsuario) {
   }
 
   const cleanInput = txt.replace(/[^A-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-
+  
   // ─── GENERACIÓN DE TRIGRAMAS DEL LADO DEL SERVIDOR (V8) ───
   const paddedInput = " " + cleanInput + " ";
   const trigrams = new Set();
   for (let i = 0; i < paddedInput.length - 2; i++) {
     const tri = paddedInput.substring(i, i + 3);
-    if (tri.trim().length === 3) trigrams.add(tri); // Validamos que sean exactamente 3 caracteres
+    if (tri.trim().length === 3) trigrams.add(tri); 
   }
   const trigramasArray = Array.from(trigrams);
-
   if (trigramasArray.length === 0) {
     throw new Error("Entrada sin suficiente claridad léxica alfanumérica.");
   }
 
   const props = PropertiesService.getScriptProperties();
-  const bqLocation = props.getProperty("BQ_LOCATION") || "US";
+  
+  // CORRECCIÓN DE REGIÓN: Forzamos la ubicación real de tu dataset
+  const bqLocation = props.getProperty("BQ_LOCATION") || "northamerica-south1"; 
+  
   const cacheKeyRaw = `hcg_idx_v6_${cleanInput}`;
   const cacheKey = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, cacheKeyRaw)
     .map(b => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2)).join("").substring(0, 24);
-
   const cache = CacheService.getScriptCache();
   const cached = cache.get(cacheKey);
   if (cached) return JSON.parse(cached);
 
-  // ─── CONSULTA SQL (INYECCIÓN PARAMETRIZADA A LA TABLA CORRECTA) ───
+  // ─── CONSULTA SQL SIN FILTROS RESTRICTIVOS (RECALL TOTAL) ───
   const sqlQuery = `
-    WITH candidatos_indexados AS (
+    WITH candidatos_evaluados AS (
       SELECT 
         id_codigo,
         descripcion_articulo,
         activo,
         ARRAY_LENGTH(trigramas) AS len_cat,
-        (SELECT COUNT(DISTINCT elemento) FROM UNNEST(trigramas) elemento WHERE elemento IN UNNEST(@user_trigrams)) AS inter
-      -- Apuntamos a la ruta exacta de la tabla que creaste
-      FROM \`certain-perigee-495302-h7.catalogo.catalogo_maestro_clean\`
-      WHERE SEARCH(norm_desc, @search_text) 
+        (
+          SELECT COUNT(DISTINCT elemento) 
+          FROM UNNEST(trigramas) elemento 
+          WHERE elemento IN UNNEST(@user_trigrams)
+        ) AS inter
+      FROM \` certain-perigee-495302-h7.catalogo.catalogo_maestro_clean \`
     )
     SELECT 
       id_codigo,
       descripcion_articulo,
       activo,
       ROUND(SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) * 100, 1) AS score
-    FROM candidatos_indexados
+    FROM candidatos_evaluados
     WHERE inter > 0 
-      AND SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) >= 0.20 -- Umbral del 20%
+      AND SAFE_DIVIDE(inter, len_cat + @len_in_tri - inter) >= 0.15 -- Regresamos al 15% original para recuperar sensibilidad
     ORDER BY score DESC
     LIMIT 10;
   `;
 
-  // El Project ID se lo pasamos directo para la facturación de la consulta
   const billingProjectId = props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
 
   const request = {
@@ -129,11 +130,6 @@ function buscarSimilitudesBQ(textoUsuario) {
     parameterMode: "NAMED",
     location: bqLocation,
     queryParameters: [
-      {
-        name: "search_text",
-        parameterType: { type: "STRING" },
-        parameterValue: { value: cleanInput }
-      },
       {
         name: "user_trigrams",
         parameterType: { type: "ARRAY", arrayType: { type: "STRING" } },
@@ -149,13 +145,13 @@ function buscarSimilitudesBQ(textoUsuario) {
 
   try {
     const res = BigQuery.Jobs.query(request, billingProjectId);
-    const results = res.rows ? res.rows.map(({ f }) => ({
-      id_codigo: f[0].v,
-      descripcion: f[1].v,
-      activo: Number(f[2].v) || 0,
-      similitud: Number(f[3].v) || 0
-    })) : [];
-
+    const results = res.rows ?
+      res.rows.map(({ f }) => ({
+        id_codigo: f[0].v,
+        descripcion: f[1].v,
+        activo: Number(f[2].v) || 0,
+        similitud: Number(f[3].v) || 0
+      })) : [];
     cache.put(cacheKey, JSON.stringify(results), 21600);
     return results;
   } catch (e) {

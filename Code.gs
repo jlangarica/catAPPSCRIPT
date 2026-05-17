@@ -372,11 +372,22 @@ function sugerirCamposConIA(descripcionCruda) {
   const startTime = Date.now();
   try {
     let input = String(descripcionCruda || "").trim();
-    if (input.length > MAX_INPUT_LENGTH) {
-      input = input.substring(0, MAX_INPUT_LENGTH);
-    }
+    if (input.length > MAX_INPUT_LENGTH) input = input.substring(0, MAX_INPUT_LENGTH);
+    if (input.length < 3) throw new Error("Input muy corto para clasificación.");
+
     const cfg = getConfig_();
-    if (!cfg.GEMINI_KEY) throw new Error("La propiedad 'GEMINI_API_KEY' no está configurada.");
+    if (!cfg.GEMINI_KEY) throw new Error("GEMINI_API_KEY no configurada.");
+
+    // Cache IA: evita llamadas duplicadas para el mismo término (TTL 1h vs 6h de BQ)
+    const cache = CacheService.getScriptCache();
+    const iaCacheKey = `ia_${Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, input)
+      .map((b) => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2))
+      .join("")}`;
+    const iaCached = cache.get(iaCacheKey);
+    if (iaCached) {
+      logEvent(0, "Cache hit IA", { input: input.substring(0, 50) });
+      return JSON.parse(iaCached);
+    }
 
     const conacContexto = obtenerClasificadorContexto_();
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.GEMINI_MODEL}:generateContent?key=${cfg.GEMINI_KEY}`;
@@ -419,22 +430,23 @@ Responde única y obligatoriamente con la estructura JSON definida en el respons
       muteHttpExceptions: true
     });
 
-    if (response.getResponseCode() !== 200) {
-      throw new Error(response.getContentText());
-    }
+    if (response.getResponseCode() !== 200) throw new Error(response.getContentText());
 
     const resJson = JSON.parse(response.getContentText());
     const aiResult = JSON.parse(resJson.candidates[0].content.parts[0].text);
-    
-    logEvent(0, "Invocación exitosa a Gemini IA", {
-      durationMs: Date.now() - startTime,
-      input: input.substring(0, 50)
-    });
-    
+
+    // Validación estructural de respuesta
+    const requiredKeys = ["descripcionSugerida", "partidaCOG", "unidadMedida", "familia"];
+    const missing = requiredKeys.filter(k => !aiResult[k]);
+    if (missing.length) throw new Error(`Respuesta IA incompleta. Faltan: ${missing.join(", ")}`);
+
+    cache.put(iaCacheKey, JSON.stringify(aiResult), 3600); // 1 hora
+
+    logEvent(0, "IA invocación exitosa", { durationMs: Date.now() - startTime, input: input.substring(0, 50) });
     return aiResult;
 
   } catch (e) {
-    logEvent(2, "Error en Copiloto Automático", { error: e.message, durationMs: Date.now() - startTime });
+    logEvent(2, "Error IA", { error: e.message, durationMs: Date.now() - startTime });
     throw new Error(`Asistente IA: ${e.message}`);
   }
 }
@@ -525,7 +537,8 @@ const formatearTimestamp_ = (fecha = new Date()) =>
   Utilities.formatDate(fecha, Session.getScriptTimeZone(), "yyyyMMdd-HHmm");
 
 /**
- * Normaliza un texto para búsqueda léxica avanzada.
+ * Normaliza texto para búsqueda léxica.
+ * V3: Usa regex precompiladas del cache para expansión médica.
  * @private
  */
 const normalizarTexto_ = (texto) => {
@@ -536,12 +549,11 @@ const normalizarTexto_ = (texto) => {
     .replace(/C\//g, " CON ")
     .replace(/S\//g, " SIN ");
 
-  // Separar números de letras
   txt = txt
     .replace(/([0-9]+)([A-Z])/g, "$1 $2")
     .replace(/([A-Z]+)([0-9])/g, "$1 $2");
 
-  // Expansión de abreviaturas médicas usando regex cacheadas
+  // Expansión médica con regex cacheadas (evita 6 new RegExp() por llamada)
   const regexCache = getRegexCacheMedico_();
   for (const [abrev, regex] of regexCache) {
     txt = txt.replace(regex, DICT_MEDICO[abrev]);
@@ -574,14 +586,17 @@ const generarTrigramas_ = (texto) => {
 };
 
 /**
- * Genera una clave hash corta para el caché.
+ * Genera clave de caché con MD5 completo (32 chars hex).
+ * V3: Elimina truncamiento a 24 chars para evitar colisiones estadísticas.
  * @private
+ * @param {string} input
+ * @returns {string}
  */
 const generarCacheKey_ = (input) => {
   const rawKey = `hcg_v3_${input}`;
   return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, rawKey)
     .map((b) => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2))
-    .join("");
+    .join(""); // 32 caracteres completos
 };
 
 /**

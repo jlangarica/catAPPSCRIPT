@@ -1,36 +1,51 @@
 /**
- * @fileoverview Verificador de Catálogo HCG — Servidor (Google Apps Script V8)
- * Refactorizado para optimización mediante Batch Operations, ES6+,
- * JSDoc estricto, robustez con Cloud Logging y encapsulamiento.
+ * @fileoverview Verificador de Catálogo HCG — Servidor Optimizado V3
+ * Integra: lazy-config, caché multinivel, regex precompiladas, sanitización
+ * server-side, logging estructurado, límite de trigramas, MD5 completo y
+ * corrección del algoritmo de tokenización para alineación con BigQuery.
  *
- * @version 2.0.0
+ * @version 3.0.0
  */
 
 "use strict";
 
-// ─── CONSTANTES DE CONFIGURACIÓN ─────────────────────────────────────────────
+// ─── LAZY-CONFIG: Se evalúa solo en la primera llamada, no en cada invocación ─
 
-/** @const {string} ID de la hoja de cálculo plantilla (HCG Formato Inclusión 2026) */
-const ID_PLANTILLA =
-  PropertiesService.getScriptProperties().getProperty("TEMPLATE_SHEET_ID") ||
-  "1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8";
+/** @type {Object|null} Caché en memoria de la ejecución actual */
+let __configCache = null;
 
-/** @const {string} Nombre de la hoja dentro de la plantilla */
+/**
+ * Retorna configuración unificada desde PropertiesService con caché en memoria.
+ * @private
+ * @returns {Object}
+ */
+const getConfig_ = () => {
+  if (__configCache) return __configCache;
+  const props = PropertiesService.getScriptProperties();
+  __configCache = {
+    BQ_PROJECT: props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7",
+    BQ_LOCATION: props.getProperty("BQ_LOCATION") || "northamerica-south1",
+    BQ_DATASET: props.getProperty("BQ_DATASET") || "catalogo",
+    BQ_TABLE: props.getProperty("BQ_TABLE") || "catalogo_maestro_clean",
+    TEMPLATE_ID: props.getProperty("TEMPLATE_SHEET_ID") || "1ZVwPuloDIcDfQJFuZs_AeEb8SH5TD0iRbEx3kER_GC8",
+    GEMINI_KEY: props.getProperty("GEMINI_API_KEY") || "",
+    GEMINI_MODEL: props.getProperty("GEMINI_MODEL") || "gemini-2.5-flash-lite",
+    CONAC_ID: props.getProperty("CONAC_JSON_ID") || "",
+  };
+  return __configCache;
+};
+
+// ─── CONSTANTES OPERATIVAS ───────────────────────────────────────────────────
+
 const NOMBRE_HOJA = "Formato";
-
-/** @const {string} Nombre de la carpeta destino en Drive */
 const NOMBRE_CARPETA = "Solicitudes de Inclusión HCG";
-
-/** @const {number} TTL de caché en segundos (6 horas) */
-const CACHE_TTL_SEG = 21600;
-
-/** @const {number} Fila inicio para escritura batch en la plantilla */
+const CACHE_TTL_SEG = 21600; // 6 horas
 const FILA_INICIO_DATOS = 14;
-
-/** @const {number} Columna inicio (C = 3) para escritura batch */
 const COL_INICIO_DATOS = 3;
+const MAX_TRIGRAMAS = 200;
+const MAX_INPUT_LENGTH = 500;
 
-/** @const {Object<string, string>} Diccionario clínico para normalización */
+/** @const {Object<string, string>} Diccionario clínico */
 const DICT_MEDICO = {
   MG: "MILIGRAMOS",
   ML: "MILILITROS",
@@ -40,57 +55,116 @@ const DICT_MEDICO = {
   JGA: "JERINGA",
 };
 
-// ─── FUNCIONES PÚBLICAS (TRIGGER-SAFE) ───────────────────────────────────────
+/** @type {Map|null} Caché de regex precompiladas */
+let __regexCache = null;
 
 /**
- * Punto de entrada HTML Service — renderiza la SPA al cliente.
- *
- * @returns {GoogleAppsScript.HTML.HtmlOutput} Página web servida al navegador.
+ * Retorna Map de regex precompiladas para expansión médica.
+ * @private
+ * @returns {Map<string, RegExp>}
+ */
+const getRegexCacheMedico_ = () => {
+  if (__regexCache) return __regexCache;
+  __regexCache = new Map();
+  for (const [abrev, compl] of Object.entries(DICT_MEDICO)) {
+    __regexCache.set(abrev, new RegExp("\\b" + abrev + "\\b", "gi"));
+  }
+  return __regexCache;
+};
+
+// ─── LOGGING ESTRUCTURADO ────────────────────────────────────────────────────
+
+/**
+ * Logger unificado con metadatos JSON para Cloud Logging/Stackdriver.
+ * @private
+ * @param {number} level 0=info, 1=warn, 2=error
+ * @param {string} message
+ * @param {Object} [meta={}]
+ */
+const logEvent = (level, message, meta = {}) => {
+  const payload = {
+    ts: new Date().toISOString(),
+    level: level === 0 ? "INFO" : level === 1 ? "WARN" : "ERROR",
+    service: "HCG_CATALOGO",
+    message,
+    ...meta,
+  };
+  const fn = level === 0 ? console.info : level === 1 ? console.warn : console.error;
+  fn(JSON.stringify(payload));
+};
+
+// ─── FUNCIONES PÚBLICAS ────────────────────────────────────────────────────────
+
+/**
+ * Punto de entrada HTML Service.
+ * @returns {GoogleAppsScript.HTML.HtmlOutput}
  */
 function doGet() {
   return HtmlService.createHtmlOutputFromFile("index")
     .setTitle("Prevención de Duplicados | HCG")
     .addMetaTag("viewport", "width=device-width, initial-scale=1")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.DEFAULT);
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 /**
- * Motor de auditoría y prevención de duplicados utilizando BigQuery y similitud de Jaccard.
+ * Endpoint de heartbeat para validación de sesión institucional.
+ * @returns {{email: string, authorized: boolean}}
+ */
+function getActiveUserEmail() {
+  try {
+    const email = Session.getActiveUser().getEmail();
+    return { email, authorized: email.endsWith("@hcg.gob.mx") };
+  } catch (e) {
+    return { email: "", authorized: false };
+  }
+}
+
+/**
+ * Motor de auditoría léxica con Jaccard/BigQuery.
+ * CORRECCIÓN CRÍTICA V3: Trigramas alineados por palabra (sin padding de espacios)
+ * para coincidir con la tokenización de BigQuery.
  *
- * @param {string} textoUsuario - Descripción enviada por el solicitante en la SPA.
- * @returns {Array<{id_codigo: string, descripcion: string, activo: number, similitud: number}>}
- *   Lista de coincidencias encontradas.
- * @throws {Error} Si la entrada es inválida o falla la consulta a BigQuery.
+ * @param {string} textoUsuario
+ * @returns {Array<Object>}
  */
 function buscarSimilitudesBQ(textoUsuario) {
+  const startTime = Date.now();
   try {
-    const input = String(textoUsuario || "").trim();
+    let input = String(textoUsuario || "").trim();
+    if (input.length > MAX_INPUT_LENGTH) {
+      input = input.substring(0, MAX_INPUT_LENGTH);
+    }
     if (input.length < 3) {
-      throw new Error(
-        "La verificación requiere una descripción mínima de 3 caracteres.",
-      );
+      throw new Error("La verificación requiere una descripción mínima de 3 caracteres.");
     }
 
     const cleanInput = normalizarTexto_(input);
-    const trigramasArray = generarTrigramas_(cleanInput);
+    let trigramasArray = generarTrigramas_(cleanInput);
 
     if (trigramasArray.length === 0) {
       throw new Error("Entrada sin suficiente claridad léxica alfanumérica.");
     }
 
+    // Protección contra payloads excesivos
+    const originalTriCount = trigramasArray.length;
+    if (trigramasArray.length > MAX_TRIGRAMAS) {
+      trigramasArray = trigramasArray.slice(0, MAX_TRIGRAMAS);
+      logEvent(1, "Trigramas truncados por límite de seguridad", {
+        original: originalTriCount,
+        limit: MAX_TRIGRAMAS,
+        input: cleanInput.substring(0, 50),
+      });
+    }
+
     const cacheKey = generarCacheKey_(cleanInput);
     const cache = CacheService.getScriptCache();
     const cached = cache.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+    if (cached) {
+      logEvent(0, "Cache hit en búsqueda de similitudes", { cacheKey, trigramas: trigramasArray.length });
+      return JSON.parse(cached);
+    }
 
-    const props = PropertiesService.getScriptProperties();
-    const bqLocation =
-      props.getProperty("BQ_LOCATION") || "northamerica-south1";
-    const bqProject =
-      props.getProperty("BQ_PROJECT_ID") || "certain-perigee-495302-h7";
-    const bqDataset = props.getProperty("BQ_DATASET") || "catalogo";
-    const bqTable = props.getProperty("BQ_TABLE") || "catalogo_maestro_clean";
-
+    const cfg = getConfig_();
     const sqlQuery = `
       WITH base_trigramas AS (
         SELECT 
@@ -101,12 +175,12 @@ function buscarSimilitudesBQ(textoUsuario) {
             SELECT COALESCE(ARRAY_AGG(DISTINCT SUBSTR(wf.w, i, 3)), [])
             FROM (
               SELECT w 
-              FROM UNNEST(SPLIT(UPPER(REGEXP_REPLACE(NORMALIZE(descripcion_articulo, NFD), r'\\p{M}', '')), ' ')) AS w
+              FROM UNNEST(SPLIT(UPPER(REGEXP_REPLACE(NORMALIZE(descripcion_articulo, NFD), r'\\\\p{M}', '')), ' ')) AS w
               WHERE LENGTH(w) >= 3
             ) AS wf,
                  UNNEST(GENERATE_ARRAY(1, LENGTH(wf.w) - 2)) AS i
           ) AS trigramas
-        FROM \`${bqProject}.${bqDataset}.${bqTable}\`
+        FROM \`${cfg.BQ_PROJECT}.${cfg.BQ_DATASET}.${cfg.BQ_TABLE}\`
       ),
       candidatos_evaluados AS (
         SELECT
@@ -137,7 +211,7 @@ function buscarSimilitudesBQ(textoUsuario) {
       query: sqlQuery,
       useLegacySql: false,
       parameterMode: "NAMED",
-      location: bqLocation,
+      location: cfg.BQ_LOCATION,
       queryParameters: [
         {
           name: "user_trigrams",
@@ -154,7 +228,10 @@ function buscarSimilitudesBQ(textoUsuario) {
       ],
     };
 
-    const res = BigQuery.Jobs.query(request, bqProject);
+    const bqStart = Date.now();
+    const res = BigQuery.Jobs.query(request, cfg.BQ_PROJECT);
+    const bqDuration = Date.now() - bqStart;
+
     const results = res.rows
       ? res.rows.map(({ f }) => ({
           id_codigo: f[0].v,
@@ -164,36 +241,45 @@ function buscarSimilitudesBQ(textoUsuario) {
         }))
       : [];
 
-    cache.put(cacheKey, JSON.stringify(results), CACHE_TTL_SEG);
+    try {
+      cache.put(cacheKey, JSON.stringify(results), CACHE_TTL_SEG);
+    } catch (err) {
+      logEvent(1, "Error al escribir en caché", { error: err.message, cacheKey });
+    }
+
+    logEvent(0, "Búsqueda BQ completada", {
+      durationMs: bqDuration,
+      trigramasEnviados: trigramasArray.length,
+      resultados: results.length,
+      input: cleanInput.substring(0, 50),
+    });
+
     return results;
   } catch (e) {
-    console.error({
-      message: "Fallo en motor de auditoría léxica HCG",
+    logEvent(2, "Fallo en motor de auditoría léxica HCG", {
       error: e.message,
       stack: e.stack,
+      durationMs: Date.now() - startTime,
     });
     throw new Error(`Error analítico de catálogo: ${e.message}`);
   }
 }
 
 /**
- * Orquestador de alta de solicitud y generación de documento de inclusión.
- *
- * @param {Object|null} payload - Datos del formulario enviados desde el cliente.
+ * Orquestador de alta de solicitud.
+ * @param {Object|null} payload
  * @returns {{ success: boolean, url?: string, id?: string, message?: string }}
- *   Resultado de la operación.
- * @throws {Error} Si la validación o generación del documento falla.
  */
 function guardarSolicitud(payload) {
   if (!payload) {
-    console.info({ message: "Verificando acceso a DriveApp..." });
+    logEvent(0, "Heartbeat de autorización", { user: Session.getActiveUser().getEmail() });
     DriveApp.getRootFolder();
     return { success: true, message: "Autorización exitosa" };
   }
 
   const { valido, mensaje } = validarPayloadEntrada_(payload);
   if (!valido) {
-    console.warn({ message: "Validación de payload fallida", error: mensaje });
+    logEvent(1, "Validación de payload fallida", { error: mensaje });
     throw new Error(`Validación: ${mensaje}`);
   }
 
@@ -231,16 +317,14 @@ function guardarSolicitud(payload) {
 
     const resultadoDoc = generarDocumentoInclusion(datosDoc, cotizacionPDF);
 
-    console.info({
-      message: "Solicitud procesada con éxito",
+    logEvent(0, "Solicitud procesada con éxito", {
       descripcion,
       idDocumento: resultadoDoc.id,
     });
 
     return { success: true, url: resultadoDoc.url, id: resultadoDoc.id };
   } catch (e) {
-    console.error({
-      message: "Error en guardarSolicitud",
+    logEvent(2, "Error en guardarSolicitud", {
       error: e.message,
       stack: e.stack,
     });
@@ -259,13 +343,10 @@ function guardarSolicitud(payload) {
 function generarDocumentoInclusion(datos, pdfBase64) {
   const lock = LockService.getScriptLock();
   try {
-    lock.waitLock(15000); // Espera hasta 15 segundos si otra instancia escribe
+    lock.waitLock(15000);
 
-    if (!datos || !datos.descripcion) {
-      throw new Error("Datos insuficientes: descripción es obligatoria.");
-    }
-
-    const plantilla = DriveApp.getFileById(ID_PLANTILLA);
+    const cfg = getConfig_();
+    const plantilla = DriveApp.getFileById(cfg.TEMPLATE_ID);
     const fechaStr = formatearTimestamp_();
     const nombreNuevoArchivo = `Solicitud Inclusión - ${datos.descripcion.substring(0, 30)} - ${fechaStr}`;
 
@@ -276,47 +357,44 @@ function generarDocumentoInclusion(datos, pdfBase64) {
     const hoja = ssCopia.getSheetByName(NOMBRE_HOJA);
 
     if (!hoja) {
-      throw new Error(
-        `No se encontró la hoja "${NOMBRE_HOJA}" en la plantilla.`,
-      );
+      throw new Error(`No se encontró la hoja "${NOMBRE_HOJA}" en la plantilla.`);
     }
 
     const urlPdf = adjuntarPDF_(carpetaDestino, pdfBase64, datos.descripcion);
     const valores = construirValoresHoja_(datos, urlPdf);
 
-    // Batch write: Escritura de una sola vez para optimizar rendimiento
-    hoja
-      .getRange(FILA_INICIO_DATOS, COL_INICIO_DATOS, 1, valores[0].length)
-      .setValues(valores);
+    hoja.getRange(FILA_INICIO_DATOS, COL_INICIO_DATOS, 1, valores[0].length).setValues(valores);
     SpreadsheetApp.flush();
 
     return { url: ssCopia.getUrl(), id: ssCopia.getId() };
   } catch (e) {
-    console.error({
-      message: "Error al generar documento",
+    logEvent(2, "Error al generar documento", {
       error: e.message,
       stack: e.stack,
     });
     throw new Error(`Error al generar documento: ${e.message}`);
   } finally {
-    lock.releaseLock(); // Libera el bloqueo para la siguiente solicitud
+    lock.releaseLock();
   }
 }
 
 /**
- * Endpoint analítico automático. Clasifica el término de búsqueda usando Gemini 1.5 Flash
- * bajo un esquema estructurado estricto basado en estándares internacionales y el catálogo CONAC.
- * * @param {string} descripcionCruda - El término de búsqueda original del usuario.
+ * Endpoint analítico automático. Clasifica el término de búsqueda usando Gemini.
+ * @param {string} descripcionCruda - El término de búsqueda original del usuario.
  * @returns {Object} Objeto estructurado con las clasificaciones predeterminadas.
  */
 function sugerirCamposConIA(descripcionCruda) {
+  const startTime = Date.now();
   try {
-    const input = String(descripcionCruda || "").trim();
-    const apiKey = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
-    if (!apiKey) throw new Error("La propiedad de entorno 'GEMINI_API_KEY' no está configurada.");
+    let input = String(descripcionCruda || "").trim();
+    if (input.length > MAX_INPUT_LENGTH) {
+      input = input.substring(0, MAX_INPUT_LENGTH);
+    }
+    const cfg = getConfig_();
+    if (!cfg.GEMINI_KEY) throw new Error("La propiedad 'GEMINI_API_KEY' no está configurada.");
 
     const conacContexto = obtenerClasificadorContexto_();
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.GEMINI_MODEL}:generateContent?key=${cfg.GEMINI_KEY}`;
 
     const systemInstruction = `Eres el sistema automatizado de catalogación oficial. Tu función es clasificar el insumo ingresado por el usuario utilizando exclusivamente el catálogo CONAC suministrado.
 
@@ -356,13 +434,22 @@ Responde única y obligatoriamente con la estructura JSON definida en el respons
       muteHttpExceptions: true
     });
 
-    if (response.getResponseCode() !== 200) throw new Error(response.getContentText());
+    if (response.getResponseCode() !== 200) {
+      throw new Error(response.getContentText());
+    }
 
     const resJson = JSON.parse(response.getContentText());
-    return JSON.parse(resJson.candidates[0].content.parts[0].text);
+    const aiResult = JSON.parse(resJson.candidates[0].content.parts[0].text);
+    
+    logEvent(0, "Invocación exitosa a Gemini IA", {
+      durationMs: Date.now() - startTime,
+      input: input.substring(0, 50)
+    });
+    
+    return aiResult;
 
   } catch (e) {
-    console.error({ message: "Error en Copiloto Automático", error: e.message });
+    logEvent(2, "Error en Copiloto Automático", { error: e.message, durationMs: Date.now() - startTime });
     throw new Error(`Asistente IA: ${e.message}`);
   }
 }
@@ -370,11 +457,9 @@ Responde única y obligatoriamente con la estructura JSON definida en el respons
 // ─── FUNCIONES PRIVADAS (SUFFIX: _) ──────────────────────────────────────────
 
 /**
- * Recupera el catálogo de partidas desde el archivo configurado en las propiedades del script.
- * Cumple estrictamente con la directiva de no almacenar IDs fijos en el código fuente.
- * * @private
+ * Recupera el catálogo de partidas.
+ * @private
  * @returns {string} Estructura comprimida de partidas en formato JSON string.
- * @throws {Error} Si la propiedad de entorno CONAC_JSON_ID no está definida o el archivo no existe.
  */
 const obtenerClasificadorContexto_ = () => {
   const cache = CacheService.getScriptCache();
@@ -384,17 +469,15 @@ const obtenerClasificadorContexto_ = () => {
   if (cached) return cached;
 
   try {
-    // Lectura pura desde PropertiesService sin fallbacks hardcoded
-    const propId = PropertiesService.getScriptProperties().getProperty("CONAC_JSON_ID");
-    if (!propId) {
-      throw new Error("La propiedad de entorno 'CONAC_JSON_ID' no se encuentra configurada en este script.");
+    const cfg = getConfig_();
+    if (!cfg.CONAC_ID) {
+      throw new Error("La propiedad de entorno 'CONAC_JSON_ID' no se encuentra configurada.");
     }
 
-    const file = DriveApp.getFileById(propId);
+    const file = DriveApp.getFileById(cfg.CONAC_ID);
     const jsonString = file.getBlob().getDataAsString();
     const partidasRaw = JSON.parse(jsonString);
 
-    // Reducción del catálogo para optimizar la ventana de contexto
     const catalogoOptimizado = partidasRaw.map(p => ({
       partida: String(p.id || ""),
       nombre: String(p.nombre || ""),
@@ -404,36 +487,31 @@ const obtenerClasificadorContexto_ = () => {
 
     const resultadoTexto = JSON.stringify(catalogoOptimizado);
     try {
-      cache.put(cacheKey, resultadoTexto, 21600); // 6 horas en caché
+      cache.put(cacheKey, resultadoTexto, CACHE_TTL_SEG);
     } catch (cacheError) {
-      console.warn("No se pudo cachear el catálogo (excede límite de 100KB de Apps Script): " + cacheError.message);
+      logEvent(1, "No se pudo cachear el catálogo (excede límite de Apps Script)", { error: cacheError.message });
     }
     return resultadoTexto;
 
   } catch (e) {
-    console.error({ message: "Fallo crítico al resolver fuente de datos CONAC", error: e.message });
+    logEvent(2, "Fallo crítico al resolver fuente de datos CONAC", { error: e.message });
     throw new Error(`Infraestructura de Datos: ${e.message}`);
   }
 };
 
 /**
  * Obtiene o crea la carpeta dedicada para las solicitudes de inclusión en Drive.
- *
- * @returns {GoogleAppsScript.Drive.Folder} Carpeta destino para las solicitudes.
  * @private
  */
 const getCarpetaSolicitudes_ = () => {
   const folders = DriveApp.getFoldersByName(NOMBRE_CARPETA);
   if (folders.hasNext()) return folders.next();
-  console.info({ message: "Carpeta creada", nombre: NOMBRE_CARPETA });
+  logEvent(0, "Carpeta creada", { nombre: NOMBRE_CARPETA });
   return DriveApp.createFolder(NOMBRE_CARPETA);
 };
 
 /**
- * Valida que el payload de solicitud contenga los campos críticos.
- *
- * @param {Object} payload - Payload crudo del cliente.
- * @returns {{ valido: boolean, mensaje?: string }}
+ * Valida que el payload contenga los campos críticos.
  * @private
  */
 const validarPayloadEntrada_ = (payload) => {
@@ -455,10 +533,7 @@ const validarPayloadEntrada_ = (payload) => {
 };
 
 /**
- * Genera un timestamp formateado para nomenclatura de archivos.
- *
- * @param {Date} [fecha=new Date()] - Fecha base.
- * @returns {string} Cadena formateada (yyyyMMdd-HHmm).
+ * Genera un timestamp formateado.
  * @private
  */
 const formatearTimestamp_ = (fecha = new Date()) =>
@@ -466,9 +541,6 @@ const formatearTimestamp_ = (fecha = new Date()) =>
 
 /**
  * Normaliza un texto para búsqueda léxica avanzada.
- *
- * @param {string} texto - Texto crudo del usuario.
- * @returns {string} Texto normalizado y expandido según diccionario.
  * @private
  */
 const normalizarTexto_ = (texto) => {
@@ -484,9 +556,10 @@ const normalizarTexto_ = (texto) => {
     .replace(/([0-9]+)([A-Z])/g, "$1 $2")
     .replace(/([A-Z]+)([0-9])/g, "$1 $2");
 
-  // Expansión de abreviaturas médicas
-  for (const [abrev, compl] of Object.entries(DICT_MEDICO)) {
-    txt = txt.replace(new RegExp("\\b" + abrev + "\\b", "gi"), compl);
+  // Expansión de abreviaturas médicas usando regex cacheadas
+  const regexCache = getRegexCacheMedico_();
+  for (const [abrev, regex] of regexCache) {
+    txt = txt.replace(regex, DICT_MEDICO[abrev]);
   }
 
   return txt
@@ -497,30 +570,26 @@ const normalizarTexto_ = (texto) => {
 
 /**
  * Genera un array de trigramas únicos a partir de un texto.
- *
- * @param {string} texto - Texto normalizado.
- * @returns {string[]} Arreglo de trigramas.
+ * V3: Tokens alineados por palabra (sin padding general).
  * @private
  */
 const generarTrigramas_ = (texto) => {
-  const padded = ` ${texto} `;
+  const words = texto.split(" ").filter(w => w.length >= 3);
   const trigrams = new Set();
-  for (let i = 0; i < padded.length - 2; i++) {
-    const tri = padded.substring(i, i + 3);
-    if (tri.trim().length === 3) trigrams.add(tri);
+  for (const w of words) {
+    for (let i = 0; i <= w.length - 3; i++) {
+      trigrams.add(w.substring(i, i + 3));
+    }
   }
   return Array.from(trigrams);
 };
 
 /**
- * Genera una clave MD5 corta para el servicio de caché.
- *
- * @param {string} input - Texto base para la clave.
- * @returns {string} Hash MD5 de 24 caracteres.
+ * Genera una clave hash corta para el caché.
  * @private
  */
 const generarCacheKey_ = (input) => {
-  const rawKey = `hcg_v2_${input}`;
+  const rawKey = `hcg_v3_${input}`;
   return Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, rawKey)
     .map((b) => ("0" + (b < 0 ? b + 256 : b).toString(16)).slice(-2))
     .join("")
@@ -528,37 +597,29 @@ const generarCacheKey_ = (input) => {
 };
 
 /**
- * Adjunta un archivo PDF de cotización a la carpeta de solicitudes.
- *
- * @param {GoogleAppsScript.Drive.Folder} carpeta - Carpeta destino.
- * @param {string|undefined} pdfBase64 - Contenido PDF codificado en Base64.
- * @param {string} descripcion - Descripción para el nombre del archivo.
- * @returns {string} URL del archivo PDF en Drive.
+ * Adjunta un archivo PDF a Drive.
  * @private
  */
 const adjuntarPDF_ = (carpeta, pdfBase64, descripcion) => {
   if (!pdfBase64 || typeof pdfBase64 !== "string") return "";
 
   try {
-    const nombreArchivo = `Cotizacion_${descripcion.substring(0, 20)}.pdf`;
+    const cleanDesc = descripcion.replace(/[^A-Za-z0-9]/g, "_");
+    const nombreArchivo = `Cotizacion_${cleanDesc.substring(0, 20)}.pdf`;
     const bytes = Utilities.base64Decode(pdfBase64);
     const blob = Utilities.newBlob(bytes, "application/pdf", nombreArchivo);
     const archivo = carpeta.createFile(blob);
 
-    console.info({ message: "PDF adjuntado", nombre: nombreArchivo });
+    logEvent(0, "PDF adjuntado", { nombre: nombreArchivo });
     return archivo.getUrl();
   } catch (e) {
-    console.error({ message: "Fallo al adjuntar PDF", error: e.message });
+    logEvent(2, "Fallo al adjuntar PDF", { error: e.message });
     throw new Error(`Error en adjunto PDF: ${e.message}`);
   }
 };
 
 /**
  * Construye el arreglo 2D de valores para escritura batch.
- *
- * @param {Object} datos - Datos del formulario.
- * @param {string} urlPdf - URL del PDF adjunto.
- * @returns {Array<Array<*>>} Arreglo 2D de una fila.
  * @private
  */
 const construirValoresHoja_ = (datos, urlPdf) => [

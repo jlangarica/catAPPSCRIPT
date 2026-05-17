@@ -2325,14 +2325,7 @@
           "Adjuntar cotización institucional (Solo formato PDF)";
         $("searchInput").value = "";
 
-        const counter = $("formDescCounter");
-        if (counter) {
-          counter.textContent = "0 / 200";
-          counter.classList.remove(
-            "char-counter--warning",
-            "char-counter--limit",
-          );
-        }
+        resetVisualFormState_();
       }
 
       /**
@@ -2485,6 +2478,26 @@
           return { unidad: "", error: "Selecciona una unidad de medida válida." };
         }
         return { unidad };
+      };
+
+      /**
+       * Resetea los contadores visuales de caracteres y estados de floating labels.
+       * @private
+       */
+      const resetVisualFormState_ = () => {
+        const counter = $("formDescCounter");
+        if (counter) {
+          counter.textContent = "0 / 200";
+          counter.classList.remove("char-counter--warning", "char-counter--limit");
+        }
+
+        document.querySelectorAll(".input-group select").forEach((sel) => {
+          sel.classList.remove("has-value");
+        });
+
+        document.querySelectorAll(".input-group input[type='text'], .input-group textarea").forEach((input) => {
+          input.classList.remove("has-value");
+        });
       };
 
       /**

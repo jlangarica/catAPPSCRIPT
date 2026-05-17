@@ -313,7 +313,7 @@ function sugerirCamposConIA(descripcionCruda) {
     if (!apiKey) throw new Error("La propiedad de entorno 'GEMINI_API_KEY' no está configurada.");
 
     const conacContexto = obtenerClasificadorContexto_();
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
 
     const systemInstruction = `Eres el sistema automatizado de catalogación oficial. Tu función es clasificar el insumo ingresado por el usuario utilizando exclusivamente el catálogo CONAC suministrado.
 
